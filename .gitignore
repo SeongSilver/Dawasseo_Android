@@ -1,0 +1,10 @@
+.gradle/
+.gradle-cache/
+.gradle-local/
+.idea/caches/
+.idea/markdown.xml
+build/
+local.properties
+app/build/
+app/google-services.json
+*.iml
