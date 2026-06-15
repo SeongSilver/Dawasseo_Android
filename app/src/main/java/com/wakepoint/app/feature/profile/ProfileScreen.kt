@@ -60,9 +60,24 @@ fun ProfileScreen() {
                 )
             }
         }
-        WakepointCard { SettingText("위치 권한", "foreground -> background 순서로 요청") }
-        WakepointCard { SettingText("알림 권한", "Android 13 이상 POST_NOTIFICATIONS") }
-        WakepointCard { SettingText("법적 문서", "개인정보 처리방침과 위치정보 고지") }
+        WakepointCard {
+            SettingText(
+                title = stringResource(R.string.profile_location_permission),
+                body = stringResource(R.string.profile_location_permission_body)
+            )
+        }
+        WakepointCard {
+            SettingText(
+                title = stringResource(R.string.profile_notification_permission),
+                body = stringResource(R.string.profile_notification_permission_body)
+            )
+        }
+        WakepointCard {
+            SettingText(
+                title = stringResource(R.string.profile_legal_documents),
+                body = stringResource(R.string.profile_legal_documents_body)
+            )
+        }
     }
 }
 

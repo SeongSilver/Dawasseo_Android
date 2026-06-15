@@ -13,12 +13,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.StatusPill
-import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCanvas
+import com.wakepoint.app.core.design.WakepointCard
+import com.wakepoint.app.core.design.WakepointDanger
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointSuccess
-import com.wakepoint.app.core.design.WakepointDanger
 import com.wakepoint.app.data.mock.MockWakepointData
 import com.wakepoint.app.domain.model.Alarm
 
@@ -44,10 +44,18 @@ fun AlarmsScreen() {
 
 @Composable
 private fun AlarmCard(alarm: Alarm) {
+    val creatorLabel = if (alarm.createdBy == alarm.ownerId) {
+        stringResource(R.string.alarm_created_by_me)
+    } else {
+        stringResource(R.string.alarm_created_by_friend)
+    }
+
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusPill(
-                text = if (alarm.isActive) "활성 알람" else "지난 알람",
+                text = stringResource(
+                    if (alarm.isActive) R.string.alarm_active else R.string.alarm_inactive
+                ),
                 color = if (alarm.isActive) WakepointSuccess else WakepointDanger
             )
             Text(
@@ -61,7 +69,7 @@ private fun AlarmCard(alarm: Alarm) {
                 color = WakepointMuted
             )
             Text(
-                text = "반경 ${alarm.radiusKm}km · ${if (alarm.createdBy == alarm.ownerId) "직접 설정" else "친구가 설정"}",
+                text = stringResource(R.string.alarm_radius, alarm.radiusKm, creatorLabel),
                 style = MaterialTheme.typography.bodyMedium,
                 color = WakepointMuted
             )

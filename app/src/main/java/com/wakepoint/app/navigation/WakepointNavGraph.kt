@@ -1,5 +1,6 @@
 package com.wakepoint.app.navigation
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -9,11 +10,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.wakepoint.app.R
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPrimaryActive
@@ -25,12 +28,12 @@ import com.wakepoint.app.feature.profile.ProfileScreen
 
 private enum class MainRoute(
     val route: String,
-    val label: String
+    @StringRes val labelResId: Int
 ) {
-    Home("home", "홈"),
-    Alarms("alarms", "알람"),
-    Friends("friends", "친구"),
-    Profile("profile", "마이")
+    Home("home", R.string.tab_home),
+    Alarms("alarms", R.string.tab_alarms),
+    Friends("friends", R.string.tab_friends),
+    Profile("profile", R.string.tab_profile)
 }
 
 @Composable
@@ -45,6 +48,7 @@ fun WakepointApp() {
         bottomBar = {
             NavigationBar(containerColor = WakepointTabBar) {
                 routes.forEach { item ->
+                    val label = stringResource(item.labelResId)
                     NavigationBarItem(
                         selected = currentRoute == item.route,
                         onClick = {
@@ -56,8 +60,8 @@ fun WakepointApp() {
                                 restoreState = true
                             }
                         },
-                        label = { Text(item.label) },
-                        icon = { Text(item.label.take(1)) },
+                        label = { Text(label) },
+                        icon = { Text(label.take(1)) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = WakepointPrimaryActive,
                             selectedTextColor = WakepointPrimaryActive,

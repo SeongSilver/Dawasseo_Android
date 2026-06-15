@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.StatusPill
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCanvas
+import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPrimary
@@ -38,7 +38,7 @@ fun FriendsScreen() {
             style = MaterialTheme.typography.headlineMedium,
             color = WakepointInk
         )
-        WakepointButton(text = "친구 검색")
+        WakepointButton(text = stringResource(R.string.friends_search))
         MockWakepointData.friends.forEach { friend ->
             FriendCard(friend = friend)
         }
@@ -47,10 +47,15 @@ fun FriendsScreen() {
 
 @Composable
 private fun FriendCard(friend: Friend) {
-    val (label, color) = when (friend.permissionStatus) {
-        PermissionStatus.Accepted -> "대리 설정 가능" to WakepointSuccess
-        PermissionStatus.Pending -> "권한 대기" to WakepointPrimary
-        PermissionStatus.Rejected -> "거절됨" to WakepointMuted
+    val label = when (friend.permissionStatus) {
+        PermissionStatus.Accepted -> stringResource(R.string.permission_accepted)
+        PermissionStatus.Pending -> stringResource(R.string.permission_pending)
+        PermissionStatus.Rejected -> stringResource(R.string.permission_rejected)
+    }
+    val color = when (friend.permissionStatus) {
+        PermissionStatus.Accepted -> WakepointSuccess
+        PermissionStatus.Pending -> WakepointPrimary
+        PermissionStatus.Rejected -> WakepointMuted
     }
 
     WakepointCard {

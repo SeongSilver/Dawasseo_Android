@@ -1,7 +1,33 @@
 <resources>
     <string name="app_name">다왔어</string>
+    <string name="tab_home">홈</string>
+    <string name="tab_alarms">알람</string>
+    <string name="tab_friends">친구</string>
+    <string name="tab_profile">마이</string>
     <string name="home_title">어디에 도착하면 알려드릴까요?</string>
+    <string name="home_search_placeholder">장소 검색</string>
+    <string name="home_map_preview">지도 미리보기</string>
+    <string name="home_active_status">활성</string>
+    <string name="home_alarm_summary">%1$s · 반경 %2$.1fkm</string>
+    <string name="home_create_alarm">알람 만들기</string>
     <string name="alarms_title">알람</string>
+    <string name="alarm_active">활성 알람</string>
+    <string name="alarm_inactive">지난 알람</string>
+    <string name="alarm_radius">반경 %1$.1fkm · %2$s</string>
+    <string name="alarm_created_by_me">직접 설정</string>
+    <string name="alarm_created_by_friend">친구가 설정</string>
     <string name="friends_title">친구</string>
+    <string name="friends_search">친구 검색</string>
+    <string name="permission_accepted">대리 설정 가능</string>
+    <string name="permission_pending">권한 대기</string>
+    <string name="permission_rejected">거절됨</string>
     <string name="profile_title">마이페이지</string>
+    <string name="profile_location_permission">위치 권한</string>
+    <string name="profile_location_permission_body">foreground → background 순서로 요청</string>
+    <string name="profile_notification_permission">알림 권한</string>
+    <string name="profile_notification_permission_body">Android 13 이상 POST_NOTIFICATIONS</string>
+    <string name="profile_legal_documents">법적 문서</string>
+    <string name="profile_legal_documents_body">개인정보 처리방침과 위치정보 고지</string>
+    <string name="auth_title">로그인</string>
+    <string name="invite_title">초대 처리</string>
 </resources>

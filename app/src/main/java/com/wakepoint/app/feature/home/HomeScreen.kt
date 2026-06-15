@@ -58,7 +58,7 @@ fun HomeScreen() {
             color = Color.White
         ) {
             Text(
-                text = "장소 검색",
+                text = stringResource(R.string.home_search_placeholder),
                 color = WakepointMuted,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)
             )
@@ -74,9 +74,11 @@ fun HomeScreen() {
         ) {
             MapMarkerPreview()
             Text(
-                text = "지도 미리보기",
+                text = stringResource(R.string.home_map_preview),
                 color = WakepointMuted,
-                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
             )
         }
 
@@ -87,13 +89,20 @@ fun HomeScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    StatusPill(text = "활성", color = WakepointSuccess)
+                    StatusPill(
+                        text = stringResource(R.string.home_active_status),
+                        color = WakepointSuccess
+                    )
                     Text(
                         text = activeAlarm.label,
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "${activeAlarm.targetAddress} · 반경 ${activeAlarm.radiusKm}km",
+                        text = stringResource(
+                            R.string.home_alarm_summary,
+                            activeAlarm.targetAddress,
+                            activeAlarm.radiusKm
+                        ),
                         color = WakepointMuted,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -113,7 +122,7 @@ fun HomeScreen() {
         Spacer(modifier = Modifier.weight(1f))
 
         WakepointButton(
-            text = "알람 만들기",
+            text = stringResource(R.string.home_create_alarm),
             modifier = Modifier.fillMaxWidth()
         )
     }
