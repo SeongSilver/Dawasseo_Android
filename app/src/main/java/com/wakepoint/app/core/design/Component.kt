@@ -3,18 +3,29 @@ package com.wakepoint.app.core.design
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,21 +33,64 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.wakepoint.app.R
 
 @Composable
 fun WakepointButton(
     text: String,
     modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
     onClick: () -> Unit = {}
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier,
-        shape = CircleShape,
+        modifier = modifier.height(56.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(containerColor = WakepointPrimary)
     ) {
-        Text(text = text)
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+        }
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+fun WakepointSecondaryButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    onClick: () -> Unit = {}
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(56.dp),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, WakepointBorder),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = WakepointParchment,
+            contentColor = WakepointInk
+        )
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+        }
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -79,20 +133,235 @@ fun StatusPill(
 }
 
 @Composable
-fun MapMarkerPreview(modifier: Modifier = Modifier) {
+fun WakepointLogo(
+    modifier: Modifier = Modifier,
+    horizontal: Boolean = true
+) {
+    val content: @Composable () -> Unit = {
+        Box(
+            modifier = Modifier.size(30.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.LocationOn,
+                contentDescription = null,
+                tint = WakepointPrimaryActive,
+                modifier = Modifier.size(34.dp)
+            )
+            Surface(
+                modifier = Modifier.size(14.dp),
+                color = Color.White,
+                shape = CircleShape
+            ) {}
+        }
+        Text(
+            text = stringResource(R.string.app_name),
+            color = WakepointPrimary,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+
+    if (horizontal) {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            content()
+        }
+    } else {
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+fun WakepointHeader(
+    modifier: Modifier = Modifier,
+    action: @Composable (() -> Unit)? = null
+) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        WakepointLogo()
+        Spacer(modifier = Modifier.weight(1f))
+        action?.invoke()
+    }
+}
+
+@Composable
+fun WakepointTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
+    readOnly: Boolean = false
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        readOnly = readOnly,
+        singleLine = true,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        placeholder = {
+            Text(text = placeholder, color = WakepointMuted)
+        },
+        leadingIcon = leadingIcon?.let {
+            {
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                    tint = WakepointMuted
+                )
+            }
+        },
+        trailingIcon = trailingIcon?.let {
+            {
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                    tint = WakepointMuted
+                )
+            }
+        },
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = WakepointBorder,
+            unfocusedBorderColor = WakepointBorder,
+            focusedContainerColor = WakepointCanvas,
+            unfocusedContainerColor = WakepointCanvas,
+            focusedTextColor = WakepointInk,
+            unfocusedTextColor = WakepointInk
+        )
+    )
+}
+
+@Composable
+fun RadiusSelector(
+    options: List<String>,
+    selectedOption: String,
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(WakepointParchment)
+            .border(1.dp, WakepointBorder, RoundedCornerShape(8.dp))
+            .padding(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        options.forEach { option ->
+            val selected = option == selectedOption
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (selected) WakepointPrimary.copy(alpha = 0.68f) else Color.Transparent)
+                    .clickable { onSelected(option) }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = option,
+                    color = if (selected) Color.White else WakepointInk,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SoundOptionRow(
+    title: String,
+    subtitle: String? = null,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    trailing: @Composable (() -> Unit)? = null,
+    onClick: () -> Unit = {}
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(WakepointParchment)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            color = WakepointCanvas,
+            shape = CircleShape
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = WakepointPrimary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = WakepointInk)
+            if (subtitle != null) {
+                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = WakepointMuted)
+            }
+        }
+        trailing?.invoke()
+    }
+}
+
+@Composable
+fun BottomSheetHandle(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = 42.dp, height = 5.dp)
+                .clip(CircleShape)
+                .background(WakepointBorder)
+        )
+    }
+}
+
+@Composable
+fun MapMarkerPreview(modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(74.dp)
             .clip(CircleShape)
             .background(WakepointPrimary.copy(alpha = 0.15f))
             .border(2.dp, WakepointPrimary.copy(alpha = 0.9f), CircleShape)
             .padding(18.dp)
     ) {
-        Surface(
-            modifier = Modifier.size(16.dp),
-            color = WakepointPrimary,
-            shape = CircleShape,
-            content = {}
+        Icon(
+            imageVector = Icons.Rounded.LocationOn,
+            contentDescription = null,
+            tint = WakepointPrimary,
+            modifier = Modifier.size(42.dp)
         )
     }
 }

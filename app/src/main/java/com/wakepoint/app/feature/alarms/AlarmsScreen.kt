@@ -1,78 +1,387 @@
 package com.wakepoint.app.feature.alarms
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Opacity
+import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
-import com.wakepoint.app.core.design.StatusPill
+import com.wakepoint.app.core.design.BottomSheetHandle
+import com.wakepoint.app.core.design.RadiusSelector
+import com.wakepoint.app.core.design.SoundOptionRow
+import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointDanger
+import com.wakepoint.app.core.design.WakepointHeader
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointSuccess
+import com.wakepoint.app.core.design.WakepointParchment
+import com.wakepoint.app.core.design.WakepointPrimary
+import com.wakepoint.app.core.design.WakepointSecondaryButton
+import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.mock.MockWakepointData
 import com.wakepoint.app.domain.model.Alarm
 
 @Composable
-fun AlarmsScreen() {
+fun AlarmsScreen(
+    onOpenSoundList: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .background(WakepointParchment)
     ) {
-        Text(
-            text = stringResource(R.string.alarms_title),
-            style = MaterialTheme.typography.headlineMedium,
-            color = WakepointInk
+        WakepointHeader(
+            action = {
+                IconButton(onClick = {}) {
+                    Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                }
+            }
         )
-        MockWakepointData.alarms.forEach { alarm ->
-            AlarmCard(alarm = alarm)
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            EditableAlarmCard(
+                alarm = MockWakepointData.alarms.first(),
+                onOpenSoundList = onOpenSoundList
+            )
+            MockWakepointData.alarms.drop(1).forEach { alarm ->
+                CompactAlarmCard(alarm = alarm)
+            }
         }
     }
 }
 
 @Composable
-private fun AlarmCard(alarm: Alarm) {
-    val creatorLabel = if (alarm.createdBy == alarm.ownerId) {
-        stringResource(R.string.alarm_created_by_me)
-    } else {
-        stringResource(R.string.alarm_created_by_friend)
-    }
-
+private fun EditableAlarmCard(
+    alarm: Alarm,
+    onOpenSoundList: () -> Unit
+) {
+    var radius by remember { mutableStateOf("300m") }
     WakepointCard {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatusPill(
-                text = stringResource(
-                    if (alarm.isActive) R.string.alarm_active else R.string.alarm_inactive
-                ),
-                color = if (alarm.isActive) WakepointSuccess else WakepointDanger
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(
+                        R.string.alarm_list_location_prefix,
+                        stringResource(R.string.alarm_transfer_center)
+                    ),
+                    color = WakepointPrimary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = true,
+                    onCheckedChange = {},
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = WakepointPrimary
+                    )
+                )
+            }
             Text(
                 text = alarm.label,
                 style = MaterialTheme.typography.titleMedium,
                 color = WakepointInk
             )
-            Text(
-                text = alarm.targetAddress,
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted
+            SectionLabel(text = stringResource(R.string.alarm_location_alias))
+            WakepointTextField(
+                value = alarm.targetAddress,
+                onValueChange = {},
+                placeholder = stringResource(R.string.alarm_location_alias),
+                readOnly = true
             )
-            Text(
-                text = stringResource(R.string.alarm_radius, alarm.radiusKm, creatorLabel),
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted
+            SectionLabel(text = stringResource(R.string.alarm_radius_setting))
+            RadiusSelector(
+                options = listOf("300m", "500m", "1km"),
+                selectedOption = radius,
+                onSelected = { radius = it }
+            )
+            SectionLabel(text = stringResource(R.string.alarm_sound_setting))
+            SoundOptionRow(
+                title = stringResource(R.string.alarm_default_sound),
+                icon = Icons.Rounded.Notifications,
+                trailing = {
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = WakepointMuted
+                    )
+                },
+                onClick = onOpenSoundList
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WakepointButton(
+                    text = stringResource(R.string.alarm_save),
+                    modifier = Modifier.weight(1f)
+                )
+                WakepointSecondaryButton(
+                    text = stringResource(R.string.alarm_cancel),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactAlarmCard(alarm: Alarm) {
+    WakepointCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.alarm_list_location_prefix, alarm.label),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (alarm.isActive) WakepointInk else WakepointMuted
+                )
+                Text(
+                    text = alarm.targetAddress,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (alarm.isActive) WakepointInk else WakepointMuted
+                )
+                Text(
+                    text = stringResource(
+                        R.string.alarm_radius_line,
+                        if (alarm.radiusKm < 1.0) "${(alarm.radiusKm * 1000).toInt()}m" else "${alarm.radiusKm.toInt()}km"
+                    ),
+                    color = WakepointMuted,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Switch(
+                checked = alarm.isActive,
+                onCheckedChange = {},
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = WakepointPrimary
+                )
             )
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SoundListScreen(
+    onBack: () -> Unit
+) {
+    var showRecording by remember { mutableStateOf(false) }
+    val sounds = listOf(
+        SoundItem(stringResource(R.string.sound_default_1), stringResource(R.string.sound_default_subtitle), Icons.Rounded.Notifications, true),
+        SoundItem(stringResource(R.string.sound_default_2), stringResource(R.string.sound_default_subtitle), Icons.Rounded.Notifications, false),
+        SoundItem(stringResource(R.string.sound_nature), stringResource(R.string.sound_nature_subtitle), Icons.Rounded.Opacity, false),
+        SoundItem(stringResource(R.string.sound_rhythm), stringResource(R.string.sound_rhythm_subtitle), Icons.Rounded.MusicNote, false)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WakepointParchment)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .background(WakepointCanvas)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+            }
+            Text(
+                text = stringResource(R.string.alarm_sound_list_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = WakepointInk
+            )
+        }
+        WakepointCard(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            sounds.forEachIndexed { index, sound ->
+                SoundRow(sound = sound)
+                if (index != sounds.lastIndex) {
+                    HorizontalDivider(color = WakepointParchment)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(WakepointCanvas)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            WakepointSecondaryButton(
+                text = stringResource(R.string.sound_import),
+                icon = Icons.Rounded.FileDownload,
+                modifier = Modifier.weight(1f)
+            )
+            WakepointButton(
+                text = stringResource(R.string.sound_record),
+                icon = Icons.Rounded.Mic,
+                onClick = { showRecording = true },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    if (showRecording) {
+        ModalBottomSheet(
+            onDismissRequest = { showRecording = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
+            containerColor = WakepointCanvas
+        ) {
+            RecordingSheet(onDismiss = { showRecording = false })
+        }
+    }
+}
+
+@Composable
+private fun SoundRow(sound: SoundItem) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {}
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = WakepointParchment
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(imageVector = sound.icon, contentDescription = null)
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = sound.title, style = MaterialTheme.typography.bodyLarge, color = WakepointInk)
+            Text(text = sound.subtitle, style = MaterialTheme.typography.bodyMedium, color = WakepointMuted)
+        }
+        if (sound.selected) {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = null,
+                tint = Color.Black
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecordingSheet(onDismiss: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(28.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.record_title),
+            color = WakepointPrimary,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = stringResource(R.string.record_time),
+            color = WakepointPrimary,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        Surface(
+            modifier = Modifier.size(48.dp),
+            shape = RoundedCornerShape(14.dp),
+            border = androidx.compose.foundation.BorderStroke(2.dp, WakepointPrimary),
+            color = WakepointCanvas
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Rounded.Stop,
+                    contentDescription = null,
+                    tint = WakepointPrimary
+                )
+            }
+        }
+        HorizontalDivider(color = WakepointParchment)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            WakepointSecondaryButton(
+                text = stringResource(R.string.alarm_cancel),
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f)
+            )
+            WakepointButton(
+                text = stringResource(R.string.alarm_save),
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(text = text, style = MaterialTheme.typography.labelLarge, color = WakepointInk)
+}
+
+private data class SoundItem(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val selected: Boolean
+)

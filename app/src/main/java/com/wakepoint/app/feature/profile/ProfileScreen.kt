@@ -1,90 +1,147 @@
 package com.wakepoint.app.feature.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
+import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointDarkTile
+import com.wakepoint.app.core.design.WakepointDanger
+import com.wakepoint.app.core.design.WakepointHeader
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.data.mock.MockWakepointData
+import com.wakepoint.app.core.design.WakepointParchment
 
 @Composable
 fun ProfileScreen() {
-    val user = MockWakepointData.currentUser
+    val profileName = stringResource(R.string.profile_name)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(WakepointCanvas)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(
-            text = stringResource(R.string.profile_title),
-            style = MaterialTheme.typography.headlineMedium,
-            color = WakepointInk
-        )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = WakepointDarkTile
+        WakepointHeader()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(252.dp)
+                .background(WakepointCanvas),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            Surface(
+                modifier = Modifier
+                    .size(76.dp)
+                    .border(2.dp, Color(0xFFCBCBCB), RoundedCornerShape(12.dp)),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFC7BCB0)
             ) {
-                Text(
-                    text = user.nickname,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = user.email,
-                    color = Color.White.copy(alpha = 0.72f),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = profileName.take(1),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = WakepointInk
+                    )
+                }
             }
-        }
-        WakepointCard {
-            SettingText(
-                title = stringResource(R.string.profile_location_permission),
-                body = stringResource(R.string.profile_location_permission_body)
+            Text(
+                text = profileName,
+                style = MaterialTheme.typography.titleLarge,
+                color = WakepointInk,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Text(
+                text = stringResource(R.string.profile_email),
+                style = MaterialTheme.typography.bodyMedium,
+                color = WakepointMuted,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
-        WakepointCard {
-            SettingText(
-                title = stringResource(R.string.profile_notification_permission),
-                body = stringResource(R.string.profile_notification_permission_body)
-            )
-        }
-        WakepointCard {
-            SettingText(
-                title = stringResource(R.string.profile_legal_documents),
-                body = stringResource(R.string.profile_legal_documents_body)
-            )
-        }
+        HorizontalDivider(color = Color(0xFFD8DDE3))
+        ProfileMenuItem(
+            icon = Icons.Rounded.Settings,
+            text = stringResource(R.string.profile_setting)
+        )
+        ProfileMenuItem(
+            icon = Icons.AutoMirrored.Rounded.HelpOutline,
+            text = stringResource(R.string.profile_support)
+        )
+        ProfileMenuItem(
+            icon = Icons.AutoMirrored.Rounded.Logout,
+            text = stringResource(R.string.profile_logout),
+            color = WakepointDanger,
+            showChevron = false
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(WakepointParchment.copy(alpha = 0.48f))
+        )
     }
 }
 
 @Composable
-private fun SettingText(title: String, body: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
-        Text(text = body, style = MaterialTheme.typography.bodyMedium, color = WakepointMuted)
+private fun ProfileMenuItem(
+    icon: ImageVector,
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = WakepointInk,
+    showChevron: Boolean = true
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(66.dp)
+                .padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = color)
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = color,
+                modifier = Modifier.weight(1f)
+            )
+            if (showChevron) {
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = WakepointMuted
+                )
+            }
+        }
+        HorizontalDivider(
+            color = Color(0xFFD8DDE3),
+            modifier = Modifier.padding(start = 24.dp, end = 16.dp)
+        )
     }
 }
