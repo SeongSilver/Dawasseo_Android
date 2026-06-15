@@ -86,7 +86,7 @@ app/
         WakepointNavGraph.kt
 supabase/migrations/
 docs/
-  README.md · SETUP.md · SCHEMA.md · API.md · DESIGN.md
+  SETUP.md · SCHEMA.md · API.md · DESIGN.md · IMPLEMENTATION_NOTES.md
 ```
 
 ---
@@ -96,7 +96,7 @@ docs/
 ### 1. 사전 준비
 - Android Studio 최신 버전 설치
 - JDK 17 이상
-- `local.properties`에 API 키 설정 (→ SETUP.md 참고)
+- `local.properties`에 API 키 설정 (→ docs/SETUP.md 참고)
 - `google-services.json` 배치 (Firebase 콘솔에서 발급)
 
 ### 2. 빌드 & 실행
@@ -132,10 +132,11 @@ docs/
 ---
 
 ## 참고 문서
-- [SETUP.md](./SETUP.md) — 개발 환경 세팅 및 키 설정
-- [SCHEMA.md](./SCHEMA.md) — Supabase DB 스키마 및 RLS
-- [API.md](./API.md) — API 연동 흐름
-- [DESIGN.md](./DESIGN.md) — 디자인 시스템
+- [SETUP.md](./docs/SETUP.md) — 개발 환경 세팅 및 키 설정
+- [SCHEMA.md](./docs/SCHEMA.md) — Supabase DB 스키마 및 RLS
+- [API.md](./docs/API.md) — API 연동 흐름
+- [DESIGN.md](./docs/DESIGN.md) — 디자인 시스템
+- [IMPLEMENTATION_NOTES.md](./docs/IMPLEMENTATION_NOTES.md) — 구현 전 확인 사항
 
 ---
 

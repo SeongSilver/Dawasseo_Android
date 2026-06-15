@@ -1,7 +1,10 @@
 .gradle/
 .gradle-cache/
 .gradle-local/
+.kotlin/
 .idea/caches/
+.idea/workspace.xml
+.idea/deploymentTargetSelector.xml
 .idea/markdown.xml
 build/
 local.properties
