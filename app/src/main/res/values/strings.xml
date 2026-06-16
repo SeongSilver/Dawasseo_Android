@@ -57,6 +57,7 @@
     <string name="alarm_radius_setting">알람 반경 설정</string>
     <string name="alarm_sound_setting">알람 사운드 설정</string>
     <string name="alarm_default_sound">기본 벨소리</string>
+    <string name="alarm_notification_permission_hint">알림 권한이 꺼져 있으면 도착 알람이 화면에 표시되지 않을 수 있어요.</string>
     <string name="alarm_save">저장</string>
     <string name="alarm_saving">저장 중...</string>
     <string name="alarm_delete">삭제</string>

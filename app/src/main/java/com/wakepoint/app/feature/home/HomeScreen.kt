@@ -3,6 +3,7 @@ package com.wakepoint.app.feature.home
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -95,6 +96,9 @@ fun HomeScreen(
     var hasLocationPermission by remember {
         mutableStateOf(context.hasForegroundLocationPermission())
     }
+    var hasNotificationPermission by remember {
+        mutableStateOf(context.hasPostNotificationPermission())
+    }
     var selectedTarget by remember { mutableStateOf(DefaultMapTarget) }
     var selectedTargetAddress by remember {
         mutableStateOf(context.formatSelectedLocation(DefaultMapTarget))
@@ -108,6 +112,11 @@ fun HomeScreen(
         hasLocationPermission =
             permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                 permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasNotificationPermission = granted || !context.requiresPostNotificationPermission()
     }
 
     LaunchedEffect(Unit) {
@@ -199,7 +208,12 @@ fun HomeScreen(
         }
         WakepointButton(
             text = stringResource(R.string.home_create_alarm),
-            onClick = { showAlarmSheet = true },
+            onClick = {
+                if (!hasNotificationPermission && context.requiresPostNotificationPermission()) {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                showAlarmSheet = true
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 20.dp, vertical = 18.dp)
@@ -223,6 +237,11 @@ fun HomeScreen(
                 radius = uiState.radiusOption,
                 isSaving = uiState.isSavingAlarm,
                 errorMessage = uiState.saveErrorMessage,
+                noticeMessage = if (!hasNotificationPermission) {
+                    stringResource(R.string.alarm_notification_permission_hint)
+                } else {
+                    null
+                },
                 onLabelChange = viewModel::updateAlarmLabel,
                 onRadiusChange = viewModel::updateRadiusOption,
                 onPrimaryClick = {
@@ -307,6 +326,7 @@ fun AlarmSetupSheet(
     radius: String = "500m",
     isSaving: Boolean = false,
     errorMessage: String? = null,
+    noticeMessage: String? = null,
     showAddressSearch: Boolean = false,
     onLabelChange: (String) -> Unit = {},
     onRadiusChange: (String) -> Unit = {},
@@ -378,6 +398,14 @@ fun AlarmSetupSheet(
                 )
             }
         )
+
+        if (noticeMessage != null) {
+            Text(
+                text = noticeMessage,
+                color = WakepointMuted,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -511,6 +539,18 @@ private fun Context.hasForegroundLocationPermission(): Boolean {
         ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun Context.requiresPostNotificationPermission(): Boolean {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+}
+
+private fun Context.hasPostNotificationPermission(): Boolean {
+    return !requiresPostNotificationPermission() ||
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
 }
 
