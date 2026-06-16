@@ -42,6 +42,51 @@
   - `friends`
   - `profile`
 - 앱 표시 문구는 `app/src/main/res/values/strings.xml`로 정리했다.
+- 이메일 기반 인증 흐름의 1차 구현을 추가했다.
+  - `AuthRepository`, `DefaultAuthRepository`
+  - `AuthViewModel`, `AuthUiState`
+  - Supabase Auth REST 기반 이메일 로그인/회원가입
+  - 회원가입 성공 시 `user_profiles` upsert로 DB 프로필 생성 보강
+  - DataStore 기반 auth session 저장/삭제
+  - 로그인 상태에 따른 `splash` -> `auth`/`home` Navigation 분기
+  - 프로필 화면 로그아웃 연결
+  - 로그인/회원가입 입력 필드 상태 연결 및 기본 검증
+- MVP 범위에서는 전화번호 인증 UI를 회원가입 화면에서 숨기고 이메일 회원가입 안정화에 집중하도록 정리했다.
+- 홈 화면 지도 목업을 Google Maps Compose 기반 실제 지도 화면으로 교체했다.
+  - `GOOGLE_MAPS_API_KEY`가 `local.properties`에 입력된 것을 값 노출 없이 확인했다.
+  - `play-services-maps`, `maps-compose` 의존성을 추가했다.
+  - 기본 카메라는 서울 시청 좌표로 설정했다.
+  - 기존 검색창, 중앙 마커 프리뷰, 현재 위치 FAB, 알람 생성 버튼 오버레이는 유지했다.
+- 홈 화면 foreground 위치 기능을 1차 연결했다.
+  - `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` 런타임 권한을 요청한다.
+  - 권한 허용 시 `FusedLocationProviderClient`의 Balanced Priority 현재 위치를 가져온다.
+  - 현재 위치를 기본 카메라와 기본 목적지로 사용한다.
+  - 위치를 가져오지 못하면 서울 시청 좌표로 fallback한다.
+  - 권한이 있을 때만 Google Map `isMyLocationEnabled`를 켠다.
+  - 지도 탭 좌표를 목적지로 저장하고 선택 마커와 알람 설정 바텀시트에 전달한다.
+- 알람 생성/목록의 실제 데이터 흐름을 1차 연결했다.
+  - 홈 알람 바텀시트의 별칭, 반경, 선택 좌표를 state로 관리한다.
+  - 알람 저장 시 로그인 유저 id로 `owner_id`, `created_by`를 설정한다.
+  - `AlarmDto`와 Domain -> DTO mapper를 추가했다.
+  - Supabase REST로 `alarms` insert 성공 후 Room `alarms`에 upsert한다.
+  - 알람 활성 상태 변경과 삭제를 Supabase REST + Room에 연결했다.
+  - 알람 목록 화면에서 목업 데이터를 제거하고 `AlarmRepository.observeAlarms()`를 구독한다.
+  - 알람 목록은 활성/지난 알람으로 구분해 표시한다.
+- foreground 위치 추적과 알람 트리거 판단을 1차 구현했다.
+  - 활성 알람 1개 이상이면 `LocationTrackingService`를 foreground service로 시작한다.
+  - 활성 알람 0개면 위치 추적 서비스를 중단한다.
+  - `LocationTrackingService`는 Balanced Priority 위치 업데이트를 구독한다.
+  - `calculateDistance()`로 현재 위치와 알람 목적지 사이 거리를 계산한다.
+  - 반경 진입 시 도착 알림을 표시하고 해당 알람을 `is_active=false`, `triggered_at=now`로 업데이트한다.
+  - foreground 추적 알림과 도착 알림 생성 로직을 `AlarmNotificationManager`에 추가했다.
+- Kakao Local 장소 검색을 1차 구현했다.
+  - `KAKAO_REST_API_KEY`로 Kakao Local keyword search REST API를 호출한다.
+  - 검색창 클릭 시 장소 검색 바텀시트를 표시한다.
+  - 검색 결과 선택 시 지도 카메라 이동, 목적지 좌표, 목적지 주소를 갱신한다.
+- 앱 전체 폰트를 Pretendard로 적용했다.
+  - Pretendard Light/Regular/SemiBold/Bold font resource를 추가했다.
+  - Compose Typography 주요 스타일에 Pretendard FontFamily를 적용했다.
+  - XML app theme 기본 `android:fontFamily`도 `@font/pretendard`로 설정했다.
 
 ## 최근 관련 커밋
 
@@ -55,14 +100,38 @@
 
 - `assembleDebug` 성공
 - `test` 성공
-- 현재 작업트리는 기록 작성 전 기준으로 깨끗했다.
+- 2026-06-16 인증 흐름 추가 후 `test` 성공
+- 2026-06-16 인증 흐름 추가 후 `assembleDebug` 성공
+- 2026-06-16 회원가입 DB 프로필 upsert 보강 후 `test` 성공
+- 2026-06-16 회원가입 DB 프로필 upsert 보강 후 `assembleDebug` 성공
+- 2026-06-16 전화번호 인증 UI MVP 제외 후 `test` 성공
+- 2026-06-16 전화번호 인증 UI MVP 제외 후 `assembleDebug` 성공
+- 2026-06-16 Google Maps Compose 홈 화면 교체 후 `assembleDebug` 성공
+- 2026-06-16 Google Maps Compose 홈 화면 교체 후 `test` 성공
+- 2026-06-16 foreground 위치 권한/현재 위치/지도 탭 목적지 선택 구현 후 `assembleDebug` 성공
+- 2026-06-16 foreground 위치 권한/현재 위치/지도 탭 목적지 선택 구현 후 `test` 성공
+- 2026-06-16 알람 생성 저장/Supabase insert/실제 목록 연결 후 `assembleDebug` 성공
+- 2026-06-16 알람 생성 저장/Supabase insert/실제 목록 연결 후 `test` 성공
+- 2026-06-16 foreground 위치 추적/알람 트리거/Kakao Local 검색 구현 후 `assembleDebug` 성공
+- 2026-06-16 foreground 위치 추적/알람 트리거/Kakao Local 검색 구현 후 `test` 성공
+- 2026-06-16 Pretendard 폰트 적용 후 `assembleDebug` 성공
+- 2026-06-16 Pretendard 폰트 적용 후 `test` 성공
+- 현재 작업트리는 인증 흐름 변경사항과 기존 `.idea/` 변경사항이 커밋 전 상태다.
 
 ## 남은 이슈
 
-- 현재 UI는 실제 데이터/권한/네트워크가 연결되지 않은 목업 상태다.
-- Google Maps 실제 지도 SDK 화면은 아직 적용되지 않았다.
-- Supabase Auth, DB, Realtime, Storage 실제 연동이 아직 없다.
-- Kakao Login/Share SDK는 아직 연결되지 않았다.
+- 이메일 로그인/회원가입은 Supabase Auth REST 엔드포인트에 연결했지만, 실제 Supabase 프로젝트 설정과 이메일 확인 정책은 실계정으로 검증해야 한다.
+- `local.properties`에는 `SUPABASE_URL`, `SUPABASE_ANON_KEY`가 입력되어 빌드 시 BuildConfig로 주입된다.
+- Supabase Auth에서 이메일 확인이 켜져 있으면 회원가입 직후 세션이 없어 홈 진입 대신 확인 메일 안내가 표시된다. MVP 즉시 홈 진입을 원하면 Supabase Auth의 이메일 확인 정책을 확인해야 한다.
+- 전화번호 인증은 MVP 이후 Supabase Edge Function + SMS provider로 구현할 예정이다.
+- Kakao Login/Share SDK는 아직 연결되지 않았고, 카카오 로그인 버튼은 placeholder 상태다.
+- Google Sign-In은 아직 구현되지 않았다.
+- 홈/알람/친구 UI는 실제 데이터/권한/네트워크가 연결되지 않은 목업 상태다.
+- Google Maps 실제 지도 SDK 화면과 foreground 현재 위치/목적지 탭 선택은 1차 적용됐다.
+- Supabase `alarms` insert/update/delete는 REST로 1차 연결됐다. 다만 실기기에서 Supabase RLS/스키마 적용 상태를 검증해야 한다.
+- foreground 위치 추적 서비스와 트리거 판단은 1차 구현됐다. Android 13+ 도착 알림 표시는 `POST_NOTIFICATIONS` 런타임 권한 UX를 별도 구현해야 안정적이다.
+- Kakao Local 검색은 1차 구현됐다. 실제 검색 성공은 `KAKAO_REST_API_KEY`와 Kakao 앱 설정으로 실기기 검증해야 한다.
+- Supabase Realtime, Storage 실제 연동이 아직 없다.
 - Firebase `google-services.json`과 Google Services Gradle 플러그인 적용은 아직 보류 중이다.
 - 위치 권한 요청, 백그라운드 위치 추적, 알람 트리거 로직은 아직 구현 전이다.
 - 알람음 녹음/파일 선택/Media3 반복 재생은 아직 UI 목업 단계다.
@@ -71,32 +140,34 @@
 
 ## 다음 작업 추천 순서
 
-1. 인증 흐름 구현
-   - `AuthViewModel`
-   - `AuthRepository`
-   - Supabase Auth 클라이언트 구성
-   - 이메일 로그인/회원가입
-   - 로그인 상태에 따른 Navigation 분기
+1. 알람 생성 실기기 검증
+   - Supabase SQL Editor에서 `alarms` 테이블/RLS 적용 확인
+   - 앱에서 알람 생성 후 Supabase `alarms` 레코드 생성 확인
+   - 알람 목록 화면에 Room cache가 즉시 반영되는지 확인
+   - 활성 토글/삭제가 Supabase와 Room에 모두 반영되는지 확인
 
-2. Supabase DB 연동
-   - `AlarmDto`, `FriendDto`, `UserProfileDto`, `AlarmPermissionDto`
-   - DTO와 Domain mapper
-   - 알람 insert/select/update
-   - Room cache 동기화
+2. Supabase DB 연동 확장
+   - `FriendDto`, `UserProfileDto`, `AlarmPermissionDto`
+   - 친구/권한 Repository
+   - Realtime 구독
 
-3. 지도 홈 실제 기능 연결
-   - Google Maps SDK 적용
-   - 현재 위치 foreground 권한 요청
-   - Kakao Local API 장소 검색
-   - 목적지 선택 및 반경 설정
-   - 알람 생성 UseCase/ViewModel 연결
+3. 인증 보강
+   - Supabase 프로젝트 실계정 로그인/회원가입 검증
+   - 이메일 확인 enabled/disabled 정책에 따른 UX 정리
+   - Google Sign-In
+   - Kakao Login SDK 및 Supabase Auth Provider 연동
+   - 서버 오류 메시지 현지화
 
-4. 위치 추적과 알람 트리거 구현
+4. 위치 추적/알림 실기기 검증
+   - foreground service 알림 표시 확인
+   - Android 13+ `POST_NOTIFICATIONS` 권한 요청 UX 구현
+   - 실제 위치 또는 에뮬레이터 mock location으로 반경 진입 테스트
+   - 트리거 후 Supabase/Room 알람 비활성화 확인
+
+5. 백그라운드 추적 확장
    - Android 10+ background location 단계적 권한 요청
-   - Android 13+ notification 권한 요청
-   - `LocationTrackingService`에서 Balanced Priority 위치 업데이트
-   - `calculateDistance()` 기반 반경 진입 판단
-   - 트리거 후 알람 비활성화 및 활성 알람 0개 시 추적 중단
+   - 장시간 추적 배터리/발열 확인
+   - Foreground Service 시작 조건과 중단 조건 실기기 검증
 
 5. 친구/권한/대리 알람 구현
    - 친구 추가
@@ -110,6 +181,31 @@
    - SAF 파일 선택
    - Supabase Storage 업로드
    - Media3/ExoPlayer 반복 재생
+
+## 하네스 적용
+
+- `docs/GOTCHAS.md`: 빌드, 키, Supabase, 위치/알림, 지도/검색 관련 반복 함정을 정리했다.
+- `docs/CHECKLISTS.md`: 작업 시작, 빌드 검증, 인증, 지도/위치, 알람 생성/목록, 위치 추적/트리거, Kakao 검색 체크리스트를 추가했다.
+- `docs/harness/alarm-trigger-flow.md`: 알람 저장부터 위치 추적, 반경 진입, 트리거 후 비활성화까지의 검증 하네스를 추가했다.
+- `docs/harness/maps-location-flow.md`: 홈 지도, 현재 위치, 목적지 선택, Kakao Local 검색 검증 하네스를 추가했다.
+- `docs/harness/START_HERE.md`: 새 세션 진입 순서와 긴 문서 읽기 조건을 정의했다.
+- `docs/harness/CURRENT_STATE.md`: 현재 구현 상태와 다음 작업 후보를 압축 정리했다.
+- `docs/harness/TASK_ROUTER.md`: 인증, 지도, 알람, 위치 추적, 알림 권한, 친구, 커스텀 알람음 작업별 읽을 파일을 정리했다.
+- `docs/harness/FILE_MAP.md`: 코드 위치를 빠르게 찾는 파일 지도를 추가했다.
+- `docs/harness/VERIFICATION_MATRIX.md`: 작업별 최소 검증 범위를 정리했다.
+- `AGENTS.md`: 새 작업 시 하네스 문서를 먼저 읽도록 빠른 시작 규칙을 추가했다.
+- `.codex/skills/wakepoint-start`: 새 세션 라우팅 Skill을 추가했다.
+- `.codex/skills/wakepoint-auth`: 인증 작업 Skill을 추가했다.
+- `.codex/skills/wakepoint-maps-location`: 지도/위치/검색 작업 Skill을 추가했다.
+- `.codex/skills/wakepoint-alarms`: 알람 저장/목록 작업 Skill을 추가했다.
+- `.codex/skills/wakepoint-tracking-notifications`: 위치 추적/알림 작업 Skill을 추가했다.
+- `.codex/skills/wakepoint-supabase-db`: Supabase schema/RLS/repository 작업 Skill을 추가했다.
+- `.codex/skills/wakepoint-design-system`: 디자인 시스템 작업 Skill을 추가했다.
+- `.codex/skills/wakepoint-verify`: 검증 선택/실행 Skill을 추가했다.
+- `docs/harness/SKILL_COMMANDS.md`: 모듈별 Skill 명령 인덱스를 추가했다.
+- `C:\Users\yoose\.codex\skills\wakepoint-*`: 다음 Codex 세션에서 자동 발견되도록 프로젝트 Skill 세트를 전역 Skill 폴더에도 복사했다.
+- Skill 검증: frontmatter 필수 항목(`name`, `description`)은 로컬 점검 완료. 공식 `quick_validate.py`는 현재 번들 Python에 `PyYAML`이 없어 실행이 중단됐다.
+- `AGENTS.md`: 기능/모듈 세부 규칙을 하네스와 Skill로 위임하고, 최초 진입용 108줄 문서로 축약했다.
 
 ## 앞으로의 작업 로그 운영
 

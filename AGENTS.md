@@ -1,278 +1,154 @@
-﻿# 다왔어 - Claude Code 프로젝트 설정
+# 다왔어 - Codex 프로젝트 설정
 
-위치 기반 알람 앱. 목적지 도착 시 알람, 친구/가족 대리 설정 가능.
-페르소나: ① 지하철 잠든 친구 알람 대리 ② 부모-자녀 귀가·이동 케어
-
----
-
-## 개발 방향
-
-기존 최초 기획은 React Native + Expo 기준이었으나, 신규 구현은 **Android 단일 타겟**으로 전환한다.
-개발 환경은 **Android Studio + Kotlin**을 기준으로 하며, Android 네이티브 기능을 우선 사용한다.
-
-- iOS/Web 대응은 현재 범위에서 제외
-- UI는 Jetpack Compose 기준
-- 백그라운드 위치 추적, 알림, FCM, 카카오 SDK 등은 Android 네이티브 API와 공식 SDK 우선
-- 기존 Supabase DB 스키마와 RLS 정책은 최대한 유지
+위치 기반 알람 Android 앱. 목적지 도착 시 알람을 울리고, 이후 친구/가족 대리 설정까지 확장한다.
+현재 구현은 Android Native + Kotlin + Jetpack Compose 단일 타겟이다.
 
 ---
 
-## 기술 스택
+## 먼저 읽는 순서
 
-| 레이어 | 기술 | 기준 |
-|--------|------|------|
-| 플랫폼 | Android Native | Android Studio |
-| 언어 | Kotlin | strict null-safety |
-| UI | Jetpack Compose + Material 3 | 단일 Activity |
-| 아키텍처 | MVVM + Repository | ViewModel + StateFlow |
-| 비동기 | Kotlin Coroutines + Flow | structured concurrency |
-| DI | Hilt | Android 공식 권장 |
-| 로컬 저장소 | DataStore + Room | 설정/세션은 DataStore, 캐시는 Room |
-| 백엔드 | Supabase | Auth·DB·Realtime·Storage |
-| 인증 | 이메일 + Google Sign-In + Kakao Login | Supabase Auth 연동 |
-| Push | Firebase Cloud Messaging | Android 알림 채널 |
-| 위치 | Fused Location Provider + WorkManager/Foreground Service | Balanced Priority |
-| 지도/검색 | Google Maps SDK + Kakao Local API | 지도 표시·장소 검색 |
-| 카카오 SDK | Kakao Android SDK | 로그인·공유 |
-| 녹음/재생 | MediaRecorder + Media3/ExoPlayer | 커스텀 알람음 |
-| 네비게이션 | Navigation Compose | typed route 권장 |
-| 빌드 | Gradle Kotlin DSL | APK/AAB |
+긴 문서를 처음부터 읽지 말고 아래 순서로 필요한 것만 연다.
+
+1. `docs/harness/START_HERE.md`
+2. `docs/harness/CURRENT_STATE.md`
+3. `docs/harness/TASK_ROUTER.md`
+4. `docs/harness/SKILL_COMMANDS.md`
+5. 작업 유형에 맞는 `.codex/skills/wakepoint-*` Skill 또는 `docs/harness/*-flow.md`
+
+긴 작업 로그(`docs/work-log/2026-06-16-current-status.md`)는 `CURRENT_STATE.md`와 실제 코드가 충돌할 때만 확인한다.
+파일 위치를 찾을 때는 전체 탐색 전에 `docs/harness/FILE_MAP.md`를 먼저 확인한다.
 
 ---
 
-## 디렉토리 구조
+## 모듈 Skill
 
-```text
-app/
-  build.gradle.kts
-  src/main/
-    AndroidManifest.xml
-    java/com/wakepoint/app/
-      MainActivity.kt
-      WakepointApplication.kt
-      core/
-        data/                 # DataStore, Room, common repository helpers
-        design/               # Compose theme, colors, typography, components
-        location/             # distance calculation, location policy
-        notification/         # alarm channel, FCM notification helpers
-        supabase/             # Supabase client setup
-      feature/
-        auth/                 # login, signup
-        home/                 # map home, place search, alarm marker
-        alarms/               # alarm list, ringing UI
-        friends/              # friend management, invite, permission request
-        profile/              # profile, terms, privacy
-        invite/               # deep link invite handling
-      data/
-        alarm/                # alarm repository, dto, mapper
-        friend/               # friend repository, permission repository
-        user/                 # profile repository
-        recording/            # recording/upload repository
-      domain/
-        model/                # Alarm, UserProfile, Friend, AlarmPermission
-        usecase/              # create alarm, trigger alarm, request permission
-      service/
-        LocationTrackingService.kt
-        AlarmWorker.kt
-        WakepointFirebaseMessagingService.kt
-      navigation/
-        WakepointNavGraph.kt
-supabase/migrations/
-docs/
-  SCHEMA.md · API.md · DESIGN.md · SETUP.md
-```
+반복 작업은 아래 Skill 중 하나로 범위를 좁힌다.
+
+- `wakepoint-start`: 새 작업 라우팅, 현재 상태, 다음 우선순위
+- `wakepoint-auth`: 회원가입, 로그인, 로그아웃, Supabase Auth, DataStore session
+- `wakepoint-maps-location`: Google Maps, 현재 위치, foreground 권한, Kakao Local 검색
+- `wakepoint-alarms`: 알람 생성, Supabase `alarms`, Room cache, 알람 목록
+- `wakepoint-tracking-notifications`: 위치 추적, 반경 트리거, 알림, `POST_NOTIFICATIONS`
+- `wakepoint-supabase-db`: schema, RLS, migration, DTO, repository, Realtime, Storage
+- `wakepoint-design-system`: Compose theme, Pretendard, 색상, 공통 컴포넌트, 문자열
+- `wakepoint-verify`: 작업별 검증 명령과 수동 검증 범위 선택
+
+모듈 이름이 명시되지 않은 요청은 `wakepoint-start` 기준으로 라우팅한다.
 
 ---
 
-## 개발 현황
+## 기술 기준
 
-✅ **기획 완료** - 위치 기반 알람, 친구/가족 대리 설정, 권한 요청, 커스텀 알람음, 법적 문서, Supabase 스키마 방향 확정.
+- 플랫폼: Android Native, Android Studio
+- 언어/UI: Kotlin, Jetpack Compose, Material 3
+- 아키텍처: MVVM + Repository, ViewModel + StateFlow
+- 비동기: Kotlin Coroutines + Flow
+- DI: Hilt
+- 로컬 저장소: DataStore + Room
+- 백엔드: Supabase Auth/DB/Realtime/Storage
+- 위치/지도: Fused Location Provider + Google Maps SDK + Kakao Local API
+- 알림/푸시: Android Notification + Firebase Cloud Messaging
+- 빌드: Gradle Kotlin DSL
 
-🔄 **진행 예정**
-1. **Android Native 프로젝트 재구성** - Android Studio + Kotlin + Compose 기준으로 패키지 생성
-2. **Supabase 연동 이관** - Auth, DB, Realtime, Storage 클라이언트 구성
-3. **지도/위치/알람 핵심 플로우 구현** - 지도 홈, 반경 설정, 백그라운드 위치 추적, 알람 트리거
-4. **친구/권한/FCM 구현** - 대리 알람 설정, 권한 요청, Realtime 동기화, Push
-5. **커스텀 알람음 구현** - 녹음, 기기 파일 선택, Storage 업로드, 반복 재생
-6. **실기기 검증** - 발열, 배터리, 백그라운드 제한, Android 권한 정책 확인
-7. **위치정보 사업자 신고** - 방송통신위원회/관련 기관 확인 후 출시 전 처리
-8. **스토어 배포** - production AAB 생성 및 Google Play 배포
-
----
-
-## DB 스키마
-
-```text
-user_profiles     - id, email, nickname, avatar_url, push_token
-alarms            - id, owner_id, created_by, label, target_lat, target_lng,
-                    target_address, radius_km, is_active, triggered_at,
-                    sound_type('default'|'custom'), sound_uri
-friends           - id, user_id, friend_id
-alarm_permissions - id, requester_id, target_id, status('pending'|'accepted'|'rejected')
-```
-
-전체 스키마·RLS는 `SCHEMA.md` 기준으로 유지한다.
+상세 스택과 디렉토리는 `docs/harness/FILE_MAP.md`, DB/RLS는 `docs/SCHEMA.md`, 설정은 `docs/SETUP.md`를 따른다.
 
 ---
 
-## 핵심 데이터 흐름
+## 현재 상태 요약
 
-```text
-알람 생성
-  HomeScreen
-  -> AlarmViewModel.createAlarm()
-  -> AlarmRepository.insertAlarm()
-  -> Supabase alarms INSERT
-  -> local state / Room cache 갱신
-  -> 필요 시 FCM 발송
+- 이메일 회원가입/로그인 REST 흐름과 DataStore session 저장이 연결되어 있다.
+- 전화번호 인증은 MVP에서 숨기거나 선택 입력으로 낮췄다.
+- Google Maps Compose 홈 화면, foreground 위치 권한, 현재 위치 fallback이 구현되어 있다.
+- 지도 탭과 Kakao Local 검색 결과 선택으로 목적지 좌표를 저장한다.
+- 홈에서 알람 생성 후 Supabase insert와 Room cache 동기화를 수행한다.
+- 알람 목록은 실제 Room flow 데이터를 표시한다.
+- 활성 알람 기반 foreground 위치 추적과 반경 진입 트리거가 1차 구현되어 있다.
+- Pretendard가 앱 기본 폰트로 적용되어 있다.
 
-위치 추적
-  활성 알람 1개 이상
-  -> LocationTrackingService 또는 WorkManager 시작
-  -> FusedLocationProviderClient Balanced Priority
-  -> calculateDistance()로 반경 진입 확인
-  -> AlarmNotificationManager.triggerAlarm()
-  -> alarms.is_active=false 업데이트
-  -> 남은 활성 알람 0개면 추적 중단
-
-친구 권한 요청
-  FriendsScreen
-  -> AlarmPermissionRepository.requestPermission()
-  -> Supabase alarm_permissions INSERT
-  -> FCM 발송
-  -> 상대방 수락 시 Realtime 구독으로 상태 갱신
-
-커스텀 알람음
-  RecordingScreen / AlarmEditor
-  -> MediaRecorder 녹음 또는 Android Photo Picker/SAF 파일 선택
-  -> Supabase Storage alarm-sounds 업로드
-  -> alarms.sound_type='custom', sound_uri 저장
-  -> 알람 트리거 시 Media3/ExoPlayer 반복 재생
-```
+최신 압축 상태는 `docs/harness/CURRENT_STATE.md`를 기준으로 한다.
 
 ---
 
-## 디자인 시스템 (DESIGN.md 요약)
+## 개발 원칙
 
-```text
-Primary    #0066cc   모든 인터랙티브 요소 (유일한 액센트)
-Success    #10B981   활성 알람, 수락
-Danger     #ef4444   삭제, 오류
-Canvas     #ffffff   기본 배경
-Parchment  #f5f5f7   섹션 배경, 카드 배경, 입력 필드
-Dark Tile  #272729   다크 섹션 (마이페이지 상단 등)
-Ink        #1d1d1f   제목, 본문
-Tab Bar    #000000   탭바 배경
-
-버튼    -> full rounded shape + pressed scale/alpha
-카드    -> 16dp radius + #e0e0e0 border
-입력    -> 12dp radius + #f5f5f7 background
-검색창  -> full rounded shape
-FAB     -> #0066cc, 56dp
-탭바    -> #000000, 활성 #2997ff, 비활성 #7a7a7a
-마커    -> stroke rgba(0,102,204,0.9), fill rgba(0,102,204,0.15)
-```
-
-Compose 구현 시 `core/design`에 색상, 타이포그래피, 공통 컴포넌트를 모은다.
+- 기존 코드 패턴, 모듈 경계, Repository 흐름을 우선한다.
+- Supabase 쿼리는 Repository에서만 수행한다.
+- DTO와 Domain Model을 분리한다.
+- UI 상태는 StateFlow 또는 Compose state로 단방향 관리한다.
+- Kotlin null-safety를 지키고 불필요한 `!!`를 쓰지 않는다.
+- 사용자 문자열은 `strings.xml`로 분리한다.
+- 민감 키는 코드에 하드코딩하지 않는다.
+- 사용자 또는 이전 작업자가 만든 unrelated 변경은 되돌리지 않는다.
 
 ---
 
-## 개발 규칙
+## 위치/알람 불변 규칙
 
-### 코드 스타일
-
-- Kotlin null-safety 준수, 불필요한 `!!` 금지
-- `Any` 남용 금지, DTO와 Domain Model 분리
-- UI는 Compose 함수형 컴포넌트만 사용
-- 화면 상태는 `StateFlow` 또는 Compose state로 단방향 관리
-- Supabase 쿼리는 Repository에서만 수행
-- ViewModel은 UI state와 user action 조율만 담당
-- `println`/`Log.d` 남용 금지, 오류는 `Log.e` 또는 Crashlytics 연동
-- 문자열은 `strings.xml`로 분리
-- 민감 키는 코드에 하드코딩 금지
-
-### 네이밍
-
-| 대상 | 규칙 | 예 |
-|------|------|----|
-| Compose 화면 | PascalCase + Screen | HomeScreen |
-| Compose 컴포넌트 | PascalCase | AlarmCard |
-| ViewModel | PascalCase + ViewModel | AlarmViewModel |
-| Repository | PascalCase + Repository | AlarmRepository |
-| UseCase | Verb/Noun + UseCase | CreateAlarmUseCase |
-| Domain Model | PascalCase | Alarm |
-| DTO | PascalCase + Dto | AlarmDto |
-| 상수 | UPPER_SNAKE_CASE | MIN_RADIUS_KM |
-
-### 위치/알람
-
-- 백그라운드 위치 추적 코드는 `service/LocationTrackingService.kt` 또는 명시된 Worker에서만 관리
-- 거리 계산은 `core/location/DistanceCalculator.kt`의 `calculateDistance()`만 사용
-- 반경 최솟값 100m / 최댓값 50km
-- 위치 정확도는 **Balanced Priority** 기준, High Accuracy 상시 사용 금지
-- 활성 알람 0개면 즉시 위치 추적 중단
-- 트리거 후 해당 알람 비활성화 + 남은 알람 0개면 추적 중단
-- Android 10+ 백그라운드 위치 권한, Android 13+ 알림 권한을 명확히 분리 요청
-- 장시간 백그라운드 추적은 Foreground Service 알림을 필수로 표시
-
-### 디자인
-
-- `#0066cc` 단일 액센트 - 두 번째 강조색 금지
-- 그림자는 지도 마커 등 기능적 요소에만 제한
-- 그라데이션 배경 금지
-- font weight 500 금지, 300/400/600만 사용
-- 하단 탭바는 항상 surface black `#000000`
-- 카드 안에 카드를 중첩하지 않음
+- 첫 단계는 foreground 위치만 다룬다.
+- background location은 별도 단계에서 권한과 UX를 분리한다.
+- 위치 업데이트는 Balanced Priority 기준이다.
+- 거리 계산은 `core/location/DistanceCalculator.kt`의 `calculateDistance()`만 사용한다.
+- 활성 알람이 1개 이상이면 위치 추적을 시작한다.
+- 활성 알람이 0개면 위치 추적을 중단한다.
+- 트리거 후 해당 알람은 `is_active=false`, `triggered_at` 갱신이 필요하다.
+- Android 13+ 알림은 `POST_NOTIFICATIONS` 권한 UX를 별도로 고려한다.
 
 ---
 
-## 환경 변수 / 로컬 설정
+## 디자인 불변 규칙
 
-Android Native에서는 Expo 공개 환경 변수 대신 `local.properties`, Gradle BuildConfig, 또는 CI secret을 사용한다.
+- Pretendard를 기본 폰트로 사용한다.
+- Primary accent는 `#0066cc` 하나만 사용한다.
+- font weight는 300/400/600 중심으로 사용하고 500은 피한다.
+- 그라데이션 배경과 불필요한 장식은 피한다.
+- 카드 안에 카드를 중첩하지 않는다.
+- 하단 탭바는 검정 배경 기준을 유지한다.
 
-```properties
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-GOOGLE_MAPS_API_KEY=
-KAKAO_NATIVE_APP_KEY=
-KAKAO_REST_API_KEY=
-FIREBASE_PROJECT_ID=
-```
-
-주의:
-- `google-services.json`은 Firebase 콘솔에서 Android 앱 패키지명 기준으로 발급
-- Supabase anon key는 클라이언트 포함 가능하지만 service role key는 절대 앱에 포함 금지
-- Google Maps API key는 Android 앱 패키지명 + SHA-1 제한 필수
-- Kakao Native App Key는 AndroidManifest 및 Kakao SDK 초기화에 사용
+상세 규칙은 `docs/DESIGN.md`와 `wakepoint-design-system` Skill을 따른다.
 
 ---
 
-## 명령어
+## 환경 키
+
+`local.properties`에 아래 키를 둔다.
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `GOOGLE_MAPS_API_KEY`
+- `KAKAO_NATIVE_APP_KEY`
+- `KAKAO_REST_API_KEY`
+- `FIREBASE_PROJECT_ID`
+
+Supabase service role key는 절대 앱에 포함하지 않는다.
+
+---
+
+## 검증
+
+기본 명령:
 
 ```powershell
-.\gradlew assembleDebug                     # Debug APK 빌드
-.\gradlew installDebug                      # 연결된 기기에 설치
-.\gradlew bundleRelease                     # Release AAB 생성
-.\gradlew test                              # Unit test
-.\gradlew connectedAndroidTest              # Instrumentation test
-.\gradlew lint                              # Android lint
-npx supabase db push                        # DB 마이그레이션
-git add .; git commit -m "feat: ..."; git push
+.\gradlew assembleDebug
+.\gradlew test
+git status --short
 ```
 
-Android Studio에서는 Run Configuration을 `app` 모듈로 두고 실기기 우선 검증한다.
+검증 범위는 `docs/harness/VERIFICATION_MATRIX.md` 또는 `wakepoint-verify` Skill을 따른다.
+Gradle이 sandbox 네트워크 제한으로 실패하면 같은 명령을 escalated 권한으로 재시도한다.
+문서만 변경한 경우 빌드는 생략 가능하지만 최종 응답에 이유를 남긴다.
 
 ---
 
-## 주의사항
+## 문서 운영
 
-- 백그라운드 위치 추적은 발열·배터리 이슈가 크므로 Balanced Priority와 추적 중단 조건을 반드시 지킨다.
-- Android 권한 정책상 위치 권한은 단계적으로 요청한다: foreground location -> background location.
-- Android 13 이상은 알림 권한 `POST_NOTIFICATIONS`를 별도로 요청한다.
-- `alarm-sounds` Storage 버킷 + RLS 마이그레이션이 라이브 DB에 적용돼야 커스텀 알람음 업로드가 동작한다.
-- 카카오 로그인/공유는 Android key hash 등록이 필요하다.
-- Google Maps는 API key 제한이 없으면 출시 전 보안 이슈가 된다.
-- 위치정보 사업자 신고 및 개인정보 처리 문구는 출시 전 법률 기준으로 재확인한다.
+- 반복 함정: `docs/GOTCHAS.md`
+- 반복 체크리스트: `docs/CHECKLISTS.md`
+- 작업 라우터: `docs/harness/TASK_ROUTER.md`
+- Skill 명령: `docs/harness/SKILL_COMMANDS.md`
+- 파일 지도: `docs/harness/FILE_MAP.md`
+- 구조 정책: `docs/harness/STRUCTURE_POLICY.md`
+- 메모리 정책: `docs/harness/MEMORY_POLICY.md`
+- Hook 정책: `docs/harness/HOOK_POLICY.md`
+- 작업 로그: `docs/work-log/2026-06-16-current-status.md`
 
----
-
+작업이 끝나면 필요한 경우 현재 상태 문서나 작업 로그만 짧게 갱신한다.

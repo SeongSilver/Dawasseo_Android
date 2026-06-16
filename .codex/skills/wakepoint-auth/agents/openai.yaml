@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Auth"
+  short_description: "Work on Wakepoint authentication flows."
+  default_prompt: "Work on Wakepoint auth with the auth skill."
