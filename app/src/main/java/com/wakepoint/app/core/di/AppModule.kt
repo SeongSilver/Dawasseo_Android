@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.room.Room
 import com.wakepoint.app.core.data.local.WakepointDatabase
 import com.wakepoint.app.core.notification.AlarmNotificationManager
+import com.wakepoint.app.core.supabase.SupabaseConfig
 import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.data.alarm.DefaultAlarmRepository
 import com.wakepoint.app.data.alarm.local.AlarmDao
+import com.wakepoint.app.data.auth.AuthRepository
+import com.wakepoint.app.data.auth.DefaultAuthRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,6 +36,14 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAlarmRepository(repository: DefaultAlarmRepository): AlarmRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(repository: DefaultAuthRepository): AuthRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideSupabaseConfig(): SupabaseConfig = SupabaseConfig()
 
     @Provides
     @Singleton

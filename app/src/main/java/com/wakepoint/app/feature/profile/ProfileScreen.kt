@@ -2,6 +2,7 @@ package com.wakepoint.app.feature.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +39,12 @@ import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointParchment
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    email: String,
+    onLogout: () -> Unit
+) {
     val profileName = stringResource(R.string.profile_name)
+    val profileEmail = email.ifBlank { stringResource(R.string.profile_email) }
 
     Column(
         modifier = Modifier
@@ -77,7 +82,7 @@ fun ProfileScreen() {
                 modifier = Modifier.padding(top = 16.dp)
             )
             Text(
-                text = stringResource(R.string.profile_email),
+                text = profileEmail,
                 style = MaterialTheme.typography.bodyMedium,
                 color = WakepointMuted,
                 modifier = Modifier.padding(top = 8.dp)
@@ -96,7 +101,8 @@ fun ProfileScreen() {
             icon = Icons.AutoMirrored.Rounded.Logout,
             text = stringResource(R.string.profile_logout),
             color = WakepointDanger,
-            showChevron = false
+            showChevron = false,
+            onClick = onLogout
         )
         Box(
             modifier = Modifier
@@ -113,13 +119,15 @@ private fun ProfileMenuItem(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = WakepointInk,
-    showChevron: Boolean = true
+    showChevron: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(66.dp)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
