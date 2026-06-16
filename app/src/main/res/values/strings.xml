@@ -11,13 +11,14 @@
     <string name="auth_id">아이디</string>
     <string name="auth_password">비밀번호</string>
     <string name="auth_login">로그인</string>
+    <string name="auth_processing">처리 중...</string>
     <string name="auth_kakao_login">카카오로 로그인</string>
     <string name="auth_forgot_password">비밀번호를 잊으셨나요?</string>
     <string name="auth_signup">회원가입</string>
     <string name="auth_terms">로그인 시 다왔어의 이용약관 및\n개인정보 처리방침에 동의하게 됩니다.</string>
     <string name="auth_copyright">© 2026 Da-wasseo. All rights reserved.</string>
 
-    <string name="signup_title">회원가입!</string>
+    <string name="signup_title">회원가입</string>
     <string name="signup_id_hint">아이디를 입력해주세요</string>
     <string name="signup_password_hint">비밀번호를 입력해주세요</string>
     <string name="signup_password_confirm_hint">비밀번호를 한번 더 입력해주세요</string>
@@ -39,16 +40,26 @@
 
     <string name="home_search_placeholder">어디로 가시나요?</string>
     <string name="home_map_preview">지도 미리보기</string>
+    <string name="home_map_default_marker">서울 시청</string>
+    <string name="home_current_location">현재 위치</string>
     <string name="home_create_alarm">알람 만들기</string>
+    <string name="place_search_title">장소 검색</string>
+    <string name="place_search">검색</string>
+    <string name="place_searching">검색 중...</string>
     <string name="alarm_setup_title">알람 설정</string>
     <string name="alarm_send_title">알람 보내기</string>
     <string name="alarm_location_alias">위치 별칭</string>
+    <string name="alarm_default_label">목적지 알람</string>
+    <string name="alarm_selected_target">선택한 목적지</string>
+    <string name="alarm_selected_location">위도 %1$.5f, 경도 %2$.5f</string>
     <string name="alarm_address_search">주소 검색</string>
     <string name="alarm_address_hint">주소를 입력해주세요</string>
     <string name="alarm_radius_setting">알람 반경 설정</string>
     <string name="alarm_sound_setting">알람 사운드 설정</string>
     <string name="alarm_default_sound">기본 벨소리</string>
     <string name="alarm_save">저장</string>
+    <string name="alarm_saving">저장 중...</string>
+    <string name="alarm_delete">삭제</string>
     <string name="alarm_cancel">취소</string>
     <string name="alarm_add">알람 추가</string>
     <string name="alarm_send">알람 보내기</string>
@@ -60,6 +71,7 @@
     <string name="alarm_radius_line">반경 : %1$s</string>
     <string name="alarm_active">활성 알람</string>
     <string name="alarm_inactive">지난 알람</string>
+    <string name="alarm_empty">아직 저장된 알람이 없습니다.</string>
     <string name="alarm_created_by_me">직접 설정</string>
     <string name="alarm_created_by_friend">친구가 설정</string>
     <string name="alarm_sound_list_title">알람 목록</string>

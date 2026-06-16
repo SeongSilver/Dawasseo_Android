@@ -14,10 +14,13 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,6 +34,7 @@ import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
+import com.wakepoint.app.feature.auth.AuthViewModel
 import com.wakepoint.app.feature.auth.SignUpScreen
 import com.wakepoint.app.feature.auth.SplashScreen
 import com.wakepoint.app.feature.friends.FriendsScreen
@@ -58,10 +62,28 @@ private enum class MainRoute(
 @Composable
 fun WakepointApp() {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val authUiState by authViewModel.uiState.collectAsState()
     val mainRoutes = MainRoute.entries
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: MainRoute.Home.route
     val showBottomBar = mainRoutes.any { it.route == currentRoute }
+
+    LaunchedEffect(authUiState.isCheckingSession, authUiState.isAuthenticated) {
+        if (!authUiState.isCheckingSession) {
+            val targetRoute = if (authUiState.isAuthenticated) {
+                MainRoute.Home.route
+            } else {
+                AppRoute.Auth
+            }
+            navController.navigate(targetRoute) {
+                popUpTo(AppRoute.Splash) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        }
+    }
 
     Scaffold(
         containerColor = WakepointCanvas,
@@ -105,15 +127,29 @@ fun WakepointApp() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = MainRoute.Home.route,
+            startDestination = AppRoute.Splash,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(AppRoute.Splash) { SplashScreen() }
             composable(AppRoute.Auth) {
-                AuthScreen(onSignUp = { navController.navigate(AppRoute.SignUp) })
+                AuthScreen(
+                    uiState = authUiState,
+                    onLoginEmailChange = authViewModel::updateLoginEmail,
+                    onLoginPasswordChange = authViewModel::updateLoginPassword,
+                    onSignIn = authViewModel::signIn,
+                    onSignUp = { navController.navigate(AppRoute.SignUp) }
+                )
             }
             composable(AppRoute.SignUp) {
-                SignUpScreen(onBack = { navController.popBackStack() })
+                SignUpScreen(
+                    uiState = authUiState,
+                    onEmailChange = authViewModel::updateSignUpEmail,
+                    onPasswordChange = authViewModel::updateSignUpPassword,
+                    onPasswordConfirmChange = authViewModel::updateSignUpPasswordConfirm,
+                    onNameChange = authViewModel::updateSignUpName,
+                    onSubmit = authViewModel::signUp,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(AppRoute.SoundList) {
                 SoundListScreen(onBack = { navController.popBackStack() })
@@ -123,7 +159,12 @@ fun WakepointApp() {
                 AlarmsScreen(onOpenSoundList = { navController.navigate(AppRoute.SoundList) })
             }
             composable(MainRoute.Friends.route) { FriendsScreen() }
-            composable(MainRoute.Profile.route) { ProfileScreen() }
+            composable(MainRoute.Profile.route) {
+                ProfileScreen(
+                    email = authUiState.session?.email.orEmpty(),
+                    onLogout = authViewModel::signOut
+                )
+            }
         }
     }
 }
