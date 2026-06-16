@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Maps Location"
+  short_description: "Work on Wakepoint maps, location, and search."
+  default_prompt: "Work on Wakepoint maps and location using the module skill."

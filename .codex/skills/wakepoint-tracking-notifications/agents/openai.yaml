@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Tracking Notifications"
+  short_description: "Work on Wakepoint location tracking and notifications."
+  default_prompt: "Work on Wakepoint tracking and notifications using the module skill."

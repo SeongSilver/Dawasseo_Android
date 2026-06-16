@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Start"
+  short_description: "Start Wakepoint Android work with minimal context."
+  default_prompt: "Start Wakepoint Android work using the routing harness."

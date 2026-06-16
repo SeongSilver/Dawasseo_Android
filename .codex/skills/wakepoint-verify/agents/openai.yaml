@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Verify"
+  short_description: "Choose and run Wakepoint Android verification steps."
+  default_prompt: "Verify Wakepoint Android work using the verification skill."

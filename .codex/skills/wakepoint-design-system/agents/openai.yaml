@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Design System"
+  short_description: "Work on Wakepoint Compose design system and typography."
+  default_prompt: "Work on Wakepoint design system using the module skill."

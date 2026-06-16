@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Supabase DB"
+  short_description: "Work on Wakepoint Supabase schema and repositories."
+  default_prompt: "Work on Wakepoint Supabase DB using the module skill."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wakepoint Alarms"
+  short_description: "Work on Wakepoint alarm storage and lists."
+  default_prompt: "Work on Wakepoint alarms using the module skill."
