@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
@@ -38,6 +39,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +51,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.RadiusSelector
@@ -63,13 +66,15 @@ import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.data.mock.MockWakepointData
 import com.wakepoint.app.domain.model.Alarm
 
 @Composable
 fun AlarmsScreen(
-    onOpenSoundList: () -> Unit
+    onOpenSoundList: () -> Unit,
+    viewModel: AlarmsViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -89,12 +94,52 @@ fun AlarmsScreen(
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            EditableAlarmCard(
-                alarm = MockWakepointData.alarms.first(),
-                onOpenSoundList = onOpenSoundList
-            )
-            MockWakepointData.alarms.drop(1).forEach { alarm ->
-                CompactAlarmCard(alarm = alarm)
+            val errorMessage = uiState.errorMessage
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = WakepointMuted,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (uiState.alarms.isEmpty()) {
+                EmptyAlarmMessage()
+            } else {
+                if (uiState.activeAlarms.isNotEmpty()) {
+                    SectionTitle(text = stringResource(R.string.alarm_active))
+                    EditableAlarmCard(
+                        alarm = uiState.activeAlarms.first(),
+                        isUpdating = uiState.isUpdating,
+                        onOpenSoundList = onOpenSoundList,
+                        onActiveChange = { isActive ->
+                            viewModel.setAlarmActive(uiState.activeAlarms.first().id, isActive)
+                        },
+                        onDelete = {
+                            viewModel.deleteAlarm(uiState.activeAlarms.first().id)
+                        }
+                    )
+                    uiState.activeAlarms.drop(1).forEach { alarm ->
+                        CompactAlarmCard(
+                            alarm = alarm,
+                            isUpdating = uiState.isUpdating,
+                            onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
+                            onDelete = { viewModel.deleteAlarm(alarm.id) }
+                        )
+                    }
+                }
+
+                if (uiState.inactiveAlarms.isNotEmpty()) {
+                    SectionTitle(text = stringResource(R.string.alarm_inactive))
+                    uiState.inactiveAlarms.forEach { alarm ->
+                        CompactAlarmCard(
+                            alarm = alarm,
+                            isUpdating = uiState.isUpdating,
+                            onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
+                            onDelete = { viewModel.deleteAlarm(alarm.id) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -103,9 +148,12 @@ fun AlarmsScreen(
 @Composable
 private fun EditableAlarmCard(
     alarm: Alarm,
-    onOpenSoundList: () -> Unit
+    isUpdating: Boolean,
+    onOpenSoundList: () -> Unit,
+    onActiveChange: (Boolean) -> Unit,
+    onDelete: () -> Unit
 ) {
-    var radius by remember { mutableStateOf("300m") }
+    var radius by remember(alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -119,8 +167,9 @@ private fun EditableAlarmCard(
                     modifier = Modifier.weight(1f)
                 )
                 Switch(
-                    checked = true,
-                    onCheckedChange = {},
+                    checked = alarm.isActive,
+                    onCheckedChange = onActiveChange,
+                    enabled = !isUpdating,
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = WakepointPrimary
@@ -161,10 +210,13 @@ private fun EditableAlarmCard(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 WakepointButton(
                     text = stringResource(R.string.alarm_save),
+                    enabled = !isUpdating,
                     modifier = Modifier.weight(1f)
                 )
                 WakepointSecondaryButton(
-                    text = stringResource(R.string.alarm_cancel),
+                    text = stringResource(R.string.alarm_delete),
+                    enabled = !isUpdating,
+                    onClick = onDelete,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -173,7 +225,12 @@ private fun EditableAlarmCard(
 }
 
 @Composable
-private fun CompactAlarmCard(alarm: Alarm) {
+private fun CompactAlarmCard(
+    alarm: Alarm,
+    isUpdating: Boolean,
+    onActiveChange: (Boolean) -> Unit,
+    onDelete: () -> Unit
+) {
     WakepointCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(
@@ -201,14 +258,45 @@ private fun CompactAlarmCard(alarm: Alarm) {
             }
             Switch(
                 checked = alarm.isActive,
-                onCheckedChange = {},
+                onCheckedChange = onActiveChange,
+                enabled = !isUpdating,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = WakepointPrimary
                 )
             )
+            IconButton(
+                onClick = onDelete,
+                enabled = !isUpdating
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = stringResource(R.string.alarm_delete),
+                    tint = WakepointMuted
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun EmptyAlarmMessage() {
+    WakepointCard {
+        Text(
+            text = stringResource(R.string.alarm_empty),
+            style = MaterialTheme.typography.bodyLarge,
+            color = WakepointMuted
+        )
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = WakepointInk
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -377,6 +465,14 @@ private fun RecordingSheet(onDismiss: () -> Unit) {
 @Composable
 private fun SectionLabel(text: String) {
     Text(text = text, style = MaterialTheme.typography.labelLarge, color = WakepointInk)
+}
+
+private fun Double.toRadiusOption(): String {
+    return if (this < 1.0) {
+        "${(this * 1000).toInt()}m"
+    } else {
+        "${this.toInt()}km"
+    }
 }
 
 private data class SoundItem(

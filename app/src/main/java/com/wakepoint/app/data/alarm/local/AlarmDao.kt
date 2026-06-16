@@ -13,8 +13,17 @@ interface AlarmDao {
     @Query("SELECT * FROM alarms WHERE is_active = 1")
     fun observeActiveAlarms(): Flow<List<AlarmEntity>>
 
+    @Query("SELECT COUNT(*) FROM alarms WHERE is_active = 1")
+    suspend fun countActiveAlarms(): Int
+
     @Upsert
     suspend fun upsertAlarm(alarm: AlarmEntity)
+
+    @Query("UPDATE alarms SET is_active = :isActive WHERE id = :alarmId")
+    suspend fun setAlarmActive(alarmId: String, isActive: Boolean)
+
+    @Query("DELETE FROM alarms WHERE id = :alarmId")
+    suspend fun deleteAlarm(alarmId: String)
 
     @Query("UPDATE alarms SET is_active = 0, triggered_at = :triggeredAt WHERE id = :alarmId")
     suspend fun markTriggered(alarmId: String, triggeredAt: String)

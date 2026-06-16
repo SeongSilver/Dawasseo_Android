@@ -144,6 +144,7 @@ fun FriendsScreen() {
                 title = stringResource(R.string.alarm_send_title),
                 primaryButton = stringResource(R.string.alarm_send),
                 showAddressSearch = true,
+                onPrimaryClick = { showSendAlarm = false },
                 onDismiss = { showSendAlarm = false }
             )
         }
