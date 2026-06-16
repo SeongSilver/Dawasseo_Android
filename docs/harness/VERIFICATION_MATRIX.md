@@ -10,6 +10,8 @@
 - Android permission, 지도, notification 변경: 수동 emulator 또는 실기기 검증
 - docs-only 변경: 빌드 생략 가능, 최종 응답에 생략 사유 명시
 - dependency 변경: `.\gradlew assembleDebug` 필수
+- 작업 완료 후 검증이 끝나면 관련 변경만 스테이징해 작업 단위 커밋을 만든다.
+- 커밋 전 `git status --short`와 `git diff --cached --name-status`로 unrelated 변경이 섞이지 않았는지 확인한다.
 
 ## 작업별 최소 검증
 
@@ -56,3 +58,26 @@
 - dependency metadata 다운로드 실패
 - Gradle wrapper distribution 다운로드 실패
 
+## Commit 기준
+
+작업이 끝나면 아래 순서로 마무리한다.
+
+1. 변경 범위에 맞는 자동 검증을 실행한다.
+2. `git status --short`로 전체 변경을 확인한다.
+3. 현재 작업과 관련된 파일만 `git add`로 스테이징한다.
+4. `git diff --cached --name-status`로 스테이징 범위를 확인한다.
+5. 작업 단위로 커밋한다.
+6. 커밋 후 `git status --short`로 남은 변경을 확인한다.
+
+커밋 메시지는 아래 형식을 우선한다.
+
+```text
+feat: ...
+fix: ...
+docs: ...
+style: ...
+chore: ...
+```
+
+여러 작업이 섞여 있으면 기능, 문서, 설정, asset rename처럼 분리 커밋한다.
+사용자나 이전 작업자의 unrelated 변경은 스테이징하지 않는다.

@@ -136,6 +136,7 @@ git status --short
 검증 범위는 `docs/harness/VERIFICATION_MATRIX.md` 또는 `wakepoint-verify` Skill을 따른다.
 Gradle이 sandbox 네트워크 제한으로 실패하면 같은 명령을 escalated 권한으로 재시도한다.
 문서만 변경한 경우 빌드는 생략 가능하지만 최종 응답에 이유를 남긴다.
+작업이 끝나면 검증 후 관련 변경만 묶어 커밋한다. 커밋은 작업 단위로 나누고, unrelated 변경은 포함하지 않는다.
 
 ---
 
