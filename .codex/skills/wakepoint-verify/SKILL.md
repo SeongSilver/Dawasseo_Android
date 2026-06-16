@@ -16,7 +16,9 @@ description: Choose and run the right verification for Wakepoint Android work. U
 2. Run only the required automatic checks.
 3. If Gradle fails due sandbox network restrictions, rerun the same command with escalated permissions.
 4. For Android runtime behavior, state which manual emulator or real-device check is still needed.
-5. Report skipped checks with a reason.
+5. Stage only files related to the finished task.
+6. Commit the task-sized change after verification.
+7. Report skipped checks with a reason.
 
 ## Common Commands
 
@@ -36,4 +38,6 @@ Use a short verification block:
 - assembleDebug: 성공
 - test: 성공
 - 수동: Android 13 emulator 알림 권한은 미실행, 연결된 기기 없음
+커밋:
+- abc1234 feat: ...
 ```
