@@ -18,6 +18,8 @@
 - 홈 바텀시트에서 알람을 생성하고 Supabase `alarms` insert 후 Room cache에 반영한다.
 - 알람 목록은 Room flow 실제 데이터로 표시한다.
 - 활성 알람 기반 foreground 위치 추적과 반경 진입 트리거를 1차 구현했다.
+- Android 13+ 알림 권한 요청 UX를 홈 알람 만들기 흐름에 연결했다.
+- Supabase core schema migration을 추가했다.
 - Pretendard 폰트를 앱 기본 폰트로 적용했다.
 
 ## 주요 제약
@@ -26,7 +28,7 @@
 - Maps Compose는 Kotlin metadata 호환 문제 때문에 `6.4.1`을 사용한다.
 - 위치 업데이트는 Balanced Priority 기준이다.
 - background location은 아직 범위 밖이다.
-- Android 13+ `POST_NOTIFICATIONS` 권한 UX는 아직 보강 필요하다.
+- Android 13+ `POST_NOTIFICATIONS` 권한 UX는 1차 구현됐고 실기기/에뮬레이터 검증이 필요하다.
 - Supabase Realtime, Storage, FCM, 친구/권한, 커스텀 알람음은 아직 본격 구현 전이다.
 
 ## 환경 키
@@ -56,7 +58,6 @@ service role key는 앱에 넣지 않는다.
 ## 다음 작업 후보
 
 - 다음 작업 시작 시 `wakepoint-start` 또는 관련 모듈 Skill을 먼저 사용한다.
-- `POST_NOTIFICATIONS` 권한 요청 UX
 - 알람 트리거 실기기 또는 emulator mock location 검증
 - Supabase `alarms` RLS 실DB 검증
 - Kakao 검색 debounce, empty/error state
