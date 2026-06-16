@@ -67,10 +67,12 @@ import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.domain.model.Alarm
+import com.wakepoint.app.feature.home.ALARM_RADIUS_OPTIONS
 
 @Composable
 fun AlarmsScreen(
     onOpenSoundList: () -> Unit,
+    onCreateAlarm: () -> Unit,
     viewModel: AlarmsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,7 +84,7 @@ fun AlarmsScreen(
     ) {
         WakepointHeader(
             action = {
-                IconButton(onClick = {}) {
+                IconButton(onClick = onCreateAlarm) {
                     Text(text = "+", style = MaterialTheme.typography.titleLarge)
                 }
             }
@@ -190,7 +192,7 @@ private fun EditableAlarmCard(
             )
             SectionLabel(text = stringResource(R.string.alarm_radius_setting))
             RadiusSelector(
-                options = listOf("300m", "500m", "1km"),
+                options = ALARM_RADIUS_OPTIONS,
                 selectedOption = radius,
                 onSelected = { radius = it }
             )

@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val alarmLabel: String = "",
-    val radiusOption: String = "500m",
+    val radiusOption: String = DEFAULT_ALARM_RADIUS_OPTION,
     val isSavingAlarm: Boolean = false,
     val saveErrorMessage: String? = null,
     val saveSucceeded: Boolean = false,
@@ -177,9 +177,16 @@ class HomeViewModel @Inject constructor(
 }
 
 private fun String.toRadiusKm(): Double {
-    return when {
+    val radiusKm = when {
         endsWith("km") -> removeSuffix("km").toDoubleOrNull() ?: 0.5
         endsWith("m") -> removeSuffix("m").toDoubleOrNull()?.div(1000.0) ?: 0.5
         else -> 0.5
     }
+    return radiusKm.coerceIn(MIN_ALARM_RADIUS_KM, MAX_ALARM_RADIUS_KM)
 }
+
+const val DEFAULT_ALARM_RADIUS_OPTION = "500m"
+const val MIN_ALARM_RADIUS_KM = 0.1
+const val MAX_ALARM_RADIUS_KM = 50.0
+
+val ALARM_RADIUS_OPTIONS = listOf("100m", "300m", "500m", "1km", "3km", "10km", "50km")

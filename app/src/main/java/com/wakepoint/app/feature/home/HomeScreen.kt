@@ -82,6 +82,7 @@ private val DefaultMapTarget = LatLng(37.5665, 126.9780)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    onAlarmCreated: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -119,6 +120,7 @@ fun HomeScreen(
         if (uiState.saveSucceeded) {
             showAlarmSheet = false
             viewModel.consumeSaveSuccess()
+            onAlarmCreated()
         }
     }
 
@@ -359,7 +361,7 @@ fun AlarmSetupSheet(
 
         SheetSectionLabel(text = stringResource(R.string.alarm_radius_setting))
         RadiusSelector(
-            options = listOf("300m", "500m", "1km"),
+            options = ALARM_RADIUS_OPTIONS,
             selectedOption = radius,
             onSelected = onRadiusChange
         )

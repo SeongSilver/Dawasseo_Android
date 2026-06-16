@@ -154,9 +154,24 @@ fun WakepointApp() {
             composable(AppRoute.SoundList) {
                 SoundListScreen(onBack = { navController.popBackStack() })
             }
-            composable(MainRoute.Home.route) { HomeScreen() }
+            composable(MainRoute.Home.route) {
+                HomeScreen(
+                    onAlarmCreated = {
+                        navController.navigate(MainRoute.Alarms.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable(MainRoute.Alarms.route) {
-                AlarmsScreen(onOpenSoundList = { navController.navigate(AppRoute.SoundList) })
+                AlarmsScreen(
+                    onOpenSoundList = { navController.navigate(AppRoute.SoundList) },
+                    onCreateAlarm = {
+                        navController.navigate(MainRoute.Home.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
             composable(MainRoute.Friends.route) { FriendsScreen() }
             composable(MainRoute.Profile.route) {

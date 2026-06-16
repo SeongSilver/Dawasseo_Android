@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -259,6 +261,7 @@ fun WakepointTextField(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RadiusSelector(
     options: List<String>,
@@ -266,25 +269,26 @@ fun RadiusSelector(
     onSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    FlowRow(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(WakepointParchment)
             .border(1.dp, WakepointBorder, RoundedCornerShape(8.dp))
             .padding(2.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        maxItemsInEachRow = 4
     ) {
         options.forEach { option ->
             val selected = option == selectedOption
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1f, fill = true)
+                    .height(44.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(if (selected) WakepointPrimary.copy(alpha = 0.68f) else Color.Transparent)
-                    .clickable { onSelected(option) }
-                    .padding(vertical = 12.dp),
+                    .clickable { onSelected(option) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
