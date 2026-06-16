@@ -1,7 +1,10 @@
 package com.wakepoint.app.feature.home
 
-import androidx.compose.foundation.Canvas
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GpsFixed
+import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
@@ -28,19 +32,36 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.MapMarkerPreview
@@ -54,34 +75,116 @@ import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
+import com.wakepoint.app.data.location.PlaceSearchResult
+
+private val DefaultMapTarget = LatLng(37.5665, 126.9780)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+    val locationClient = remember(context) {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
     var showAlarmSheet by remember { mutableStateOf(false) }
+    var showSearchSheet by remember { mutableStateOf(false) }
+    var hasLocationPermission by remember {
+        mutableStateOf(context.hasForegroundLocationPermission())
+    }
+    var selectedTarget by remember { mutableStateOf(DefaultMapTarget) }
+    var selectedTargetAddress by remember {
+        mutableStateOf(context.formatSelectedLocation(DefaultMapTarget))
+    }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(DefaultMapTarget, 15f)
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        hasLocationPermission =
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(FOREGROUND_LOCATION_PERMISSIONS)
+        }
+    }
+
+    LaunchedEffect(uiState.saveSucceeded) {
+        if (uiState.saveSucceeded) {
+            showAlarmSheet = false
+            viewModel.consumeSaveSuccess()
+        }
+    }
+
+    LaunchedEffect(hasLocationPermission) {
+        if (hasLocationPermission) {
+            viewModel.syncLocationTracking()
+            locationClient.fetchCurrentLocation(
+                onSuccess = { currentLocation ->
+                    selectedTarget = currentLocation
+                    selectedTargetAddress = context.getString(R.string.home_current_location)
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation, 16f)
+                }
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(WakepointParchment)
     ) {
-        StylizedMap(modifier = Modifier.fillMaxSize())
-        WakepointTextField(
-            value = "",
-            onValueChange = {},
-            placeholder = stringResource(R.string.home_search_placeholder),
-            leadingIcon = Icons.Rounded.Search,
-            trailingIcon = Icons.Rounded.Mic,
-            readOnly = true,
+        WakepointGoogleMap(
+            cameraPositionState = cameraPositionState,
+            selectedTarget = selectedTarget,
+            isMyLocationEnabled = hasLocationPermission,
+            onMapClick = { target ->
+                selectedTarget = target
+                selectedTargetAddress = context.formatSelectedLocation(target)
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+        Box(
             modifier = Modifier
                 .padding(horizontal = 28.dp, vertical = 28.dp)
                 .fillMaxWidth()
-        )
+                .clickable { showSearchSheet = true }
+        ) {
+            WakepointTextField(
+                value = "",
+                onValueChange = {},
+                placeholder = stringResource(R.string.home_search_placeholder),
+                leadingIcon = Icons.Rounded.Search,
+                trailingIcon = Icons.Rounded.Mic,
+                readOnly = true
+            )
+        }
         MapMarkerPreview(
             modifier = Modifier.align(Alignment.Center)
         )
         FloatingActionButton(
-            onClick = {},
+            onClick = {
+                if (hasLocationPermission) {
+                    locationClient.fetchCurrentLocation(
+                        onSuccess = { currentLocation ->
+                            selectedTarget = currentLocation
+                            selectedTargetAddress = context.getString(R.string.home_current_location)
+                            cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation, 16f)
+                        },
+                        onFallback = {
+                            cameraPositionState.position = CameraPosition.fromLatLngZoom(DefaultMapTarget, 15f)
+                        }
+                    )
+                } else {
+                    permissionLauncher.launch(FOREGROUND_LOCATION_PERMISSIONS)
+                }
+            },
             shape = RoundedCornerShape(14.dp),
             containerColor = WakepointCanvas,
             contentColor = WakepointInk,
@@ -112,9 +215,82 @@ fun HomeScreen() {
             AlarmSetupSheet(
                 title = stringResource(R.string.alarm_setup_title),
                 primaryButton = stringResource(R.string.alarm_add),
+                target = selectedTarget,
+                targetAddress = selectedTargetAddress,
+                label = uiState.alarmLabel,
+                radius = uiState.radiusOption,
+                isSaving = uiState.isSavingAlarm,
+                errorMessage = uiState.saveErrorMessage,
+                onLabelChange = viewModel::updateAlarmLabel,
+                onRadiusChange = viewModel::updateRadiusOption,
+                onPrimaryClick = {
+                    viewModel.saveAlarm(
+                        target = selectedTarget,
+                        targetAddress = selectedTargetAddress,
+                        fallbackLabel = context.getString(R.string.alarm_default_label)
+                    )
+                },
                 onDismiss = { showAlarmSheet = false }
             )
         }
+    }
+
+    if (showSearchSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSearchSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
+            containerColor = WakepointCanvas
+        ) {
+            PlaceSearchSheet(
+                query = uiState.searchQuery,
+                results = uiState.searchResults,
+                isSearching = uiState.isSearching,
+                errorMessage = uiState.searchErrorMessage,
+                onQueryChange = viewModel::updateSearchQuery,
+                onSearch = viewModel::searchPlaces,
+                onSelectPlace = { place ->
+                    val target = LatLng(place.lat, place.lng)
+                    selectedTarget = target
+                    selectedTargetAddress = place.address.ifBlank { place.name }
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 16f)
+                    showSearchSheet = false
+                    viewModel.clearSearch()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun WakepointGoogleMap(
+    cameraPositionState: CameraPositionState,
+    selectedTarget: LatLng,
+    isMyLocationEnabled: Boolean,
+    onMapClick: (LatLng) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GoogleMap(
+        modifier = modifier,
+        cameraPositionState = cameraPositionState,
+        onMapClick = onMapClick,
+        properties = MapProperties(
+            isBuildingEnabled = true,
+            isTrafficEnabled = false,
+            isMyLocationEnabled = isMyLocationEnabled
+        ),
+        uiSettings = MapUiSettings(
+            compassEnabled = false,
+            indoorLevelPickerEnabled = false,
+            mapToolbarEnabled = false,
+            myLocationButtonEnabled = false,
+            zoomControlsEnabled = false
+        )
+    ) {
+        Marker(
+            state = MarkerState(position = selectedTarget),
+            title = stringResource(R.string.home_map_default_marker)
+        )
     }
 }
 
@@ -122,12 +298,19 @@ fun HomeScreen() {
 fun AlarmSetupSheet(
     title: String,
     primaryButton: String,
+    target: LatLng = DefaultMapTarget,
+    targetAddress: String = "",
     modifier: Modifier = Modifier,
+    label: String = "",
+    radius: String = "500m",
+    isSaving: Boolean = false,
+    errorMessage: String? = null,
     showAddressSearch: Boolean = false,
+    onLabelChange: (String) -> Unit = {},
+    onRadiusChange: (String) -> Unit = {},
+    onPrimaryClick: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
-    var radius by remember { mutableStateOf("500m") }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -155,16 +338,30 @@ fun AlarmSetupSheet(
 
         SheetSectionLabel(text = stringResource(R.string.alarm_location_alias))
         WakepointTextField(
-            value = stringResource(R.string.alarm_place_office),
+            value = label,
+            onValueChange = onLabelChange,
+            placeholder = stringResource(R.string.alarm_default_label)
+        )
+
+        SheetSectionLabel(text = stringResource(R.string.alarm_selected_target))
+        WakepointTextField(
+            value = targetAddress.ifBlank {
+                stringResource(
+                    R.string.alarm_selected_location,
+                    target.latitude,
+                    target.longitude
+                )
+            },
             onValueChange = {},
-            placeholder = stringResource(R.string.alarm_location_alias)
+            placeholder = stringResource(R.string.alarm_selected_target),
+            readOnly = true
         )
 
         SheetSectionLabel(text = stringResource(R.string.alarm_radius_setting))
         RadiusSelector(
             options = listOf("300m", "500m", "1km"),
             selectedOption = radius,
-            onSelected = { radius = it }
+            onSelected = onRadiusChange
         )
 
         SheetSectionLabel(text = stringResource(R.string.alarm_sound_setting))
@@ -187,13 +384,104 @@ fun AlarmSetupSheet(
             WakepointSecondaryButton(
                 text = stringResource(R.string.alarm_cancel),
                 onClick = onDismiss,
+                enabled = !isSaving,
                 modifier = Modifier.weight(1f)
             )
             WakepointButton(
-                text = primaryButton,
-                onClick = onDismiss,
+                text = if (isSaving) stringResource(R.string.alarm_saving) else primaryButton,
+                onClick = onPrimaryClick,
+                enabled = !isSaving,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = WakepointMuted,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaceSearchSheet(
+    query: String,
+    results: List<PlaceSearchResult>,
+    isSearching: Boolean,
+    errorMessage: String?,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onSelectPlace: (PlaceSearchResult) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.place_search_title),
+            color = WakepointPrimary,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        WakepointTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            placeholder = stringResource(R.string.home_search_placeholder),
+            leadingIcon = Icons.Rounded.Search
+        )
+        WakepointButton(
+            text = if (isSearching) {
+                stringResource(R.string.place_searching)
+            } else {
+                stringResource(R.string.place_search)
+            },
+            enabled = !isSearching,
+            onClick = onSearch,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = WakepointMuted
+            )
+        }
+
+        results.forEach { place ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelectPlace(place) }
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.LocationOn,
+                    contentDescription = null,
+                    tint = WakepointPrimary
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = place.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = WakepointInk
+                    )
+                    Text(
+                        text = place.address,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WakepointMuted
+                    )
+                }
+            }
         }
     }
 }
@@ -208,52 +496,48 @@ private fun SheetSectionLabel(text: String) {
     )
 }
 
-@Composable
-private fun StylizedMap(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        drawRect(Color(0xFFEAF3F7))
-        drawRect(
-            color = Color(0xFFB8ECF1),
-            topLeft = Offset(0f, 0f),
-            size = size.copy(width = size.width, height = size.height * 0.32f)
-        )
-        drawRect(
-            color = Color(0xFFD6F3DF),
-            topLeft = Offset(0f, size.height * 0.43f),
-            size = size.copy(width = size.width, height = size.height * 0.16f)
-        )
+private val FOREGROUND_LOCATION_PERMISSIONS = arrayOf(
+    Manifest.permission.ACCESS_FINE_LOCATION,
+    Manifest.permission.ACCESS_COARSE_LOCATION
+)
 
-        val road = Path().apply {
-            moveTo(size.width * 0.04f, size.height * 0.78f)
-            cubicTo(
-                size.width * 0.28f,
-                size.height * 0.62f,
-                size.width * 0.52f,
-                size.height * 0.50f,
-                size.width * 0.96f,
-                size.height * 0.38f
-            )
-        }
-        drawPath(road, Color.White, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 28f))
-        drawPath(road, Color(0xFFD2DCE7), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f))
+private fun Context.hasForegroundLocationPermission(): Boolean {
+    return ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+}
 
-        repeat(7) { index ->
-            val y = size.height * (0.2f + index * 0.1f)
-            drawLine(
-                color = Color(0xFFC6D2DC),
-                start = Offset(0f, y),
-                end = Offset(size.width, y - size.height * 0.14f),
-                strokeWidth = 2f
-            )
-        }
-        repeat(5) { index ->
-            val x = size.width * (0.12f + index * 0.18f)
-            drawLine(
-                color = Color(0xFFC6D2DC),
-                start = Offset(x, 0f),
-                end = Offset(x + size.width * 0.18f, size.height),
-                strokeWidth = 2f
-            )
-        }
+private fun Context.formatSelectedLocation(target: LatLng): String {
+    return getString(R.string.alarm_selected_location, target.latitude, target.longitude)
+}
+
+private fun FusedLocationProviderClient.fetchCurrentLocation(
+    onSuccess: (LatLng) -> Unit,
+    onFallback: () -> Unit = {}
+) {
+    runCatching {
+        getCurrentLocation(
+            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+            CancellationTokenSource().token
+        )
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    onSuccess(LatLng(location.latitude, location.longitude))
+                } else {
+                    onFallback()
+                }
+            }
+            .addOnFailureListener {
+                onFallback()
+            }
+    }.onFailure {
+        onFallback()
     }
 }
+
+
