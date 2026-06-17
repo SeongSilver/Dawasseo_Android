@@ -101,7 +101,7 @@ fun HomeScreen(
     }
     var selectedTarget by remember { mutableStateOf(DefaultMapTarget) }
     var selectedTargetAddress by remember {
-        mutableStateOf(context.formatSelectedLocation(DefaultMapTarget))
+        mutableStateOf(context.getString(R.string.home_default_target))
     }
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(DefaultMapTarget, 15f)
@@ -157,7 +157,16 @@ fun HomeScreen(
             isMyLocationEnabled = hasLocationPermission,
             onMapClick = { target ->
                 selectedTarget = target
-                selectedTargetAddress = context.formatSelectedLocation(target)
+                val fallbackAddress = context.getString(R.string.home_map_selected_location)
+                selectedTargetAddress = fallbackAddress
+                viewModel.resolveTargetAddress(
+                    target = target,
+                    fallback = fallbackAddress
+                ) { address ->
+                    if (selectedTarget == target) {
+                        selectedTargetAddress = address
+                    }
+                }
             },
             modifier = Modifier.fillMaxSize()
         )
@@ -174,6 +183,11 @@ fun HomeScreen(
                 leadingIcon = Icons.Rounded.Search,
                 trailingIcon = Icons.Rounded.Mic,
                 readOnly = true
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { showSearchSheet = true }
             )
         }
         MapMarkerPreview(
@@ -273,7 +287,7 @@ fun HomeScreen(
                 onSelectPlace = { place ->
                     val target = LatLng(place.lat, place.lng)
                     selectedTarget = target
-                    selectedTargetAddress = place.address.ifBlank { place.name }
+                    selectedTargetAddress = place.displayName()
                     cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 16f)
                     showSearchSheet = false
                     viewModel.clearSearch()
@@ -368,11 +382,7 @@ fun AlarmSetupSheet(
         SheetSectionLabel(text = stringResource(R.string.alarm_selected_target))
         WakepointTextField(
             value = targetAddress.ifBlank {
-                stringResource(
-                    R.string.alarm_selected_location,
-                    target.latitude,
-                    target.longitude
-                )
+                stringResource(R.string.alarm_selected_target_unknown)
             },
             onValueChange = {},
             placeholder = stringResource(R.string.alarm_selected_target),
@@ -554,10 +564,6 @@ private fun Context.hasPostNotificationPermission(): Boolean {
         ) == PackageManager.PERMISSION_GRANTED
 }
 
-private fun Context.formatSelectedLocation(target: LatLng): String {
-    return getString(R.string.alarm_selected_location, target.latitude, target.longitude)
-}
-
 private fun FusedLocationProviderClient.fetchCurrentLocation(
     onSuccess: (LatLng) -> Unit,
     onFallback: () -> Unit = {}
@@ -580,6 +586,10 @@ private fun FusedLocationProviderClient.fetchCurrentLocation(
     }.onFailure {
         onFallback()
     }
+}
+
+private fun PlaceSearchResult.displayName(): String {
+    return name.ifBlank { address.ifBlank { "검색 결과" } }
 }
 
 
