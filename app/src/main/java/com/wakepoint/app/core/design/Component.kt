@@ -7,8 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,7 +38,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
 
@@ -259,47 +256,6 @@ fun WakepointTextField(
             unfocusedTextColor = WakepointInk
         )
     )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun RadiusSelector(
-    options: List<String>,
-    selectedOption: String,
-    onSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    FlowRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(WakepointParchment)
-            .border(1.dp, WakepointBorder, RoundedCornerShape(8.dp))
-            .padding(2.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-        maxItemsInEachRow = 4
-    ) {
-        options.forEach { option ->
-            val selected = option == selectedOption
-            Box(
-                modifier = Modifier
-                    .weight(1f, fill = true)
-                    .height(44.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (selected) WakepointPrimary.copy(alpha = 0.68f) else Color.Transparent)
-                    .clickable { onSelected(option) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = option,
-                    color = if (selected) Color.White else WakepointInk,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
 }
 
 @Composable

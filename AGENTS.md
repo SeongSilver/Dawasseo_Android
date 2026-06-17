@@ -147,6 +147,7 @@ Gradle이 sandbox 네트워크 제한으로 실패하면 같은 명령을 escala
 - 작업 라우터: `docs/harness/TASK_ROUTER.md`
 - Skill 명령: `docs/harness/SKILL_COMMANDS.md`
 - 파일 지도: `docs/harness/FILE_MAP.md`
+- 토큰 정책: `docs/harness/TOKEN_POLICY.md`
 - 구조 정책: `docs/harness/STRUCTURE_POLICY.md`
 - 메모리 정책: `docs/harness/MEMORY_POLICY.md`
 - Hook 정책: `docs/harness/HOOK_POLICY.md`
