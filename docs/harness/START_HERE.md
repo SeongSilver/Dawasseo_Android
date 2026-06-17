@@ -22,6 +22,7 @@
 - `docs/harness/STRUCTURE_POLICY.md`: 폴더 구조, 전역/프로젝트 분리, 파일명 규칙을 바꿀 때
 - `docs/harness/MEMORY_POLICY.md`: 메모리나 작업 로그 운영 방식을 바꿀 때
 - `docs/harness/HOOK_POLICY.md`: hook을 만들거나 수정할 때
+- `docs/harness/TOKEN_POLICY.md`: 토큰 소모량을 줄이는 읽기/출력 규칙을 바꿀 때
 
 ## Skill 우선 사용
 
@@ -52,6 +53,7 @@ Gradle이 네트워크 또는 wrapper 다운로드 문제로 실패하면 같은
 
 - 먼저 `TASK_ROUTER.md`에서 작업 유형을 찾는다.
 - 라우터가 지정한 파일만 먼저 연다.
+- 큰 Kotlin 파일은 통째로 읽지 말고 `rg`와 라인 범위 읽기를 우선한다.
 - 전체 repository scan은 파일 위치를 모를 때만 한다.
 - project-specific Skill은 `.codex/skills`에만 두고 전역 `~/.codex/skills`에는 두지 않는다.
 - 긴 work log 대신 `CURRENT_STATE.md`를 먼저 믿고, 모순이 있을 때만 work log를 확인한다.

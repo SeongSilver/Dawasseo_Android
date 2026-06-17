@@ -72,6 +72,7 @@
 - `docs/harness/STRUCTURE_POLICY.md`: 전역/프로젝트 분리와 파일명 규칙
 - `docs/harness/MEMORY_POLICY.md`: 메모리와 work-log 분할 규칙
 - `docs/harness/HOOK_POLICY.md`: hook 종료 조건
+- `docs/harness/TOKEN_POLICY.md`: 토큰 절약용 읽기/출력 규칙
 - `docs/harness/VERIFICATION_MATRIX.md`: 검증 범위 선택
 - `docs/GOTCHAS.md`: 반복 함정
 - `docs/CHECKLISTS.md`: 반복 체크리스트

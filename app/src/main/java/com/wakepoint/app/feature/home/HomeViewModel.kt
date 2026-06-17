@@ -186,7 +186,7 @@ private fun String.toRadiusKm(): Double {
 }
 
 const val DEFAULT_ALARM_RADIUS_OPTION = "500m"
-const val MIN_ALARM_RADIUS_KM = 0.1
+const val MIN_ALARM_RADIUS_KM = 0.01
 const val MAX_ALARM_RADIUS_KM = 50.0
 
-val ALARM_RADIUS_OPTIONS = listOf("100m", "300m", "500m", "1km", "3km", "10km", "50km")
+val ALARM_RADIUS_OPTIONS = listOf("10m", "50m", "100m", "300m", "500m", "1km", "3km", "10km")

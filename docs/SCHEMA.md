@@ -57,7 +57,7 @@ create table public.alarms (
   target_lng       double precision not null,
   target_address   text,
   radius_km        numeric(5,2) not null default 0.5
-                   check (radius_km >= 0.1 and radius_km <= 50),
+                   check (radius_km >= 0.01 and radius_km <= 50),
   is_active        boolean not null default true,
   triggered_at     timestamptz,
   sound_type       text not null default 'default'   -- 'default' | 'custom'
@@ -74,7 +74,7 @@ create index alarms_is_active_idx on public.alarms(is_active);
 |------|------|------|
 | owner_id | uuid | 알람이 울릴 대상 (소유자) |
 | created_by | uuid | 알람을 설정한 사람 (본인 또는 친구) |
-| radius_km | numeric | 트리거 반경 (0.1 ~ 50km) |
+| radius_km | numeric | 트리거 반경 (DB 허용 0.01 ~ 50km, 현재 UI 옵션 10m ~ 10km) |
 | sound_type | text | default(기본음) / custom(녹음) |
 | sound_uri | text | custom일 때 Storage 파일 경로 |
 
