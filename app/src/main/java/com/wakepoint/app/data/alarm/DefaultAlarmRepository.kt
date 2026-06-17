@@ -9,6 +9,7 @@ import com.wakepoint.app.data.alarm.remote.toDto
 import com.wakepoint.app.data.alarm.remote.toJson
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.domain.model.Alarm
+import com.wakepoint.app.domain.model.SoundType
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -45,6 +46,33 @@ class DefaultAlarmRepository @Inject constructor(
         val accessToken = requireAccessToken()
         insertRemoteAlarm(alarm, accessToken)
         alarmDao.upsertAlarm(alarm.toEntity())
+        syncTracking()
+    }
+
+    override suspend fun updateAlarm(alarm: Alarm) {
+        val accessToken = requireAccessToken()
+        patchRemoteAlarm(
+            alarmId = alarm.id,
+            body = JSONObject()
+                .put("label", alarm.label)
+                .put("radius_km", alarm.radiusKm)
+                .put(
+                    "sound_type",
+                    when (alarm.soundType) {
+                        SoundType.Default -> "default"
+                        SoundType.Custom -> "custom"
+                    }
+                )
+                .put("sound_uri", alarm.soundUri),
+            accessToken = accessToken
+        )
+        alarmDao.updateAlarmSettings(
+            alarmId = alarm.id,
+            label = alarm.label,
+            radiusKm = alarm.radiusKm,
+            soundType = alarm.soundType.name,
+            soundUri = alarm.soundUri
+        )
         syncTracking()
     }
 

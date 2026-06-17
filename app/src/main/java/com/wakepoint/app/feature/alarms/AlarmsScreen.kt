@@ -117,6 +117,9 @@ fun AlarmsScreen(
                         onActiveChange = { isActive ->
                             viewModel.setAlarmActive(uiState.activeAlarms.first().id, isActive)
                         },
+                        onSave = { alarm, label, radius ->
+                            viewModel.updateAlarmSettings(alarm, label, radius)
+                        },
                         onDelete = {
                             viewModel.deleteAlarm(uiState.activeAlarms.first().id)
                         }
@@ -153,9 +156,11 @@ private fun EditableAlarmCard(
     isUpdating: Boolean,
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
+    onSave: (Alarm, String, String) -> Unit,
     onDelete: () -> Unit
 ) {
     var radius by remember(alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
+    var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -178,17 +183,12 @@ private fun EditableAlarmCard(
                     )
                 )
             }
-            Text(
-                text = alarm.label,
-                style = MaterialTheme.typography.titleMedium,
-                color = WakepointInk
-            )
             SectionLabel(text = stringResource(R.string.alarm_location_alias))
             WakepointTextField(
-                value = alarm.targetAddress,
-                onValueChange = {},
+                value = label,
+                onValueChange = { label = it },
                 placeholder = stringResource(R.string.alarm_location_alias),
-                readOnly = true
+                readOnly = isUpdating
             )
             SectionLabel(text = stringResource(R.string.alarm_radius_setting))
             RadiusSelector(
@@ -213,6 +213,7 @@ private fun EditableAlarmCard(
                 WakepointButton(
                     text = stringResource(R.string.alarm_save),
                     enabled = !isUpdating,
+                    onClick = { onSave(alarm, label, radius) },
                     modifier = Modifier.weight(1f)
                 )
                 WakepointSecondaryButton(
