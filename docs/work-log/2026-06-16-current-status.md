@@ -182,31 +182,6 @@
    - Supabase Storage 업로드
    - Media3/ExoPlayer 반복 재생
 
-## 하네스 적용
-
-- `docs/GOTCHAS.md`: 빌드, 키, Supabase, 위치/알림, 지도/검색 관련 반복 함정을 정리했다.
-- `docs/CHECKLISTS.md`: 작업 시작, 빌드 검증, 인증, 지도/위치, 알람 생성/목록, 위치 추적/트리거, Kakao 검색 체크리스트를 추가했다.
-- `docs/harness/alarm-trigger-flow.md`: 알람 저장부터 위치 추적, 반경 진입, 트리거 후 비활성화까지의 검증 하네스를 추가했다.
-- `docs/harness/maps-location-flow.md`: 홈 지도, 현재 위치, 목적지 선택, Kakao Local 검색 검증 하네스를 추가했다.
-- `docs/harness/START_HERE.md`: 새 세션 진입 순서와 긴 문서 읽기 조건을 정의했다.
-- `docs/harness/CURRENT_STATE.md`: 현재 구현 상태와 다음 작업 후보를 압축 정리했다.
-- `docs/harness/TASK_ROUTER.md`: 인증, 지도, 알람, 위치 추적, 알림 권한, 친구, 커스텀 알람음 작업별 읽을 파일을 정리했다.
-- `docs/harness/FILE_MAP.md`: 코드 위치를 빠르게 찾는 파일 지도를 추가했다.
-- `docs/harness/VERIFICATION_MATRIX.md`: 작업별 최소 검증 범위를 정리했다.
-- `AGENTS.md`: 새 작업 시 하네스 문서를 먼저 읽도록 빠른 시작 규칙을 추가했다.
-- `.codex/skills/wakepoint-start`: 새 세션 라우팅 Skill을 추가했다.
-- `.codex/skills/wakepoint-auth`: 인증 작업 Skill을 추가했다.
-- `.codex/skills/wakepoint-maps-location`: 지도/위치/검색 작업 Skill을 추가했다.
-- `.codex/skills/wakepoint-alarms`: 알람 저장/목록 작업 Skill을 추가했다.
-- `.codex/skills/wakepoint-tracking-notifications`: 위치 추적/알림 작업 Skill을 추가했다.
-- `.codex/skills/wakepoint-supabase-db`: Supabase schema/RLS/repository 작업 Skill을 추가했다.
-- `.codex/skills/wakepoint-design-system`: 디자인 시스템 작업 Skill을 추가했다.
-- `.codex/skills/wakepoint-verify`: 검증 선택/실행 Skill을 추가했다.
-- `docs/harness/SKILL_COMMANDS.md`: 모듈별 Skill 명령 인덱스를 추가했다.
-- `C:\Users\yoose\.codex\skills\wakepoint-*`: 다음 Codex 세션에서 자동 발견되도록 프로젝트 Skill 세트를 전역 Skill 폴더에도 복사했다.
-- Skill 검증: frontmatter 필수 항목(`name`, `description`)은 로컬 점검 완료. 공식 `quick_validate.py`는 현재 번들 Python에 `PyYAML`이 없어 실행이 중단됐다.
-- `AGENTS.md`: 기능/모듈 세부 규칙을 하네스와 Skill로 위임하고, 최초 진입용 108줄 문서로 축약했다.
-
 ## 앞으로의 작업 로그 운영
 
 - 작업이 끝날 때마다 `docs/work-log/`에 새 파일을 추가한다.
