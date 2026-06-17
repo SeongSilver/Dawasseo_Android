@@ -107,6 +107,20 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun resolveTargetAddress(
+        target: LatLng,
+        fallback: String,
+        onResolved: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val address = kakaoLocalRepository.resolveAddress(
+                lat = target.latitude,
+                lng = target.longitude
+            ).getOrElse { fallback }
+            onResolved(address.ifBlank { fallback })
+        }
+    }
+
     fun saveAlarm(
         target: LatLng,
         targetAddress: String,

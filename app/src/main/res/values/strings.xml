@@ -42,6 +42,8 @@
     <string name="home_map_preview">지도 미리보기</string>
     <string name="home_map_default_marker">서울 시청</string>
     <string name="home_current_location">현재 위치</string>
+    <string name="home_default_target">서울특별시청</string>
+    <string name="home_map_selected_location">지도에서 선택한 위치</string>
     <string name="home_create_alarm">알람 만들기</string>
     <string name="place_search_title">장소 검색</string>
     <string name="place_search">검색</string>
@@ -51,6 +53,7 @@
     <string name="alarm_location_alias">위치 별칭</string>
     <string name="alarm_default_label">목적지 알람</string>
     <string name="alarm_selected_target">선택한 목적지</string>
+    <string name="alarm_selected_target_unknown">목적지를 선택해 주세요</string>
     <string name="alarm_selected_location">위도 %1$.5f, 경도 %2$.5f</string>
     <string name="alarm_address_search">주소 검색</string>
     <string name="alarm_address_hint">주소를 입력해주세요</string>
