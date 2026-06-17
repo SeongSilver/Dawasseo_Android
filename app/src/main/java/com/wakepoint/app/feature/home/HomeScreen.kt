@@ -1,9 +1,13 @@
 package com.wakepoint.app.feature.home
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.speech.RecognizerIntent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +32,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -77,6 +82,7 @@ import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.location.PlaceSearchResult
+import java.util.Locale
 
 private val DefaultMapTarget = LatLng(37.5665, 126.9780)
 
@@ -117,6 +123,34 @@ fun HomeScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasNotificationPermission = granted || !context.requiresPostNotificationPermission()
+    }
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val spokenQuery = result.data
+            ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            ?.firstOrNull()
+            .orEmpty()
+            .trim()
+        if (spokenQuery.isNotBlank()) {
+            showSearchSheet = true
+            viewModel.updateSearchQuery(spokenQuery)
+            viewModel.searchPlaces()
+        }
+    }
+    val startVoiceSearch: () -> Unit = {
+        runCatching {
+            speechLauncher.launch(context.createSpeechSearchIntent())
+        }.onFailure { error ->
+            if (error is ActivityNotFoundException) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.place_voice_search_unavailable),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+        Unit
     }
 
     LaunchedEffect(Unit) {
@@ -174,20 +208,12 @@ fun HomeScreen(
             modifier = Modifier
                 .padding(horizontal = 28.dp, vertical = 28.dp)
                 .fillMaxWidth()
-                .clickable { showSearchSheet = true }
         ) {
-            WakepointTextField(
-                value = "",
-                onValueChange = {},
+            HomeSearchBar(
                 placeholder = stringResource(R.string.home_search_placeholder),
-                leadingIcon = Icons.Rounded.Search,
-                trailingIcon = Icons.Rounded.Mic,
-                readOnly = true
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { showSearchSheet = true }
+                micContentDescription = stringResource(R.string.place_voice_search),
+                onClick = { showSearchSheet = true },
+                onMicClick = startVoiceSearch
             )
         }
         MapMarkerPreview(
@@ -284,6 +310,7 @@ fun HomeScreen(
                 errorMessage = uiState.searchErrorMessage,
                 onQueryChange = viewModel::updateSearchQuery,
                 onSearch = viewModel::searchPlaces,
+                onVoiceSearch = startVoiceSearch,
                 onSelectPlace = { place ->
                     val target = LatLng(place.lat, place.lng)
                     selectedTarget = target
@@ -454,6 +481,7 @@ private fun PlaceSearchSheet(
     errorMessage: String?,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
+    onVoiceSearch: () -> Unit,
     onSelectPlace: (PlaceSearchResult) -> Unit
 ) {
     Column(
@@ -474,7 +502,10 @@ private fun PlaceSearchSheet(
             value = query,
             onValueChange = onQueryChange,
             placeholder = stringResource(R.string.home_search_placeholder),
-            leadingIcon = Icons.Rounded.Search
+            leadingIcon = Icons.Rounded.Search,
+            trailingIcon = Icons.Rounded.Mic,
+            trailingIconContentDescription = stringResource(R.string.place_voice_search),
+            onTrailingIconClick = onVoiceSearch
         )
         WakepointButton(
             text = if (isSearching) {
@@ -521,6 +552,52 @@ private fun PlaceSearchSheet(
                         color = WakepointMuted
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeSearchBar(
+    placeholder: String,
+    micContentDescription: String,
+    onClick: () -> Unit,
+    onMicClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = WakepointCanvas,
+        tonalElevation = 2.dp,
+        shadowElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(onClick = onClick)
+                .padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                tint = WakepointMuted
+            )
+            Text(
+                text = placeholder,
+                color = WakepointMuted,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onMicClick) {
+                Icon(
+                    imageVector = Icons.Rounded.Mic,
+                    contentDescription = micContentDescription,
+                    tint = WakepointMuted
+                )
             }
         }
     }
@@ -590,6 +667,14 @@ private fun FusedLocationProviderClient.fetchCurrentLocation(
 
 private fun PlaceSearchResult.displayName(): String {
     return name.ifBlank { address.ifBlank { "검색 결과" } }
+}
+
+private fun Context.createSpeechSearchIntent(): Intent {
+    return Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.KOREAN.toLanguageTag())
+        putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.place_voice_search_prompt))
+    }
 }
 
 

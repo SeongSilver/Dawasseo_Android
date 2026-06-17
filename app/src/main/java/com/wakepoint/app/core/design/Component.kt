@@ -211,6 +211,8 @@ fun WakepointTextField(
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
+    trailingIconContentDescription: String? = null,
+    onTrailingIconClick: (() -> Unit)? = null,
     readOnly: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
@@ -241,8 +243,13 @@ fun WakepointTextField(
             {
                 Icon(
                     imageVector = it,
-                    contentDescription = null,
-                    tint = WakepointMuted
+                    contentDescription = trailingIconContentDescription,
+                    tint = WakepointMuted,
+                    modifier = if (onTrailingIconClick != null) {
+                        Modifier.clickable(onClick = onTrailingIconClick)
+                    } else {
+                        Modifier
+                    }
                 )
             }
         },
