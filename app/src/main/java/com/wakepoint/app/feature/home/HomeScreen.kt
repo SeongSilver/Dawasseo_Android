@@ -56,6 +56,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -352,7 +353,8 @@ private fun WakepointGoogleMap(
     ) {
         Marker(
             state = MarkerState(position = selectedTarget),
-            title = stringResource(R.string.home_map_default_marker)
+            title = stringResource(R.string.home_map_default_marker),
+            icon = BitmapDescriptorFactory.fromResource(R.drawable.logo_point)
         )
     }
 }

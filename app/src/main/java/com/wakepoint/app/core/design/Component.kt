@@ -15,8 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.foundation.Image
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
@@ -212,27 +213,11 @@ fun WakepointLogo(
     horizontal: Boolean = true
 ) {
     val content: @Composable () -> Unit = {
-        Box(
-            modifier = Modifier.size(30.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.LocationOn,
-                contentDescription = null,
-                tint = WakepointPrimaryActive,
-                modifier = Modifier.size(34.dp)
-            )
-            Surface(
-                modifier = Modifier.size(14.dp),
-                color = Color.White,
-                shape = CircleShape
-            ) {}
-        }
-        Text(
-            text = stringResource(R.string.app_name),
-            color = WakepointPrimary,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold
+        Image(
+            painter = painterResource(R.drawable.logo),
+            contentDescription = stringResource(R.string.app_name),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(width = 112.dp, height = 34.dp)
         )
     }
 
@@ -403,11 +388,11 @@ fun MapMarkerPreview(modifier: Modifier = Modifier) {
             .border(2.dp, WakepointPrimary.copy(alpha = 0.9f), CircleShape)
             .padding(18.dp)
     ) {
-        Icon(
-            imageVector = Icons.Rounded.LocationOn,
+        Image(
+            painter = painterResource(R.drawable.logo_point),
             contentDescription = null,
-            tint = WakepointPrimary,
-            modifier = Modifier.size(42.dp)
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(width = 34.dp, height = 50.dp)
         )
     }
 }
