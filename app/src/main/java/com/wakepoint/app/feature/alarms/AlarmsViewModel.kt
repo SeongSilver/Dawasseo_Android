@@ -60,6 +60,29 @@ class AlarmsViewModel @Inject constructor(
         }
     }
 
+    fun updateAlarmSettings(
+        alarm: Alarm,
+        label: String,
+        radiusOption: String
+    ) {
+        viewModelScope.launch {
+            transientState.update { it.copy(isUpdating = true, errorMessage = null) }
+            val updatedAlarm = alarm.copy(
+                label = label.trim().ifBlank { alarm.label },
+                radiusKm = radiusOption.toRadiusKm()
+            )
+            val result = runCatching {
+                alarmRepository.updateAlarm(updatedAlarm)
+            }
+            transientState.update { current ->
+                current.copy(
+                    isUpdating = false,
+                    errorMessage = result.exceptionOrNull()?.message
+                )
+            }
+        }
+    }
+
     fun deleteAlarm(alarmId: String) {
         viewModelScope.launch {
             transientState.update { it.copy(isUpdating = true, errorMessage = null) }
@@ -75,3 +98,16 @@ class AlarmsViewModel @Inject constructor(
         }
     }
 }
+
+private fun String.toRadiusKm(): Double {
+    val radiusKm = when {
+        endsWith("km") -> removeSuffix("km").toDoubleOrNull() ?: DEFAULT_RADIUS_KM
+        endsWith("m") -> removeSuffix("m").toDoubleOrNull()?.div(1000.0) ?: DEFAULT_RADIUS_KM
+        else -> DEFAULT_RADIUS_KM
+    }
+    return radiusKm.coerceIn(MIN_RADIUS_KM, MAX_RADIUS_KM)
+}
+
+private const val DEFAULT_RADIUS_KM = 0.5
+private const val MIN_RADIUS_KM = 0.01
+private const val MAX_RADIUS_KM = 50.0

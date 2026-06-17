@@ -19,6 +19,24 @@ interface AlarmDao {
     @Upsert
     suspend fun upsertAlarm(alarm: AlarmEntity)
 
+    @Query(
+        """
+        UPDATE alarms
+        SET label = :label,
+            radius_km = :radiusKm,
+            sound_type = :soundType,
+            sound_uri = :soundUri
+        WHERE id = :alarmId
+        """
+    )
+    suspend fun updateAlarmSettings(
+        alarmId: String,
+        label: String,
+        radiusKm: Double,
+        soundType: String,
+        soundUri: String?
+    )
+
     @Query("UPDATE alarms SET is_active = :isActive WHERE id = :alarmId")
     suspend fun setAlarmActive(alarmId: String, isActive: Boolean)
 
