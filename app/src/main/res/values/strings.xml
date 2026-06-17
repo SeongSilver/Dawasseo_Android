@@ -48,6 +48,9 @@
     <string name="place_search_title">장소 검색</string>
     <string name="place_search">검색</string>
     <string name="place_searching">검색 중...</string>
+    <string name="place_voice_search">음성 검색</string>
+    <string name="place_voice_search_prompt">목적지를 말해주세요</string>
+    <string name="place_voice_search_unavailable">음성 입력을 사용할 수 없습니다.</string>
     <string name="alarm_setup_title">알람 설정</string>
     <string name="alarm_send_title">알람 보내기</string>
     <string name="alarm_location_alias">위치 별칭</string>
