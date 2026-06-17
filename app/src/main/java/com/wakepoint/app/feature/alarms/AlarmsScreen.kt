@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
@@ -59,6 +58,7 @@ import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
+import com.wakepoint.app.core.design.WakepointConfirmDialog
 import com.wakepoint.app.core.design.WakepointHeader
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
@@ -76,6 +76,8 @@ fun AlarmsScreen(
     viewModel: AlarmsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var expandedAlarmId by remember { mutableStateOf<String?>(null) }
+    var deleteTarget by remember { mutableStateOf<Alarm?>(null) }
 
     Column(
         modifier = Modifier
@@ -110,26 +112,20 @@ fun AlarmsScreen(
             } else {
                 if (uiState.activeAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_active))
-                    EditableAlarmCard(
-                        alarm = uiState.activeAlarms.first(),
-                        isUpdating = uiState.isUpdating,
-                        onOpenSoundList = onOpenSoundList,
-                        onActiveChange = { isActive ->
-                            viewModel.setAlarmActive(uiState.activeAlarms.first().id, isActive)
-                        },
-                        onSave = { alarm, label, radius ->
-                            viewModel.updateAlarmSettings(alarm, label, radius)
-                        },
-                        onDelete = {
-                            viewModel.deleteAlarm(uiState.activeAlarms.first().id)
-                        }
-                    )
-                    uiState.activeAlarms.drop(1).forEach { alarm ->
-                        CompactAlarmCard(
+                    uiState.activeAlarms.forEach { alarm ->
+                        AlarmListCard(
                             alarm = alarm,
+                            expanded = expandedAlarmId == alarm.id,
                             isUpdating = uiState.isUpdating,
+                            onToggleExpanded = {
+                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                            },
+                            onOpenSoundList = onOpenSoundList,
                             onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                            onDelete = { viewModel.deleteAlarm(alarm.id) }
+                            onSave = { updatedAlarm, label, radius ->
+                                viewModel.updateAlarmSettings(updatedAlarm, label, radius)
+                            },
+                            onDeleteRequest = { deleteTarget = alarm }
                         )
                     }
                 }
@@ -137,16 +133,72 @@ fun AlarmsScreen(
                 if (uiState.inactiveAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_inactive))
                     uiState.inactiveAlarms.forEach { alarm ->
-                        CompactAlarmCard(
+                        AlarmListCard(
                             alarm = alarm,
+                            expanded = expandedAlarmId == alarm.id,
                             isUpdating = uiState.isUpdating,
+                            onToggleExpanded = {
+                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                            },
+                            onOpenSoundList = onOpenSoundList,
                             onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                            onDelete = { viewModel.deleteAlarm(alarm.id) }
+                            onSave = { updatedAlarm, label, radius ->
+                                viewModel.updateAlarmSettings(updatedAlarm, label, radius)
+                            },
+                            onDeleteRequest = { deleteTarget = alarm }
                         )
                     }
                 }
             }
         }
+    }
+
+    deleteTarget?.let { alarm ->
+        WakepointConfirmDialog(
+            title = stringResource(R.string.alarm_delete_confirm_title),
+            message = stringResource(R.string.alarm_delete_confirm_message),
+            cancelText = stringResource(R.string.alarm_cancel),
+            confirmText = stringResource(R.string.alarm_delete),
+            onDismiss = { deleteTarget = null },
+            onConfirm = {
+                viewModel.deleteAlarm(alarm.id)
+                if (expandedAlarmId == alarm.id) {
+                    expandedAlarmId = null
+                }
+                deleteTarget = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun AlarmListCard(
+    alarm: Alarm,
+    expanded: Boolean,
+    isUpdating: Boolean,
+    onToggleExpanded: () -> Unit,
+    onOpenSoundList: () -> Unit,
+    onActiveChange: (Boolean) -> Unit,
+    onSave: (Alarm, String, String) -> Unit,
+    onDeleteRequest: () -> Unit
+) {
+    if (expanded) {
+        EditableAlarmCard(
+            alarm = alarm,
+            isUpdating = isUpdating,
+            onToggleExpanded = onToggleExpanded,
+            onOpenSoundList = onOpenSoundList,
+            onActiveChange = onActiveChange,
+            onSave = onSave,
+            onDelete = onDeleteRequest
+        )
+    } else {
+        CompactAlarmCard(
+            alarm = alarm,
+            isUpdating = isUpdating,
+            onToggleExpanded = onToggleExpanded,
+            onActiveChange = onActiveChange
+        )
     }
 }
 
@@ -154,6 +206,7 @@ fun AlarmsScreen(
 private fun EditableAlarmCard(
     alarm: Alarm,
     isUpdating: Boolean,
+    onToggleExpanded: () -> Unit,
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onSave: (Alarm, String, String) -> Unit,
@@ -163,15 +216,23 @@ private fun EditableAlarmCard(
     var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.clickable(onClick = onToggleExpanded),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = stringResource(
                         R.string.alarm_list_location_prefix,
-                        stringResource(R.string.alarm_transfer_center)
+                        alarm.label
                     ),
                     color = WakepointPrimary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = WakepointMuted
                 )
                 Switch(
                     checked = alarm.isActive,
@@ -231,10 +292,10 @@ private fun EditableAlarmCard(
 private fun CompactAlarmCard(
     alarm: Alarm,
     isUpdating: Boolean,
-    onActiveChange: (Boolean) -> Unit,
-    onDelete: () -> Unit
+    onToggleExpanded: () -> Unit,
+    onActiveChange: (Boolean) -> Unit
 ) {
-    WakepointCard {
+    WakepointCard(modifier = Modifier.clickable(onClick = onToggleExpanded)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(
                 modifier = Modifier.weight(1f),
@@ -268,16 +329,6 @@ private fun CompactAlarmCard(
                     checkedTrackColor = WakepointPrimary
                 )
             )
-            IconButton(
-                onClick = onDelete,
-                enabled = !isUpdating
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Delete,
-                    contentDescription = stringResource(R.string.alarm_delete),
-                    tint = WakepointMuted
-                )
-            }
         }
     }
 }
