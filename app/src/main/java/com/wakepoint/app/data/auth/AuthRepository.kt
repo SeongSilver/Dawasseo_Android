@@ -28,5 +28,9 @@ interface AuthRepository {
         nickname: String
     ): Result<AuthOperationResult>
 
+    fun kakaoOAuthUrl(): String
+
+    suspend fun completeOAuthSignIn(callbackUri: String): Result<AuthOperationResult>
+
     suspend fun signOut()
 }

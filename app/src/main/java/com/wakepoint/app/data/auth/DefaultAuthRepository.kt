@@ -1,11 +1,14 @@
 package com.wakepoint.app.data.auth
 
+import android.net.Uri
 import com.wakepoint.app.core.data.preferences.UserPreferencesDataStore
 import com.wakepoint.app.core.supabase.SupabaseConfig
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLDecoder
+import java.net.URLEncoder
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +64,45 @@ class DefaultAuthRepository @Inject constructor(
                 message = "가입 확인 메일을 확인한 뒤 로그인해주세요."
             )
         }
+    }
+
+    override fun kakaoOAuthUrl(): String {
+        ensureConfigured()
+        val redirectTo = URLEncoder.encode(OAUTH_REDIRECT_URI, Charsets.UTF_8.name())
+        return "${config.url.trimEnd('/')}/auth/v1/authorize" +
+            "?provider=kakao&redirect_to=$redirectTo"
+    }
+
+    override suspend fun completeOAuthSignIn(
+        callbackUri: String
+    ): Result<AuthOperationResult> = runCatching {
+        ensureConfigured()
+        val params = Uri.parse(callbackUri).authCallbackParams()
+        val errorMessage = params["error_description"] ?: params["error"]
+        if (!errorMessage.isNullOrBlank()) {
+            error(errorMessage)
+        }
+
+        val accessToken = params["access_token"]
+            ?: error("카카오 로그인 콜백에서 Supabase 세션을 확인하지 못했습니다.")
+        val user = fetchUser(accessToken)
+        val userId = user.optString("id").takeIf { it.isNotBlank() }
+            ?: error("카카오 로그인 사용자 정보를 확인하지 못했습니다.")
+        val email = user.optString("email").takeIf { it.isNotBlank() }
+            ?: "$userId@kakao.local"
+        val session = AuthSession(
+            userId = userId,
+            email = email,
+            accessToken = accessToken,
+            refreshToken = params["refresh_token"]
+        )
+
+        upsertUserProfile(
+            session = session,
+            nickname = user.oauthNickname() ?: email.substringBefore("@")
+        )
+        preferences.saveAuthSession(session)
+        AuthOperationResult(sessionStarted = true)
     }
 
     override suspend fun signOut() {
@@ -141,6 +183,23 @@ class DefaultAuthRepository @Inject constructor(
         }
     }
 
+    private suspend fun fetchUser(accessToken: String): JSONObject = withContext(Dispatchers.IO) {
+        val endpoint = URL("${config.url.trimEnd('/')}/auth/v1/user")
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer $accessToken")
+        }
+
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException(parseErrorMessage(responseText))
+        }
+        JSONObject(responseText)
+    }
+
     private fun HttpURLConnection.readResponseText(): String {
         val stream = if (responseCode in 200..299) inputStream else errorStream
         if (stream == null) return ""
@@ -172,5 +231,31 @@ class DefaultAuthRepository @Inject constructor(
             listOf("msg", "message", "error_description", "error")
                 .firstNotNullOfOrNull { key -> json.optString(key).takeIf { it.isNotBlank() } }
         }.getOrNull() ?: "인증 요청에 실패했습니다."
+    }
+
+    private fun Uri.authCallbackParams(): Map<String, String> {
+        val params = mutableMapOf<String, String>()
+        queryParameterNames.forEach { name ->
+            getQueryParameter(name)?.let { value -> params[name] = value }
+        }
+        fragment
+            ?.split("&")
+            ?.filter { it.contains("=") }
+            ?.forEach { pair ->
+                val key = pair.substringBefore("=")
+                val value = pair.substringAfter("=")
+                params[key] = URLDecoder.decode(value, Charsets.UTF_8.name())
+            }
+        return params
+    }
+
+    private fun JSONObject.oauthNickname(): String? {
+        val metadata = optJSONObject("user_metadata") ?: return null
+        return listOf("nickname", "name", "full_name")
+            .firstNotNullOfOrNull { key -> metadata.optString(key).takeIf { it.isNotBlank() } }
+    }
+
+    companion object {
+        const val OAUTH_REDIRECT_URI = "com.wakepoint.app://auth-callback"
     }
 }

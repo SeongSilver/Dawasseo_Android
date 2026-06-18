@@ -137,6 +137,7 @@ fun WakepointApp() {
                     onLoginEmailChange = authViewModel::updateLoginEmail,
                     onLoginPasswordChange = authViewModel::updateLoginPassword,
                     onSignIn = authViewModel::signIn,
+                    onKakaoLogin = authViewModel::kakaoOAuthUrl,
                     onSignUp = { navController.navigate(AppRoute.SignUp) }
                 )
             }

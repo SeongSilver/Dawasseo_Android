@@ -147,6 +147,16 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun kakaoOAuthUrl(): String? {
+        return runCatching {
+            authRepository.kakaoOAuthUrl()
+        }.onFailure { error ->
+            _uiState.update {
+                it.copy(errorMessage = error.message ?: "카카오 로그인을 시작하지 못했습니다.")
+            }
+        }.getOrNull()
+    }
+
     fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()
