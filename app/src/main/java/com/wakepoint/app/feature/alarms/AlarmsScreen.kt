@@ -40,6 +40,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -113,40 +114,44 @@ fun AlarmsScreen(
                 if (uiState.activeAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_active))
                     uiState.activeAlarms.forEach { alarm ->
-                        AlarmListCard(
-                            alarm = alarm,
-                            expanded = expandedAlarmId == alarm.id,
-                            isUpdating = uiState.isUpdating,
-                            onToggleExpanded = {
-                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
-                            },
-                            onOpenSoundList = onOpenSoundList,
-                            onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                            onSave = { updatedAlarm, label, radius ->
-                                viewModel.updateAlarmSettings(updatedAlarm, label, radius)
-                            },
-                            onDeleteRequest = { deleteTarget = alarm }
-                        )
+                        key(alarm.id) {
+                            AlarmListCard(
+                                alarm = alarm,
+                                expanded = expandedAlarmId == alarm.id,
+                                isUpdating = alarm.id in uiState.updatingAlarmIds,
+                                onToggleExpanded = {
+                                    expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                                },
+                                onOpenSoundList = onOpenSoundList,
+                                onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
+                                onSave = { updatedAlarm, label, radius ->
+                                    viewModel.updateAlarmSettings(updatedAlarm, label, radius)
+                                },
+                                onDeleteRequest = { deleteTarget = alarm }
+                            )
+                        }
                     }
                 }
 
                 if (uiState.inactiveAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_inactive))
                     uiState.inactiveAlarms.forEach { alarm ->
-                        AlarmListCard(
-                            alarm = alarm,
-                            expanded = expandedAlarmId == alarm.id,
-                            isUpdating = uiState.isUpdating,
-                            onToggleExpanded = {
-                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
-                            },
-                            onOpenSoundList = onOpenSoundList,
-                            onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                            onSave = { updatedAlarm, label, radius ->
-                                viewModel.updateAlarmSettings(updatedAlarm, label, radius)
-                            },
-                            onDeleteRequest = { deleteTarget = alarm }
-                        )
+                        key(alarm.id) {
+                            AlarmListCard(
+                                alarm = alarm,
+                                expanded = expandedAlarmId == alarm.id,
+                                isUpdating = alarm.id in uiState.updatingAlarmIds,
+                                onToggleExpanded = {
+                                    expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                                },
+                                onOpenSoundList = onOpenSoundList,
+                                onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
+                                onSave = { updatedAlarm, label, radius ->
+                                    viewModel.updateAlarmSettings(updatedAlarm, label, radius)
+                                },
+                                onDeleteRequest = { deleteTarget = alarm }
+                            )
+                        }
                     }
                 }
             }
