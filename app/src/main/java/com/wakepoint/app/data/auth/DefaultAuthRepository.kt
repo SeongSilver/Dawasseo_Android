@@ -73,8 +73,9 @@ class DefaultAuthRepository @Inject constructor(
     override fun kakaoOAuthUrl(): String {
         ensureConfigured()
         val redirectTo = URLEncoder.encode(OAUTH_REDIRECT_URI, Charsets.UTF_8.name())
+        val scopes = URLEncoder.encode(KAKAO_OAUTH_SCOPES, Charsets.UTF_8.name())
         return "${config.url.trimEnd('/')}/auth/v1/authorize" +
-            "?provider=kakao&redirect_to=$redirectTo"
+            "?provider=kakao&redirect_to=$redirectTo&scopes=$scopes"
     }
 
     override suspend fun completeOAuthSignIn(
@@ -327,6 +328,7 @@ class DefaultAuthRepository @Inject constructor(
 
     companion object {
         const val OAUTH_REDIRECT_URI = "com.wakepoint.app://auth-callback"
+        private const val KAKAO_OAUTH_SCOPES = "profile_nickname profile_image"
         private const val REFRESH_WINDOW_SECONDS = 300L
     }
 }
