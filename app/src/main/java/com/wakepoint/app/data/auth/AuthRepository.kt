@@ -6,7 +6,8 @@ data class AuthSession(
     val userId: String,
     val email: String,
     val accessToken: String,
-    val refreshToken: String?
+    val refreshToken: String?,
+    val expiresAtEpochSeconds: Long
 )
 
 data class AuthOperationResult(
@@ -31,6 +32,10 @@ interface AuthRepository {
     fun kakaoOAuthUrl(): String
 
     suspend fun completeOAuthSignIn(callbackUri: String): Result<AuthOperationResult>
+
+    suspend fun refreshSessionIfNeeded(): Result<AuthSession?>
+
+    suspend fun requireValidSession(): AuthSession
 
     suspend fun signOut()
 }

@@ -38,10 +38,15 @@ class AuthViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             authRepository.authSession.collect { session ->
+                val validSession = if (session != null) {
+                    authRepository.refreshSessionIfNeeded().getOrNull()
+                } else {
+                    null
+                }
                 _uiState.update {
                     it.copy(
                         isCheckingSession = false,
-                        session = session
+                        session = validSession
                     )
                 }
             }

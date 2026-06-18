@@ -18,7 +18,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -119,8 +118,7 @@ class DefaultAlarmRepository @Inject constructor(
         check(config.isConfigured) {
             "Supabase 설정이 비어 있습니다. local.properties에 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력해주세요."
         }
-        return authRepository.authSession.first()?.accessToken
-            ?: error("로그인이 필요합니다.")
+        return authRepository.requireValidSession().accessToken
     }
 
     private suspend fun insertRemoteAlarm(alarm: Alarm, accessToken: String) {

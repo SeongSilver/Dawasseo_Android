@@ -9,11 +9,14 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
@@ -23,6 +26,7 @@ class DefaultAuthRepository @Inject constructor(
     private val preferences: UserPreferencesDataStore
 ) : AuthRepository {
     override val authSession: Flow<AuthSession?> = preferences.authSession
+    private val refreshMutex = Mutex()
 
     override suspend fun signInWithEmail(
         email: String,
@@ -94,7 +98,8 @@ class DefaultAuthRepository @Inject constructor(
             userId = userId,
             email = email,
             accessToken = accessToken,
-            refreshToken = params["refresh_token"]
+            refreshToken = params["refresh_token"],
+            expiresAtEpochSeconds = params.tokenExpiresAt()
         )
 
         upsertUserProfile(
@@ -103,6 +108,41 @@ class DefaultAuthRepository @Inject constructor(
         )
         preferences.saveAuthSession(session)
         AuthOperationResult(sessionStarted = true)
+    }
+
+    override suspend fun refreshSessionIfNeeded(): Result<AuthSession?> = runCatching {
+        refreshMutex.withLock {
+            val session = authSession.first() ?: return@withLock null
+            if (!session.shouldRefresh()) {
+                return@withLock session
+            }
+
+            val refreshToken = session.refreshToken
+            if (refreshToken.isNullOrBlank()) {
+                preferences.clearAuthSession()
+                return@withLock null
+            }
+
+            val body = JSONObject().put("refresh_token", refreshToken)
+            val response = runCatching {
+                postAuth("/auth/v1/token?grant_type=refresh_token", body)
+            }.getOrElse {
+                preferences.clearAuthSession()
+                throw it
+            }
+            val refreshedSession = parseSession(response)
+                ?: run {
+                    preferences.clearAuthSession()
+                    error("세션 갱신 응답을 확인하지 못했습니다.")
+                }
+            preferences.saveAuthSession(refreshedSession)
+            refreshedSession
+        }
+    }
+
+    override suspend fun requireValidSession(): AuthSession {
+        return refreshSessionIfNeeded().getOrThrow()
+            ?: error("로그인이 필요합니다.")
     }
 
     override suspend fun signOut() {
@@ -220,7 +260,8 @@ class DefaultAuthRepository @Inject constructor(
             userId = userId,
             email = email,
             accessToken = accessToken,
-            refreshToken = response.optString("refresh_token").takeIf { it.isNotBlank() }
+            refreshToken = response.optString("refresh_token").takeIf { it.isNotBlank() },
+            expiresAtEpochSeconds = response.tokenExpiresAt()
         )
     }
 
@@ -255,7 +296,37 @@ class DefaultAuthRepository @Inject constructor(
             .firstNotNullOfOrNull { key -> metadata.optString(key).takeIf { it.isNotBlank() } }
     }
 
+    private fun AuthSession.shouldRefresh(): Boolean {
+        if (expiresAtEpochSeconds <= 0L) return true
+        return expiresAtEpochSeconds - Instant.now().epochSecond <= REFRESH_WINDOW_SECONDS
+    }
+
+    private fun JSONObject.tokenExpiresAt(): Long {
+        val expiresAt = optLong("expires_at", 0L)
+        if (expiresAt > 0L) return expiresAt
+
+        val expiresIn = optLong("expires_in", 0L)
+        return if (expiresIn > 0L) {
+            Instant.now().epochSecond + expiresIn
+        } else {
+            0L
+        }
+    }
+
+    private fun Map<String, String>.tokenExpiresAt(): Long {
+        val expiresAt = this["expires_at"]?.toLongOrNull()
+        if (expiresAt != null && expiresAt > 0L) return expiresAt
+
+        val expiresIn = this["expires_in"]?.toLongOrNull()
+        return if (expiresIn != null && expiresIn > 0L) {
+            Instant.now().epochSecond + expiresIn
+        } else {
+            0L
+        }
+    }
+
     companion object {
         const val OAUTH_REDIRECT_URI = "com.wakepoint.app://auth-callback"
+        private const val REFRESH_WINDOW_SECONDS = 300L
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.wakepoint.app.data.auth.AuthSession
@@ -32,8 +33,9 @@ class UserPreferencesDataStore @Inject constructor(
         dataStore.data.map { preferences -> preferences[AUTH_USER_ID] },
         dataStore.data.map { preferences -> preferences[AUTH_EMAIL] },
         dataStore.data.map { preferences -> preferences[AUTH_ACCESS_TOKEN] },
-        dataStore.data.map { preferences -> preferences[AUTH_REFRESH_TOKEN] }
-    ) { userId, email, accessToken, refreshToken ->
+        dataStore.data.map { preferences -> preferences[AUTH_REFRESH_TOKEN] },
+        dataStore.data.map { preferences -> preferences[AUTH_EXPIRES_AT] }
+    ) { userId, email, accessToken, refreshToken, expiresAt ->
         if (userId.isNullOrBlank() || email.isNullOrBlank() || accessToken.isNullOrBlank()) {
             null
         } else {
@@ -41,7 +43,8 @@ class UserPreferencesDataStore @Inject constructor(
                 userId = userId,
                 email = email,
                 accessToken = accessToken,
-                refreshToken = refreshToken
+                refreshToken = refreshToken,
+                expiresAtEpochSeconds = expiresAt ?: 0L
             )
         }
     }
@@ -57,6 +60,7 @@ class UserPreferencesDataStore @Inject constructor(
             preferences[AUTH_USER_ID] = session.userId
             preferences[AUTH_EMAIL] = session.email
             preferences[AUTH_ACCESS_TOKEN] = session.accessToken
+            preferences[AUTH_EXPIRES_AT] = session.expiresAtEpochSeconds
             session.refreshToken?.let { preferences[AUTH_REFRESH_TOKEN] = it }
                 ?: preferences.remove(AUTH_REFRESH_TOKEN)
         }
@@ -68,6 +72,7 @@ class UserPreferencesDataStore @Inject constructor(
             preferences.remove(AUTH_EMAIL)
             preferences.remove(AUTH_ACCESS_TOKEN)
             preferences.remove(AUTH_REFRESH_TOKEN)
+            preferences.remove(AUTH_EXPIRES_AT)
         }
     }
 
@@ -77,5 +82,6 @@ class UserPreferencesDataStore @Inject constructor(
         val AUTH_EMAIL = stringPreferencesKey("auth_email")
         val AUTH_ACCESS_TOKEN = stringPreferencesKey("auth_access_token")
         val AUTH_REFRESH_TOKEN = stringPreferencesKey("auth_refresh_token")
+        val AUTH_EXPIRES_AT = longPreferencesKey("auth_expires_at")
     }
 }
