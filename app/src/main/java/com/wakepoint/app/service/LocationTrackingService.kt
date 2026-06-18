@@ -76,10 +76,8 @@ class LocationTrackingService : Service() {
             return START_NOT_STICKY
         }
 
-        startForeground(
-            AlarmNotificationManager.TRACKING_NOTIFICATION_ID,
-            alarmNotificationManager.buildTrackingNotification(activeAlarmCount = 0)
-        )
+        val activeAlarmCount = intent?.getIntExtra(EXTRA_ACTIVE_ALARM_COUNT, 0) ?: 0
+        updateTrackingNotification(activeAlarmCount)
         observeActiveAlarms()
         startLocationUpdates()
         return START_STICKY
@@ -103,13 +101,17 @@ class LocationTrackingService : Service() {
                 if (alarms.isEmpty()) {
                     stopSelf()
                 } else {
-                    startForeground(
-                        AlarmNotificationManager.TRACKING_NOTIFICATION_ID,
-                        alarmNotificationManager.buildTrackingNotification(alarms.size)
-                    )
+                    updateTrackingNotification(alarms.size)
                 }
             }
         }
+    }
+
+    private fun updateTrackingNotification(activeAlarmCount: Int) {
+        startForeground(
+            AlarmNotificationManager.TRACKING_NOTIFICATION_ID,
+            alarmNotificationManager.buildTrackingNotification(activeAlarmCount)
+        )
     }
 
     private fun startLocationUpdates() {
@@ -146,8 +148,15 @@ class LocationTrackingService : Service() {
         private const val LOCATION_INTERVAL_MILLIS = 60_000L
         private const val LOCATION_MIN_INTERVAL_MILLIS = 30_000L
 
-        fun startIntent(context: android.content.Context): Intent {
-            return Intent(context, LocationTrackingService::class.java)
+        private const val EXTRA_ACTIVE_ALARM_COUNT = "extra_active_alarm_count"
+
+        fun startIntent(
+            context: android.content.Context,
+            activeAlarmCount: Int = 0
+        ): Intent {
+            return Intent(context, LocationTrackingService::class.java).apply {
+                putExtra(EXTRA_ACTIVE_ALARM_COUNT, activeAlarmCount)
+            }
         }
     }
 }

@@ -16,14 +16,14 @@ class LocationTrackingController @Inject constructor(
 ) {
     fun syncTracking(activeAlarmCount: Int) {
         if (activeAlarmCount > 0 && hasForegroundLocationPermission()) {
-            startTracking()
+            startTracking(activeAlarmCount)
         } else {
             stopTracking()
         }
     }
 
-    private fun startTracking() {
-        val intent = LocationTrackingService.startIntent(context)
+    private fun startTracking(activeAlarmCount: Int) {
+        val intent = LocationTrackingService.startIntent(context, activeAlarmCount)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ContextCompat.startForegroundService(context, intent)
         } else {
@@ -32,7 +32,7 @@ class LocationTrackingController @Inject constructor(
     }
 
     private fun stopTracking() {
-        context.stopService(LocationTrackingService.startIntent(context))
+        context.stopService(LocationTrackingService.startIntent(context, activeAlarmCount = 0))
     }
 
     private fun hasForegroundLocationPermission(): Boolean {
