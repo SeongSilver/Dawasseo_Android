@@ -12,11 +12,13 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.core.content.getSystemService
 import com.wakepoint.app.MainActivity
 import com.wakepoint.app.R
 import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.feature.alarmalert.AlarmAlertActivity
+import com.wakepoint.app.service.AlarmAlertService
 
 class AlarmNotificationManager(
     private val context: Context
@@ -60,17 +62,31 @@ class AlarmNotificationManager(
     fun showArrivalAlarm(alarm: Alarm) {
         if (!canPostNotifications()) return
 
+        val intent = AlarmAlertService.startIntent(
+            context = context,
+            alarmId = alarm.id,
+            label = alarm.label,
+            targetAddress = alarm.targetAddress
+        )
+        startForegroundService(context, intent)
+    }
+
+    fun buildArrivalNotification(
+        alarmId: String,
+        label: String,
+        targetAddress: String
+    ): Notification {
         val notification = NotificationCompat.Builder(context, ALARM_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher)
             .setContentTitle(context.getString(R.string.alarm_alert_arrived))
-            .setContentText(alarm.displayTarget())
-            .setContentIntent(alarmAlertIntent(alarm))
-            .setFullScreenIntent(alarmAlertIntent(alarm), true)
-            .setDeleteIntent(stopAlarmIntent(alarm.id))
+            .setContentText(targetAddress.ifBlank { label })
+            .setContentIntent(alarmAlertIntent(alarmId, label, targetAddress))
+            .setFullScreenIntent(alarmAlertIntent(alarmId, label, targetAddress), true)
+            .setDeleteIntent(stopAlarmIntent(alarmId))
             .addAction(
                 R.drawable.ic_launcher,
                 context.getString(R.string.alarm_alert_stop),
-                stopAlarmIntent(alarm.id)
+                stopAlarmIntent(alarmId)
             )
             .setAutoCancel(false)
             .setOngoing(true)
@@ -78,24 +94,27 @@ class AlarmNotificationManager(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .build()
-
-        AlarmVibrationController.start(context)
         NotificationManagerCompat.from(context).notify(
-            alarm.id.hashCode(),
+            AlarmAlertContract.notificationId(alarmId),
             notification
         )
+        return notification
     }
 
-    private fun alarmAlertIntent(alarm: Alarm): PendingIntent {
+    private fun alarmAlertIntent(
+        alarmId: String,
+        label: String,
+        targetAddress: String
+    ): PendingIntent {
         val intent = Intent(context, AlarmAlertActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(AlarmAlertContract.EXTRA_ALARM_ID, alarm.id)
-            putExtra(AlarmAlertContract.EXTRA_ALARM_LABEL, alarm.label)
-            putExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS, alarm.targetAddress)
+            putExtra(AlarmAlertContract.EXTRA_ALARM_ID, alarmId)
+            putExtra(AlarmAlertContract.EXTRA_ALARM_LABEL, label)
+            putExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS, targetAddress)
         }
         return PendingIntent.getActivity(
             context,
-            alarm.id.hashCode(),
+            AlarmAlertContract.notificationId(alarmId),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -107,7 +126,7 @@ class AlarmNotificationManager(
         }
         return PendingIntent.getBroadcast(
             context,
-            alarmId.hashCode(),
+            AlarmAlertContract.notificationId(alarmId),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -136,8 +155,4 @@ class AlarmNotificationManager(
         const val TRACKING_CHANNEL_ID = "location_tracking"
         const val TRACKING_NOTIFICATION_ID = 1001
     }
-}
-
-private fun Alarm.displayTarget(): String {
-    return targetAddress.ifBlank { label }
 }
