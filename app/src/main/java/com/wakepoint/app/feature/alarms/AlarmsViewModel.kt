@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 data class AlarmsUiState(
     val alarms: List<Alarm> = emptyList(),
     val isUpdating: Boolean = false,
+    val updatingAlarmIds: Set<String> = emptySet(),
     val errorMessage: String? = null
 ) {
     val activeAlarms: List<Alarm> = alarms.filter { it.isActive }
@@ -47,13 +48,21 @@ class AlarmsViewModel @Inject constructor(
 
     fun setAlarmActive(alarmId: String, isActive: Boolean) {
         viewModelScope.launch {
-            transientState.update { it.copy(isUpdating = true, errorMessage = null) }
+            transientState.update { state ->
+                state.copy(
+                    isUpdating = true,
+                    updatingAlarmIds = state.updatingAlarmIds + alarmId,
+                    errorMessage = null
+                )
+            }
             val result = runCatching {
                 alarmRepository.setAlarmActive(alarmId, isActive)
             }
             transientState.update { current ->
+                val updatingAlarmIds = current.updatingAlarmIds - alarmId
                 current.copy(
-                    isUpdating = false,
+                    isUpdating = updatingAlarmIds.isNotEmpty(),
+                    updatingAlarmIds = updatingAlarmIds,
                     errorMessage = result.exceptionOrNull()?.message
                 )
             }
@@ -66,7 +75,13 @@ class AlarmsViewModel @Inject constructor(
         radiusOption: String
     ) {
         viewModelScope.launch {
-            transientState.update { it.copy(isUpdating = true, errorMessage = null) }
+            transientState.update { state ->
+                state.copy(
+                    isUpdating = true,
+                    updatingAlarmIds = state.updatingAlarmIds + alarm.id,
+                    errorMessage = null
+                )
+            }
             val updatedAlarm = alarm.copy(
                 label = label.trim().ifBlank { alarm.label },
                 radiusKm = radiusOption.toRadiusKm()
@@ -75,8 +90,10 @@ class AlarmsViewModel @Inject constructor(
                 alarmRepository.updateAlarm(updatedAlarm)
             }
             transientState.update { current ->
+                val updatingAlarmIds = current.updatingAlarmIds - alarm.id
                 current.copy(
-                    isUpdating = false,
+                    isUpdating = updatingAlarmIds.isNotEmpty(),
+                    updatingAlarmIds = updatingAlarmIds,
                     errorMessage = result.exceptionOrNull()?.message
                 )
             }
@@ -85,13 +102,21 @@ class AlarmsViewModel @Inject constructor(
 
     fun deleteAlarm(alarmId: String) {
         viewModelScope.launch {
-            transientState.update { it.copy(isUpdating = true, errorMessage = null) }
+            transientState.update { state ->
+                state.copy(
+                    isUpdating = true,
+                    updatingAlarmIds = state.updatingAlarmIds + alarmId,
+                    errorMessage = null
+                )
+            }
             val result = runCatching {
                 alarmRepository.deleteAlarm(alarmId)
             }
             transientState.update { current ->
+                val updatingAlarmIds = current.updatingAlarmIds - alarmId
                 current.copy(
-                    isUpdating = false,
+                    isUpdating = updatingAlarmIds.isNotEmpty(),
+                    updatingAlarmIds = updatingAlarmIds,
                     errorMessage = result.exceptionOrNull()?.message
                 )
             }
