@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -72,7 +71,6 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
-import com.wakepoint.app.core.design.MapMarkerPreview
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
@@ -176,7 +174,7 @@ fun HomeScreen(
                 onSuccess = { currentLocation ->
                     selectedTarget = currentLocation
                     selectedTargetAddress = context.getString(R.string.home_current_location)
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation, 16f)
+                    cameraPositionState.centerOn(currentLocation)
                 }
             )
         }
@@ -195,6 +193,7 @@ fun HomeScreen(
                 selectedTarget = target
                 val fallbackAddress = context.getString(R.string.home_map_selected_location)
                 selectedTargetAddress = fallbackAddress
+                cameraPositionState.centerOn(target)
                 viewModel.resolveTargetAddress(
                     target = target,
                     fallback = fallbackAddress
@@ -218,9 +217,6 @@ fun HomeScreen(
                 onMicClick = startVoiceSearch
             )
         }
-        MapMarkerPreview(
-            modifier = Modifier.align(Alignment.Center)
-        )
         FloatingActionButton(
             onClick = {
                 if (hasLocationPermission) {
@@ -228,7 +224,7 @@ fun HomeScreen(
                         onSuccess = { currentLocation ->
                             selectedTarget = currentLocation
                             selectedTargetAddress = context.getString(R.string.home_current_location)
-                            cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation, 16f)
+                            cameraPositionState.centerOn(currentLocation)
                         },
                         onFallback = {
                             cameraPositionState.position = CameraPosition.fromLatLngZoom(DefaultMapTarget, 15f)
@@ -317,13 +313,20 @@ fun HomeScreen(
                     val target = LatLng(place.lat, place.lng)
                     selectedTarget = target
                     selectedTargetAddress = place.displayName()
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 16f)
+                    cameraPositionState.centerOn(target)
                     showSearchSheet = false
                     viewModel.clearSearch()
                 }
             )
         }
     }
+}
+
+private fun CameraPositionState.centerOn(target: LatLng) {
+    position = CameraPosition.fromLatLngZoom(
+        target,
+        maxOf(position.zoom, SELECTED_TARGET_ZOOM)
+    )
 }
 
 @Composable
@@ -620,6 +623,8 @@ private val FOREGROUND_LOCATION_PERMISSIONS = arrayOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
     Manifest.permission.ACCESS_COARSE_LOCATION
 )
+
+private const val SELECTED_TARGET_ZOOM = 16f
 
 private fun Context.hasForegroundLocationPermission(): Boolean {
     return ContextCompat.checkSelfPermission(
