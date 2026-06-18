@@ -15,7 +15,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -139,8 +138,7 @@ class HomeViewModel @Inject constructor(
             }
 
             val result = runCatching {
-                val session = authRepository.authSession.first()
-                    ?: error("로그인이 필요합니다.")
+                val session = authRepository.requireValidSession()
                 alarmRepository.saveAlarm(
                     Alarm(
                         id = UUID.randomUUID().toString(),
