@@ -1,6 +1,7 @@
 package com.wakepoint.app.core.notification
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -19,7 +20,14 @@ object AlarmVibrationController {
         vibrator = context.alarmVibrator()
         val pattern = longArrayOf(0, 700, 250, 700)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(
+                VibrationEffect.createWaveform(pattern, 0),
+                alarmAudioAttributes()
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(pattern, 0, alarmAudioAttributes())
         } else {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(pattern, 0)
@@ -40,6 +48,13 @@ object AlarmVibrationController {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
+    }
+
+    private fun alarmAudioAttributes(): AudioAttributes {
+        return AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
     }
 
     private const val MAX_VIBRATION_MILLIS = 30_000L

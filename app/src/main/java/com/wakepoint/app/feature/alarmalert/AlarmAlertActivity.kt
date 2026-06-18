@@ -40,6 +40,7 @@ import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointTheme
 import com.wakepoint.app.core.notification.AlarmAlertContract
 import com.wakepoint.app.core.notification.AlarmVibrationController
+import com.wakepoint.app.service.AlarmAlertService
 
 class AlarmAlertActivity : ComponentActivity() {
     private val alarmId: String
@@ -71,8 +72,11 @@ class AlarmAlertActivity : ComponentActivity() {
 
     private fun stopAlarmAndClose() {
         AlarmVibrationController.stop()
+        stopService(AlarmAlertService.stopIntent(this))
         if (alarmId.isNotBlank()) {
-            NotificationManagerCompat.from(this).cancel(alarmId.hashCode())
+            NotificationManagerCompat.from(this).cancel(
+                AlarmAlertContract.notificationId(alarmId)
+            )
         }
         finishAndRemoveTask()
     }

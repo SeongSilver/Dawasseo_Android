@@ -54,6 +54,11 @@
             android:foregroundServiceType="location" />
 
         <service
+            android:name=".service.AlarmAlertService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
+
+        <service
             android:name=".service.WakepointFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
