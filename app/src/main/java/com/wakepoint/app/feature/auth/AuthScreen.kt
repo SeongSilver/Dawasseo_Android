@@ -1,9 +1,12 @@
 package com.wakepoint.app.feature.auth
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,8 +79,11 @@ fun AuthScreen(
     onLoginEmailChange: (String) -> Unit,
     onLoginPasswordChange: (String) -> Unit,
     onSignIn: () -> Unit,
+    onKakaoLogin: () -> String?,
     onSignUp: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -124,12 +131,13 @@ fun AuthScreen(
                 onClick = onSignIn
             )
             Spacer(modifier = Modifier.height(12.dp))
-            WakepointButton(
-                text = stringResource(R.string.auth_kakao_login),
-                icon = Icons.Rounded.ChatBubble,
+            KakaoLoginButton(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isSubmitting,
-                onClick = {}
+                onClick = {
+                    val url = onKakaoLogin() ?: return@KakaoLoginButton
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                }
             )
             Spacer(modifier = Modifier.height(28.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -161,6 +169,28 @@ fun AuthScreen(
                 fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+@Composable
+private fun KakaoLoginButton(
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .height(45.dp)
+            .alpha(if (enabled) 1f else 0.5f)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(R.drawable.kakao_login_medium_narrow),
+            contentDescription = stringResource(R.string.auth_kakao_login),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(width = 183.dp, height = 45.dp)
+        )
     }
 }
 
