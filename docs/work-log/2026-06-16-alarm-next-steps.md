@@ -29,4 +29,4 @@
 - 로그인 후 알람 생성 시 Supabase `alarms` row 생성 확인
 - 알람 목록 Room cache 반영 확인
 - mock location 또는 실기기 이동으로 반경 진입 트리거 확인
-- 트리거 후 `is_active=false`, `triggered_at` 갱신 확인
+- 트리거 후 서버 갱신 없이 로컬 알림 표시와 로컬 알람 삭제 확인

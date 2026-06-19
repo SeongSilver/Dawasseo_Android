@@ -11,5 +11,5 @@ interface AlarmRepository {
     suspend fun setAlarmActive(alarmId: String, isActive: Boolean)
     suspend fun deleteAlarm(alarmId: String)
     suspend fun syncLocationTracking()
-    suspend fun markTriggered(alarmId: String, triggeredAt: String)
+    suspend fun handleTriggeredAlarm(alarmId: String)
 }

@@ -51,7 +51,7 @@
 - 위치 업데이트 priority는 Balanced 기준이다.
 - 반경 진입 판단은 `DistanceCalculator.calculateDistance()`를 사용한다.
 - 트리거 후 알림이 표시된다.
-- 트리거된 알람은 `is_active=false`, `triggered_at` 값으로 갱신된다.
+- 트리거된 알람은 서버 갱신 없이 로컬 알림을 울린 뒤 로컬 알람 행만 삭제한다.
 
 ## Kakao Local 검색
 
@@ -69,4 +69,12 @@
 - Android 13+ `POST_NOTIFICATIONS` 권한 UX가 있다.
 - Android 10+ background location 권한은 foreground와 분리해서 요청한다.
 - 위치정보 관련 법적 문구와 신고 필요성을 재확인했다.
+## Destination Alarm Privacy
 
+- This app must not become target-user location tracking.
+- A requester can see only invitation status: pending, accepted, rejected, expired, cancelled.
+- Never store target current location, last location, arrival state, proximity state, alarm trigger state, or confirmation state on the server.
+- Never update Supabase when a local destination alarm triggers.
+- After a local trigger, show the local alarm and delete the local alarm row.
+- Do not send arrival, proximity, trigger, or confirmation events to requester FCM, analytics, crash logs, or debug logs.
+- Follow `docs/DESTINATION_ALARM_PRIVACY.md` before editing friend alarms, alarm permissions, tracking, notifications, or Supabase alarm schema.

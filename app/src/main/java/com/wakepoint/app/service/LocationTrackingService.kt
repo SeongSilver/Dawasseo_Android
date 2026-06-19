@@ -27,7 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.Instant
 
 @AndroidEntryPoint
 class LocationTrackingService : Service() {
@@ -144,10 +143,7 @@ class LocationTrackingService : Service() {
             serviceScope.launch {
                 runCatching {
                     alarmNotificationManager.showArrivalAlarm(alarm)
-                    alarmRepository.markTriggered(
-                        alarmId = alarm.id,
-                        triggeredAt = Instant.now().toString()
-                    )
+                    alarmRepository.handleTriggeredAlarm(alarm.id)
                 }.onFailure {
                     triggeringAlarmIds.remove(alarm.id)
                 }

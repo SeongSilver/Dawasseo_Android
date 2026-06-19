@@ -10,7 +10,6 @@ data class Alarm(
     val targetAddress: String,
     val radiusKm: Double,
     val isActive: Boolean,
-    val triggeredAt: String?,
     val soundType: SoundType,
     val soundUri: String?
 )

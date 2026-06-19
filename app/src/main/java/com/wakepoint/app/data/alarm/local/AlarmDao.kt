@@ -42,7 +42,4 @@ interface AlarmDao {
 
     @Query("DELETE FROM alarms WHERE id = :alarmId")
     suspend fun deleteAlarm(alarmId: String)
-
-    @Query("UPDATE alarms SET is_active = 0, triggered_at = :triggeredAt WHERE id = :alarmId")
-    suspend fun markTriggered(alarmId: String, triggeredAt: String)
 }
