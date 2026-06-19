@@ -10,7 +10,7 @@
 ```
 user_profiles     — 유저 프로필 (auth.users 확장)
 alarms            — 위치 알람
-friends           — 친구 관계 (양방향)
+friends           — 친구 관계/요청 (단일 관계 행)
 alarm_permissions — 대리 알람 권한
 ```
 
@@ -85,16 +85,28 @@ create index alarms_is_active_idx on public.alarms(is_active);
 ```sql
 create table public.friends (
   id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references public.user_profiles(id) on delete cascade,
-  friend_id   uuid not null references public.user_profiles(id) on delete cascade,
+  user_id     uuid not null references public.user_profiles(id) on delete cascade, -- 요청자
+  friend_id   uuid not null references public.user_profiles(id) on delete cascade, -- 요청 대상
+  status      friend_status not null default 'pending',
   created_at  timestamptz default now(),
-  unique(user_id, friend_id)
+  check (user_id <> friend_id)
 );
 
 create index friends_user_id_idx on public.friends(user_id);
+create index friends_friend_id_idx on public.friends(friend_id);
+create index friends_status_idx on public.friends(status);
+create unique index friends_pair_unique_idx
+  on public.friends (least(user_id, friend_id), greatest(user_id, friend_id));
 ```
 
-> 친구 관계는 양방향으로 저장한다 (user→friend, friend→user 두 레코드).
+| 컬럼 | 설명 |
+|------|------|
+| user_id | 친구 요청을 보낸 사용자 |
+| friend_id | 친구 요청을 받은 사용자 |
+| status | pending / accepted / rejected / blocked |
+
+> 친구 관계는 한 쌍당 하나의 행만 저장한다. `accepted` 상태는 양방향 친구 관계로 해석한다.
+> 기존 단순 친구 행은 마이그레이션에서 `accepted`로 간주한다.
 
 ---
 
@@ -102,6 +114,8 @@ create index friends_user_id_idx on public.friends(user_id);
 
 ```sql
 create type permission_status as enum ('pending', 'accepted', 'rejected');
+
+create type friend_status as enum ('pending', 'accepted', 'rejected', 'blocked');
 
 create table public.alarm_permissions (
   id             uuid primary key default gen_random_uuid(),
@@ -159,8 +173,29 @@ create policy "권한 있는 친구가 알람 생성 가능"
 alter table public.friends enable row level security;
 
 create policy "본인 친구 목록 접근"
-  on public.friends for all
-  using (auth.uid() = user_id);
+  on public.friends for select
+  using (auth.uid() = user_id or auth.uid() = friend_id);
+
+create policy "친구 요청 생성"
+  on public.friends for insert
+  with check (
+    auth.uid() = user_id
+    and user_id <> friend_id
+    and status = 'pending'
+  );
+
+create policy "친구 관계 참여자 수정"
+  on public.friends for update
+  using (auth.uid() = user_id or auth.uid() = friend_id)
+  with check (auth.uid() = user_id or auth.uid() = friend_id);
+
+create policy "친구 관계 참여자 삭제"
+  on public.friends for delete
+  using (auth.uid() = user_id or auth.uid() = friend_id);
+
+-- validate_friend_update_trigger
+-- user_id/friend_id 변경 방지
+-- pending -> accepted/rejected는 요청 대상(friend_id)만 가능
 
 -- alarm_permissions
 alter table public.alarm_permissions enable row level security;
@@ -224,7 +259,7 @@ auth.users
     └── user_profiles (1:1)
             │
             ├── alarms (1:N)            owner_id, created_by
-            ├── friends (1:N)           user_id ↔ friend_id
+            ├── friends (1:N)           user_id, friend_id, status
             └── alarm_permissions (1:N) requester_id, target_id
 
 storage:

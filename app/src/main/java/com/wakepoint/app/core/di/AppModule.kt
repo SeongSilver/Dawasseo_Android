@@ -10,6 +10,9 @@ import com.wakepoint.app.data.alarm.DefaultAlarmRepository
 import com.wakepoint.app.data.alarm.local.AlarmDao
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.auth.DefaultAuthRepository
+import com.wakepoint.app.data.friend.DefaultFriendRepository
+import com.wakepoint.app.data.friend.FriendRepository
+import com.wakepoint.app.data.friend.local.FriendDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,14 +31,23 @@ object AppModule {
         context,
         WakepointDatabase::class.java,
         "wakepoint.db"
-    ).build()
+    )
+        .addMigrations(WakepointDatabase.MIGRATION_1_2)
+        .build()
 
     @Provides
     fun provideAlarmDao(database: WakepointDatabase): AlarmDao = database.alarmDao()
 
     @Provides
+    fun provideFriendDao(database: WakepointDatabase): FriendDao = database.friendDao()
+
+    @Provides
     @Singleton
     fun provideAlarmRepository(repository: DefaultAlarmRepository): AlarmRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideFriendRepository(repository: DefaultFriendRepository): FriendRepository = repository
 
     @Provides
     @Singleton
