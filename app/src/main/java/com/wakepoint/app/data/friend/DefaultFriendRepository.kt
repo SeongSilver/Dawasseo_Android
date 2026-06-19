@@ -13,6 +13,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +49,29 @@ class DefaultFriendRepository @Inject constructor(
         )
         friendDao.clearFriends()
         friendDao.upsertFriends(remoteFriends.map { it.toEntity() })
+    }
+
+    override suspend fun searchUsers(query: String): List<FriendSearchResult> {
+        val trimmedQuery = query.trim()
+        if (trimmedQuery.length < MIN_SEARCH_QUERY_LENGTH) return emptyList()
+
+        val session = authRepository.requireValidSession()
+        refreshFriends()
+        val existingFriends = friendDao.snapshotFriends()
+        val profiles = searchUserProfiles(
+            query = trimmedQuery,
+            currentUserId = session.userId,
+            accessToken = session.accessToken
+        )
+        return profiles.map { profile ->
+            val relation = existingFriends.firstOrNull {
+                it.userId == profile.id || it.friendId == profile.id
+            }
+            FriendSearchResult(
+                profile = profile,
+                existingFriendStatus = relation?.status?.toFriendStatus()
+            )
+        }
     }
 
     override suspend fun sendFriendRequest(friendUserId: String) {
@@ -181,6 +205,34 @@ class DefaultFriendRepository @Inject constructor(
         }
     }
 
+    private suspend fun searchUserProfiles(
+        query: String,
+        currentUserId: String,
+        accessToken: String
+    ): List<UserProfile> {
+        val encodedQuery = URLEncoder.encode("*$query*", Charsets.UTF_8.name())
+        val response = executeRemoteRequest(
+            path = "/rest/v1/user_profiles?or=(email.ilike.$encodedQuery,nickname.ilike.$encodedQuery)&select=id,email,nickname,avatar_url,push_token&limit=20",
+            method = "GET",
+            body = null,
+            accessToken = accessToken,
+            prefer = "return=representation"
+        )
+        val rows = response.toJsonArray()
+        return (0 until rows.length()).mapNotNull { index ->
+            val row = rows.getJSONObject(index)
+            val id = row.optString("id")
+            if (id.isBlank() || id == currentUserId) return@mapNotNull null
+            UserProfile(
+                id = id,
+                email = row.optString("email"),
+                nickname = row.optString("nickname"),
+                avatarUrl = row.optString("avatar_url").takeIf { it.isNotBlank() },
+                pushToken = row.optString("push_token").takeIf { it.isNotBlank() }
+            )
+        }
+    }
+
     private suspend fun executeRemoteRequest(
         path: String,
         method: String,
@@ -251,3 +303,5 @@ private fun String.toFriendStatus(): FriendStatus {
         else -> FriendStatus.Pending
     }
 }
+
+private const val MIN_SEARCH_QUERY_LENGTH = 2

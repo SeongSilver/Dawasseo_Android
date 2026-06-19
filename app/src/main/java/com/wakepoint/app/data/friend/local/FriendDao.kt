@@ -25,6 +25,9 @@ interface FriendDao {
     @Query("SELECT * FROM friends WHERE status = 'Accepted' ORDER BY nickname ASC")
     fun observeAcceptedFriends(): Flow<List<FriendEntity>>
 
+    @Query("SELECT * FROM friends")
+    suspend fun snapshotFriends(): List<FriendEntity>
+
     @Upsert
     suspend fun upsertFriends(friends: List<FriendEntity>)
 
