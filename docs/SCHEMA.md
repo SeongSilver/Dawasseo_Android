@@ -133,6 +133,7 @@ create table public.alarm_permissions (
 | requester_id | 권한을 요청한 친구 |
 | target_id | 권한을 부여하는 대상 (나) |
 | status | pending / accepted / rejected |
+| expires_at | MVP에서는 null로 저장하며, null은 만료 없음 |
 
 ---
 
@@ -200,9 +201,30 @@ create policy "친구 관계 참여자 삭제"
 -- alarm_permissions
 alter table public.alarm_permissions enable row level security;
 
-create policy "관련 당사자만 접근"
-  on public.alarm_permissions for all
+create policy "알람 권한 참여자 조회"
+  on public.alarm_permissions for select
   using (auth.uid() = requester_id or auth.uid() = target_id);
+
+create policy "알람 권한 요청 생성"
+  on public.alarm_permissions for insert
+  with check (
+    auth.uid() = requester_id
+    and requester_id <> target_id
+    and status = 'pending'
+  );
+
+create policy "알람 권한 참여자 수정"
+  on public.alarm_permissions for update
+  using (auth.uid() = requester_id or auth.uid() = target_id)
+  with check (auth.uid() = requester_id or auth.uid() = target_id);
+
+create policy "알람 권한 참여자 삭제"
+  on public.alarm_permissions for delete
+  using (auth.uid() = requester_id or auth.uid() = target_id);
+
+-- validate_alarm_permission_update_trigger
+-- requester_id/target_id 변경 방지
+-- pending -> accepted/rejected는 권한 부여 대상(target_id)만 가능
 ```
 
 ---

@@ -33,6 +33,7 @@ object AppModule {
         "wakepoint.db"
     )
         .addMigrations(WakepointDatabase.MIGRATION_1_2)
+        .addMigrations(WakepointDatabase.MIGRATION_2_3)
         .build()
 
     @Provides

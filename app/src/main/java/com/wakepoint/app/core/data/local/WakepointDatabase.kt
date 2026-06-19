@@ -11,7 +11,7 @@ import com.wakepoint.app.data.friend.local.FriendEntity
 
 @Database(
     entities = [AlarmEntity::class, FriendEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class WakepointDatabase : RoomDatabase() {
@@ -36,6 +36,12 @@ abstract class WakepointDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE friends ADD COLUMN permission_expires_at TEXT")
             }
         }
     }

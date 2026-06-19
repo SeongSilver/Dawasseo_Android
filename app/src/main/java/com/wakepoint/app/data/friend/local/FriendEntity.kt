@@ -17,6 +17,7 @@ data class FriendEntity(
     @ColumnInfo(name = "avatar_url") val avatarUrl: String?,
     val status: String,
     @ColumnInfo(name = "permission_status") val permissionStatus: String,
+    @ColumnInfo(name = "permission_expires_at") val permissionExpiresAt: String?,
     @ColumnInfo(name = "created_at") val createdAt: String?
 )
 
@@ -29,6 +30,7 @@ fun FriendEntity.toDomain(): Friend = Friend(
     avatarUrl = avatarUrl,
     status = status.toFriendStatus(),
     permissionStatus = permissionStatus.toPermissionStatus(),
+    permissionExpiresAt = permissionExpiresAt,
     createdAt = createdAt
 )
 
@@ -41,6 +43,7 @@ fun Friend.toEntity(): FriendEntity = FriendEntity(
     avatarUrl = avatarUrl,
     status = status.name,
     permissionStatus = permissionStatus.name,
+    permissionExpiresAt = permissionExpiresAt,
     createdAt = createdAt
 )
 
@@ -51,5 +54,5 @@ private fun String.toFriendStatus(): FriendStatus {
 
 private fun String.toPermissionStatus(): PermissionStatus {
     return PermissionStatus.entries.firstOrNull { it.name.equals(this, ignoreCase = true) }
-        ?: PermissionStatus.Pending
+        ?: PermissionStatus.None
 }

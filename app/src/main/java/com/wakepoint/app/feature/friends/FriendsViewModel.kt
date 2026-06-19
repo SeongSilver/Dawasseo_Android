@@ -3,9 +3,12 @@ package com.wakepoint.app.feature.friends
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wakepoint.app.data.auth.AuthRepository
+import com.wakepoint.app.data.friend.AlarmPermissionRequest
 import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.FriendSearchResult
 import com.wakepoint.app.domain.model.Friend
+import com.wakepoint.app.domain.model.FriendStatus
+import com.wakepoint.app.domain.model.PermissionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +21,7 @@ import kotlinx.coroutines.launch
 
 data class FriendsUiState(
     val friends: List<Friend> = emptyList(),
+    val alarmPermissionRequests: List<AlarmPermissionRequest> = emptyList(),
     val currentUserId: String = "",
     val searchQuery: String = "",
     val searchResults: List<FriendSearchResult> = emptyList(),
@@ -25,10 +29,25 @@ data class FriendsUiState(
     val isRefreshing: Boolean = false,
     val isSearching: Boolean = false,
     val updatingFriendIds: Set<String> = emptySet(),
+    val updatingPermissionIds: Set<String> = emptySet(),
     val requestingUserIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
     val searchMessage: String? = null
-)
+) {
+    val acceptedFriends: List<Friend> = friends.filter { it.status == FriendStatus.Accepted }
+    val receivedFriendRequests: List<Friend> = friends.filter {
+        it.status == FriendStatus.Pending && it.friendId == currentUserId
+    }
+    val sentFriendRequests: List<Friend> = friends.filter {
+        it.status == FriendStatus.Pending && it.userId == currentUserId
+    }
+    val receivedAlarmPermissionRequests: List<AlarmPermissionRequest> = alarmPermissionRequests.filter {
+        it.status == PermissionStatus.Pending && it.targetId == currentUserId
+    }
+    val sentAlarmPermissionRequests: List<AlarmPermissionRequest> = alarmPermissionRequests.filter {
+        it.status == PermissionStatus.Pending && it.requesterId == currentUserId
+    }
+}
 
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
@@ -60,11 +79,13 @@ class FriendsViewModel @Inject constructor(
             val result = runCatching {
                 val session = authRepository.requireValidSession()
                 friendRepository.refreshFriends()
-                session.userId
+                session.userId to friendRepository.fetchAlarmPermissionRequests()
             }
             transientState.update { current ->
+                val resultValue = result.getOrNull()
                 current.copy(
-                    currentUserId = result.getOrNull().orEmpty().ifBlank { current.currentUserId },
+                    currentUserId = resultValue?.first.orEmpty().ifBlank { current.currentUserId },
+                    alarmPermissionRequests = resultValue?.second ?: current.alarmPermissionRequests,
                     isRefreshing = false,
                     errorMessage = result.exceptionOrNull()?.message
                 )
@@ -173,9 +194,65 @@ class FriendsViewModel @Inject constructor(
         }
     }
 
+    fun acceptFriendRequest(friendshipId: String) {
+        runFriendAction(friendshipId) {
+            friendRepository.acceptFriendRequest(friendshipId)
+        }
+    }
+
+    fun rejectFriendRequest(friendshipId: String) {
+        runFriendAction(friendshipId) {
+            friendRepository.rejectFriendRequest(friendshipId)
+        }
+    }
+
     fun blockFriend(friendshipId: String) {
         runFriendAction(friendshipId) {
             friendRepository.blockFriend(friendshipId)
+        }
+    }
+
+    fun requestAlarmPermission(friendUserId: String) {
+        viewModelScope.launch {
+            transientState.update {
+                it.copy(
+                    requestingUserIds = it.requestingUserIds + friendUserId,
+                    errorMessage = null
+                )
+            }
+            val result = runCatching {
+                friendRepository.requestAlarmPermission(friendUserId)
+                friendRepository.fetchAlarmPermissionRequests()
+            }
+            transientState.update { current ->
+                val requestingUserIds = current.requestingUserIds - friendUserId
+                result.fold(
+                    onSuccess = { requests ->
+                        current.copy(
+                            alarmPermissionRequests = requests,
+                            requestingUserIds = requestingUserIds
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            requestingUserIds = requestingUserIds,
+                            errorMessage = error.message ?: "알람 권한 요청에 실패했습니다."
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun acceptAlarmPermission(permissionId: String) {
+        runPermissionAction(permissionId) {
+            friendRepository.acceptAlarmPermission(permissionId)
+        }
+    }
+
+    fun rejectAlarmPermission(permissionId: String) {
+        runPermissionAction(permissionId) {
+            friendRepository.rejectAlarmPermission(permissionId)
         }
     }
 
@@ -196,6 +273,44 @@ class FriendsViewModel @Inject constructor(
                 current.copy(
                     updatingFriendIds = updatingFriendIds,
                     errorMessage = result.exceptionOrNull()?.message
+                )
+            }
+            if (result.isSuccess) {
+                refreshFriends()
+            }
+        }
+    }
+
+    private fun runPermissionAction(
+        permissionId: String,
+        action: suspend () -> Unit
+    ) {
+        viewModelScope.launch {
+            transientState.update {
+                it.copy(
+                    updatingPermissionIds = it.updatingPermissionIds + permissionId,
+                    errorMessage = null
+                )
+            }
+            val result = runCatching {
+                action()
+                friendRepository.fetchAlarmPermissionRequests()
+            }
+            transientState.update { current ->
+                val updatingPermissionIds = current.updatingPermissionIds - permissionId
+                result.fold(
+                    onSuccess = { requests ->
+                        current.copy(
+                            alarmPermissionRequests = requests,
+                            updatingPermissionIds = updatingPermissionIds
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            updatingPermissionIds = updatingPermissionIds,
+                            errorMessage = error.message ?: "알람 권한 요청 처리에 실패했습니다."
+                        )
+                    }
                 )
             }
         }
