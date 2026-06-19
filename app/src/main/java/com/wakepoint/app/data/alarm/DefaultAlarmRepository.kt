@@ -97,16 +97,8 @@ class DefaultAlarmRepository @Inject constructor(
         syncTracking()
     }
 
-    override suspend fun markTriggered(alarmId: String, triggeredAt: String) {
-        val accessToken = requireAccessToken()
-        patchRemoteAlarm(
-            alarmId = alarmId,
-            body = JSONObject()
-                .put("is_active", false)
-                .put("triggered_at", triggeredAt),
-            accessToken = accessToken
-        )
-        alarmDao.markTriggered(alarmId, triggeredAt)
+    override suspend fun handleTriggeredAlarm(alarmId: String) {
+        alarmDao.deleteAlarm(alarmId)
         syncTracking()
     }
 

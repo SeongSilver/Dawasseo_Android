@@ -49,8 +49,9 @@
 - 거리 계산은 `core/location/DistanceCalculator.kt`의 `calculateDistance()`만 사용한다.
 - 활성 알람이 1개 이상이면 위치 추적을 시작한다.
 - 활성 알람이 0개면 위치 추적을 중단한다.
-- 트리거 후 해당 알람은 `is_active=false`, `triggered_at` 갱신이 필요하다.
+- 트리거 후 서버 갱신 없이 로컬 알람만 울리고 해당 로컬 알람을 삭제한다.
 - Android 13+ 알림은 `POST_NOTIFICATIONS` 권한 UX를 별도로 고려한다.
+- 친구/대리 알람에서 A는 B의 위치, 도착, 근접, 알람 발생, 확인 상태를 알 수 없어야 한다. 상세 원칙은 `docs/DESTINATION_ALARM_PRIVACY.md`를 따른다.
 
 ## 디자인 규칙
 

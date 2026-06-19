@@ -26,7 +26,6 @@ object MockWakepointData {
             targetAddress = "서울특별시 중구 세종대로",
             radiusKm = 0.5,
             isActive = true,
-            triggeredAt = null,
             soundType = SoundType.Default,
             soundUri = null
         ),
@@ -40,7 +39,6 @@ object MockWakepointData {
             targetAddress = "판교역",
             radiusKm = 1.0,
             isActive = true,
-            triggeredAt = null,
             soundType = SoundType.Default,
             soundUri = null
         ),
@@ -54,7 +52,6 @@ object MockWakepointData {
             targetAddress = "강남역",
             radiusKm = 0.3,
             isActive = false,
-            triggeredAt = "2026-06-14T22:10:00Z",
             soundType = SoundType.Custom,
             soundUri = "user-1/1781455800000.m4a"
         )

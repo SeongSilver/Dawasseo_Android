@@ -77,7 +77,7 @@
   - 활성 알람 0개면 위치 추적 서비스를 중단한다.
   - `LocationTrackingService`는 Balanced Priority 위치 업데이트를 구독한다.
   - `calculateDistance()`로 현재 위치와 알람 목적지 사이 거리를 계산한다.
-  - 반경 진입 시 도착 알림을 표시하고 해당 알람을 `is_active=false`, `triggered_at=now`로 업데이트한다.
+  - 반경 진입 시 도착 알림을 표시하고 서버 갱신 없이 해당 로컬 알람을 삭제한다.
   - foreground 추적 알림과 도착 알림 생성 로직을 `AlarmNotificationManager`에 추가했다.
 - Kakao Local 장소 검색을 1차 구현했다.
   - `KAKAO_REST_API_KEY`로 Kakao Local keyword search REST API를 호출한다.

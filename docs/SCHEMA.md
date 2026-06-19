@@ -59,7 +59,6 @@ create table public.alarms (
   radius_km        numeric(5,2) not null default 0.5
                    check (radius_km >= 0.01 and radius_km <= 50),
   is_active        boolean not null default true,
-  triggered_at     timestamptz,
   sound_type       text not null default 'default'   -- 'default' | 'custom'
                    check (sound_type in ('default', 'custom')),
   sound_uri        text,                              -- custom일 때 Storage 경로
@@ -77,6 +76,8 @@ create index alarms_is_active_idx on public.alarms(is_active);
 | radius_km | numeric | 트리거 반경 (DB 허용 0.01 ~ 50km, 현재 UI 옵션 10m ~ 10km) |
 | sound_type | text | default(기본음) / custom(녹음) |
 | sound_uri | text | custom일 때 Storage 파일 경로 |
+
+서버 `alarms` 테이블은 알람 설정값만 저장한다. 목적지 도착 여부, 목적지 근처 여부, 알람 울림 여부, 알람 울림 시각, 확인 여부는 저장하지 않는다. 반경 진입 판단과 알림 실행은 소유자 기기 내부에서만 처리한다.
 
 ---
 

@@ -122,14 +122,15 @@ val alarms = supabase.from("alarms")
     .decodeList<AlarmDto>()
 ```
 
-### 알람 트리거 기록
+### 알람 트리거 처리
+
+목적지 반경 진입 판단은 알람 소유자 기기 내부에서만 수행한다. 트리거가 발생해도 Supabase에 `is_active`, 도착 여부, 알람 울림 여부, 알람 울림 시각을 업데이트하지 않는다.
 
 ```kotlin
-supabase.from("alarms").update(
-    { set("is_active", false); set("triggered_at", Clock.System.now()) }
-) {
-    filter { eq("id", alarmId) }
-}
+// Local only
+alarmNotificationManager.showArrivalAlarm(alarm)
+alarmDao.deleteAlarm(alarm.id)
+```
 ```
 
 ---

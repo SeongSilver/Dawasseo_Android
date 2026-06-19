@@ -150,7 +150,6 @@ class HomeViewModel @Inject constructor(
                         targetAddress = targetAddress,
                         radiusKm = state.radiusOption.toRadiusKm(),
                         isActive = true,
-                        triggeredAt = null,
                         soundType = SoundType.Default,
                         soundUri = null
                     )

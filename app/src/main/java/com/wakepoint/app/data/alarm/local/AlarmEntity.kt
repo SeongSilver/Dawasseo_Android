@@ -17,7 +17,6 @@ data class AlarmEntity(
     @ColumnInfo(name = "target_address") val targetAddress: String,
     @ColumnInfo(name = "radius_km") val radiusKm: Double,
     @ColumnInfo(name = "is_active") val isActive: Boolean,
-    @ColumnInfo(name = "triggered_at") val triggeredAt: String?,
     @ColumnInfo(name = "sound_type") val soundType: String,
     @ColumnInfo(name = "sound_uri") val soundUri: String?
 )
@@ -32,7 +31,6 @@ fun AlarmEntity.toDomain(): Alarm = Alarm(
     targetAddress = targetAddress,
     radiusKm = radiusKm,
     isActive = isActive,
-    triggeredAt = triggeredAt,
     soundType = when (soundType) {
         SoundType.Custom.name -> SoundType.Custom
         else -> SoundType.Default
@@ -50,7 +48,6 @@ fun Alarm.toEntity(): AlarmEntity = AlarmEntity(
     targetAddress = targetAddress,
     radiusKm = radiusKm,
     isActive = isActive,
-    triggeredAt = triggeredAt,
     soundType = soundType.name,
     soundUri = soundUri
 )

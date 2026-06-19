@@ -14,7 +14,6 @@ data class AlarmDto(
     val targetAddress: String,
     val radiusKm: Double,
     val isActive: Boolean,
-    val triggeredAt: String?,
     val soundType: String,
     val soundUri: String?
 )
@@ -29,7 +28,6 @@ fun Alarm.toDto(): AlarmDto = AlarmDto(
     targetAddress = targetAddress,
     radiusKm = radiusKm,
     isActive = isActive,
-    triggeredAt = triggeredAt,
     soundType = when (soundType) {
         SoundType.Default -> "default"
         SoundType.Custom -> "custom"
@@ -48,7 +46,6 @@ fun AlarmDto.toJson(): JSONObject {
         .put("target_address", targetAddress)
         .put("radius_km", radiusKm)
         .put("is_active", isActive)
-        .put("triggered_at", triggeredAt)
         .put("sound_type", soundType)
         .put("sound_uri", soundUri)
 }

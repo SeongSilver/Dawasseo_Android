@@ -11,7 +11,7 @@ import com.wakepoint.app.data.friend.local.FriendEntity
 
 @Database(
     entities = [AlarmEntity::class, FriendEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class WakepointDatabase : RoomDatabase() {
@@ -42,6 +42,60 @@ abstract class WakepointDatabase : RoomDatabase() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE friends ADD COLUMN permission_expires_at TEXT")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE alarms_new (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        owner_id TEXT NOT NULL,
+                        created_by TEXT NOT NULL,
+                        label TEXT NOT NULL,
+                        target_lat REAL NOT NULL,
+                        target_lng REAL NOT NULL,
+                        target_address TEXT NOT NULL,
+                        radius_km REAL NOT NULL,
+                        is_active INTEGER NOT NULL,
+                        sound_type TEXT NOT NULL,
+                        sound_uri TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO alarms_new (
+                        id,
+                        owner_id,
+                        created_by,
+                        label,
+                        target_lat,
+                        target_lng,
+                        target_address,
+                        radius_km,
+                        is_active,
+                        sound_type,
+                        sound_uri
+                    )
+                    SELECT
+                        id,
+                        owner_id,
+                        created_by,
+                        label,
+                        target_lat,
+                        target_lng,
+                        target_address,
+                        radius_km,
+                        is_active,
+                        sound_type,
+                        sound_uri
+                    FROM alarms
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE alarms")
+                db.execSQL("ALTER TABLE alarms_new RENAME TO alarms")
             }
         }
     }
