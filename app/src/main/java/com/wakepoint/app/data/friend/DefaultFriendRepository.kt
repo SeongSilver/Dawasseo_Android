@@ -51,6 +51,30 @@ class DefaultFriendRepository @Inject constructor(
         friendDao.upsertFriends(remoteFriends.map { it.toEntity() })
     }
 
+    override suspend fun fetchAlarmPermissionRequests(): List<AlarmPermissionRequest> {
+        val session = authRepository.requireValidSession()
+        val permissionRows = fetchAlarmPermissionRows(
+            currentUserId = session.userId,
+            accessToken = session.accessToken
+        )
+        val profiles = fetchUserProfiles(
+            userIds = permissionRows.flatMap { listOf(it.requesterId, it.targetId) }.distinct(),
+            accessToken = session.accessToken
+        ).associateBy { it.id }
+        return permissionRows.map { row ->
+            AlarmPermissionRequest(
+                id = row.id,
+                requesterId = row.requesterId,
+                targetId = row.targetId,
+                status = row.status,
+                requesterProfile = profiles[row.requesterId],
+                targetProfile = profiles[row.targetId],
+                expiresAt = row.expiresAt,
+                createdAt = row.createdAt
+            )
+        }
+    }
+
     override suspend fun searchUsers(query: String): List<FriendSearchResult> {
         val trimmedQuery = query.trim()
         if (trimmedQuery.length < MIN_SEARCH_QUERY_LENGTH) return emptyList()
@@ -78,6 +102,13 @@ class DefaultFriendRepository @Inject constructor(
         val session = authRepository.requireValidSession()
         require(friendUserId != session.userId) {
             "본인에게 친구 요청을 보낼 수 없습니다."
+        }
+        refreshFriends()
+        val existingRelation = friendDao.snapshotFriends().firstOrNull {
+            it.userId == friendUserId || it.friendId == friendUserId
+        }
+        require(existingRelation == null) {
+            "이미 친구 관계 또는 요청 내역이 있습니다."
         }
         val body = JSONObject()
             .put("user_id", session.userId)
@@ -117,6 +148,34 @@ class DefaultFriendRepository @Inject constructor(
         friendDao.deleteFriend(friendshipId)
     }
 
+    override suspend fun requestAlarmPermission(targetUserId: String) {
+        val session = authRepository.requireValidSession()
+        require(targetUserId != session.userId) {
+            "본인에게 알람 권한을 요청할 수 없습니다."
+        }
+        val body = JSONObject()
+            .put("requester_id", session.userId)
+            .put("target_id", targetUserId)
+            .put("status", PermissionStatus.Pending.toRemoteStatus())
+            .put("expires_at", JSONObject.NULL)
+        executeRemoteRequest(
+            path = "/rest/v1/alarm_permissions",
+            method = "POST",
+            body = body,
+            accessToken = session.accessToken,
+            prefer = "return=minimal"
+        )
+        refreshFriends()
+    }
+
+    override suspend fun acceptAlarmPermission(permissionId: String) {
+        updateAlarmPermissionStatus(permissionId, PermissionStatus.Accepted)
+    }
+
+    override suspend fun rejectAlarmPermission(permissionId: String) {
+        updateAlarmPermissionStatus(permissionId, PermissionStatus.Rejected)
+    }
+
     private suspend fun updateFriendStatus(
         friendshipId: String,
         status: FriendStatus
@@ -124,6 +183,21 @@ class DefaultFriendRepository @Inject constructor(
         val session = authRepository.requireValidSession()
         executeRemoteRequest(
             path = "/rest/v1/friends?id=eq.$friendshipId",
+            method = "PATCH",
+            body = JSONObject().put("status", status.toRemoteStatus()),
+            accessToken = session.accessToken,
+            prefer = "return=minimal"
+        )
+        refreshFriends()
+    }
+
+    private suspend fun updateAlarmPermissionStatus(
+        permissionId: String,
+        status: PermissionStatus
+    ) {
+        val session = authRepository.requireValidSession()
+        executeRemoteRequest(
+            path = "/rest/v1/alarm_permissions?id=eq.$permissionId",
             method = "PATCH",
             body = JSONObject().put("status", status.toRemoteStatus()),
             accessToken = session.accessToken,
@@ -161,11 +235,15 @@ class DefaultFriendRepository @Inject constructor(
             .distinct()
 
         val profiles = fetchUserProfiles(otherUserIds, accessToken).associateBy { it.id }
+        val outgoingPermissions = fetchAlarmPermissionRows(currentUserId, accessToken)
+            .filter { it.requesterId == currentUserId }
+            .associateBy { it.targetId }
         relationRows.mapNotNull { row ->
             val userId = row.optString("user_id")
             val friendId = row.optString("friend_id")
             val otherUserId = if (currentUserId == userId) friendId else userId
             val profile = profiles[otherUserId] ?: return@mapNotNull null
+            val permission = outgoingPermissions[otherUserId]
             Friend(
                 id = row.optString("id"),
                 userId = userId,
@@ -174,7 +252,33 @@ class DefaultFriendRepository @Inject constructor(
                 email = profile.email,
                 avatarUrl = profile.avatarUrl,
                 status = row.optString("status").toFriendStatus(),
-                permissionStatus = PermissionStatus.Pending,
+                permissionStatus = permission?.status ?: PermissionStatus.None,
+                permissionExpiresAt = permission?.expiresAt,
+                createdAt = row.optString("created_at").takeIf { it.isNotBlank() }
+            )
+        }
+    }
+
+    private suspend fun fetchAlarmPermissionRows(
+        currentUserId: String,
+        accessToken: String
+    ): List<AlarmPermissionRow> = withContext(Dispatchers.IO) {
+        val response = executeRemoteRequest(
+            path = "/rest/v1/alarm_permissions?or=(requester_id.eq.$currentUserId,target_id.eq.$currentUserId)&select=*",
+            method = "GET",
+            body = null,
+            accessToken = accessToken,
+            prefer = "return=representation"
+        )
+        val rows = response.toJsonArray()
+        (0 until rows.length()).map { index ->
+            val row = rows.getJSONObject(index)
+            AlarmPermissionRow(
+                id = row.optString("id"),
+                requesterId = row.optString("requester_id"),
+                targetId = row.optString("target_id"),
+                status = row.optString("status").toPermissionStatus(),
+                expiresAt = row.optString("expires_at").takeIf { it.isNotBlank() },
                 createdAt = row.optString("created_at").takeIf { it.isNotBlank() }
             )
         }
@@ -295,6 +399,10 @@ private fun FriendStatus.toRemoteStatus(): String {
     return name.lowercase()
 }
 
+private fun PermissionStatus.toRemoteStatus(): String {
+    return name.lowercase()
+}
+
 private fun String.toFriendStatus(): FriendStatus {
     return when (lowercase()) {
         "accepted" -> FriendStatus.Accepted
@@ -303,5 +411,23 @@ private fun String.toFriendStatus(): FriendStatus {
         else -> FriendStatus.Pending
     }
 }
+
+private fun String.toPermissionStatus(): PermissionStatus {
+    return when (lowercase()) {
+        "accepted" -> PermissionStatus.Accepted
+        "rejected" -> PermissionStatus.Rejected
+        "pending" -> PermissionStatus.Pending
+        else -> PermissionStatus.None
+    }
+}
+
+private data class AlarmPermissionRow(
+    val id: String,
+    val requesterId: String,
+    val targetId: String,
+    val status: PermissionStatus,
+    val expiresAt: String?,
+    val createdAt: String?
+)
 
 private const val MIN_SEARCH_QUERY_LENGTH = 2

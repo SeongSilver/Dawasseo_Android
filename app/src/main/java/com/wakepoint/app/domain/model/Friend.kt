@@ -8,7 +8,8 @@ data class Friend(
     val email: String,
     val avatarUrl: String? = null,
     val status: FriendStatus = FriendStatus.Accepted,
-    val permissionStatus: PermissionStatus = PermissionStatus.Pending,
+    val permissionStatus: PermissionStatus = PermissionStatus.None,
+    val permissionExpiresAt: String? = null,
     val createdAt: String? = null
 )
 
