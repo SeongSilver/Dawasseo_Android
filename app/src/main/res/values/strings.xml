@@ -3,7 +3,7 @@
     <string name="tab_home">지도</string>
     <string name="tab_alarms">알람</string>
     <string name="tab_friends">친구</string>
-    <string name="tab_profile">프로필</string>
+    <string name="tab_profile">마이</string>
 
     <string name="splash_tagline">목적지 도착 알림의 시작</string>
     <string name="auth_title">로그인</string>
@@ -13,6 +13,7 @@
     <string name="auth_login">로그인</string>
     <string name="auth_processing">처리 중...</string>
     <string name="auth_kakao_login">카카오로 로그인</string>
+    <string name="auth_or">또는</string>
     <string name="auth_forgot_password">비밀번호를 잊으셨나요?</string>
     <string name="auth_signup">회원가입</string>
     <string name="auth_terms">로그인 시 다왔어의 이용약관 및\n개인정보 처리방침에 동의하게 됩니다.</string>
@@ -63,6 +64,7 @@
     <string name="alarm_radius_setting">알람 반경 설정</string>
     <string name="alarm_sound_setting">알람 사운드 설정</string>
     <string name="alarm_default_sound">기본 벨소리</string>
+    <string name="alarm_sound_hint">마이 &gt; 알람 사운드 관리에서 변경</string>
     <string name="alarm_notification_permission_hint">알림 권한이 꺼져 있으면 도착 알람이 화면에 표시되지 않을 수 있어요.</string>
     <string name="alarm_alert_channel_name">도착 알람</string>
     <string name="alarm_alert_channel_description">목적지 반경 진입 시 울리는 도착 알람</string>
@@ -81,15 +83,24 @@
     <string name="alarm_cancel">취소</string>
     <string name="alarm_add">알람 추가</string>
     <string name="alarm_send">알람 보내기</string>
+    <string name="alarm_send_success">알람을 보냈어요.</string>
     <string name="alarm_place_office">성수동 오피스</string>
     <string name="alarm_transfer_center">환승센터</string>
 
     <string name="alarms_title">알람</string>
     <string name="alarm_list_location_prefix">위치 별칭 : %1$s</string>
     <string name="alarm_radius_line">반경 : %1$s</string>
+    <string name="alarm_meta_line">반경 %1$s · %2$s</string>
+    <string name="alarms_summary_active">지금 %1$d개의 알람이 지켜보고 있어요</string>
+    <string name="alarms_summary_none">모든 알람이 꺼져 있어요</string>
+    <string name="alarm_state_on">알람 켜짐</string>
+    <string name="alarm_state_off">알람 꺼짐</string>
     <string name="alarm_active">활성 알람</string>
     <string name="alarm_inactive">지난 알람</string>
     <string name="alarm_empty">아직 저장된 알람이 없습니다.</string>
+    <string name="alarm_empty_title">아직 알람이 없어요</string>
+    <string name="alarm_empty_hint">목적지를 정해두면\n도착할 때 깨워드릴게요</string>
+    <string name="alarm_empty_action">첫 알람 만들기</string>
     <string name="alarm_created_by_me">직접 설정</string>
     <string name="alarm_created_by_friend">친구가 설정</string>
     <string name="alarm_sound_list_title">알람 목록</string>
@@ -104,8 +115,28 @@
     <string name="sound_record">녹음하기</string>
     <string name="record_title">음성 녹음</string>
     <string name="record_time">00:04</string>
+    <string name="sound_section_bundled">기본 제공</string>
+    <string name="sound_section_custom">내 알림음</string>
+    <string name="sound_bundled_empty">res/raw 폴더에 오디오 파일을 추가하면 여기에 표시됩니다</string>
+    <string name="sound_custom_empty">녹음하거나 파일을 가져오면 여기에 쌓입니다</string>
+    <string name="sound_delete">삭제</string>
+    <string name="sound_delete_confirm_title">알림음 삭제</string>
+    <string name="sound_delete_confirm_message">이 알림음을 삭제할까요?</string>
+    <string name="sound_none">선택된 알림음 없음</string>
+    <string name="sound_import_failed">파일을 가져오지 못했습니다</string>
+    <string name="sound_default_bell">기본 벨소리</string>
+    <string name="record_hint">아래 버튼을 눌러 녹음을 시작하세요</string>
+    <string name="record_recording">녹음 중…</string>
+    <string name="record_done">녹음 완료</string>
+    <string name="record_permission_required">녹음하려면 마이크 권한이 필요합니다</string>
+    <string name="record_failed">녹음에 실패했습니다</string>
+    <string name="record_start">녹음 시작</string>
+    <string name="record_stop">정지</string>
+    <string name="record_retry">다시 녹음</string>
 
     <string name="friends_title">친구</string>
+    <string name="friends_subtitle">서로의 도착을 지켜봐 주는 사이예요</string>
+    <string name="friends_refresh">새로고침</string>
     <string name="friends_search">친구 검색</string>
     <string name="friends_section">친구목록</string>
     <string name="friends_add">친구 추가</string>
@@ -114,11 +145,18 @@
     <string name="permission_pending">권한 대기</string>
     <string name="permission_rejected">거절됨</string>
 
-    <string name="profile_title">마이페이지</string>
+    <string name="profile_title">마이</string>
     <string name="profile_name">홍길동</string>
     <string name="profile_email">honggildong@gmail.com</string>
     <string name="profile_setting">설정</string>
-    <string name="profile_support">고객지원</string>
+    <string name="profile_notification">알림 설정</string>
+    <string name="profile_location">위치 권한 관리</string>
+    <string name="profile_sound">알람 사운드 관리</string>
+    <string name="profile_support">고객센터</string>
     <string name="profile_logout">로그아웃</string>
+    <string name="profile_stat_wakeups">깨워드린 횟수</string>
+    <string name="profile_stat_active">활성 알람</string>
+    <string name="profile_stat_friends">지켜봐 주는 친구</string>
+    <string name="profile_version">다왔어 v2.0.0</string>
     <string name="invite_title">초대 처리</string>
 </resources>

@@ -1,36 +1,57 @@
 package com.wakepoint.app.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.WakepointBackground
+import com.wakepoint.app.core.design.WakepointBorder
 import com.wakepoint.app.core.design.WakepointCanvas
+import com.wakepoint.app.core.design.WakepointIconInactive
 import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPrimary
+import com.wakepoint.app.core.design.WakepointPrimaryTint10
 import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
@@ -46,6 +67,10 @@ private object AppRoute {
     const val Auth = "auth"
     const val SignUp = "sign-up"
     const val SoundList = "sound-list"
+
+    /** 특정 알람의 사운드를 편집할 때는 alarmId 를 전달, 전역 기본 사운드는 생략. */
+    fun soundList(alarmId: String? = null): String =
+        if (alarmId.isNullOrBlank()) SoundList else "$SoundList?alarmId=$alarmId"
 }
 
 private enum class MainRoute(
@@ -86,42 +111,22 @@ fun WakepointApp() {
     }
 
     Scaffold(
-        containerColor = WakepointCanvas,
+        containerColor = WakepointBackground,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(containerColor = WakepointCanvas) {
-                    mainRoutes.forEach { item ->
-                        val label = stringResource(item.labelResId)
-                        NavigationBarItem(
-                            selected = currentRoute == item.route,
-                            onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            label = { Text(label) },
-                            icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = label
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = WakepointPrimary,
-                                selectedTextColor = WakepointPrimary,
-                                unselectedIconColor = WakepointInk,
-                                unselectedTextColor = WakepointInk,
-                                indicatorColor = WakepointCanvas,
-                                disabledIconColor = WakepointMuted,
-                                disabledTextColor = WakepointMuted
-                            )
-                        )
+                WakepointTabBar(
+                    items = mainRoutes,
+                    currentRoute = currentRoute,
+                    onSelect = { item ->
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
+                )
             }
         }
     ) { innerPadding ->
@@ -152,7 +157,16 @@ fun WakepointApp() {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(AppRoute.SoundList) {
+            composable(
+                route = "${AppRoute.SoundList}?alarmId={alarmId}",
+                arguments = listOf(
+                    navArgument("alarmId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) {
                 SoundListScreen(onBack = { navController.popBackStack() })
             }
             composable(MainRoute.Home.route) {
@@ -166,7 +180,9 @@ fun WakepointApp() {
             }
             composable(MainRoute.Alarms.route) {
                 AlarmsScreen(
-                    onOpenSoundList = { navController.navigate(AppRoute.SoundList) },
+                    onOpenSoundList = { alarmId ->
+                        navController.navigate(AppRoute.soundList(alarmId))
+                    },
                     onCreateAlarm = {
                         navController.navigate(MainRoute.Home.route) {
                             launchSingleTop = true
@@ -178,9 +194,95 @@ fun WakepointApp() {
             composable(MainRoute.Profile.route) {
                 ProfileScreen(
                     email = authUiState.session?.email.orEmpty(),
+                    onOpenSoundList = { navController.navigate(AppRoute.soundList()) },
                     onLogout = authViewModel::signOut
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun WakepointTabBar(
+    items: List<MainRoute>,
+    currentRoute: String,
+    onSelect: (MainRoute) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(68.dp),
+            shape = RoundedCornerShape(34.dp),
+            color = WakepointCanvas,
+            shadowElevation = 12.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, WakepointBorder)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                items.forEach { item ->
+                    WakepointTabItem(
+                        item = item,
+                        selected = currentRoute == item.route,
+                        onClick = { onSelect(item) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WakepointTabItem(
+    item: MainRoute,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val label = stringResource(item.labelResId)
+    val tint = if (selected) WakepointPrimary else WakepointIconInactive
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(56.dp)
+                .height(30.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(if (selected) WakepointPrimaryTint10 else androidx.compose.ui.graphics.Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = label,
+                tint = tint,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold
+                else androidx.compose.ui.text.font.FontWeight.Medium
+            ),
+            color = tint
+        )
     }
 }

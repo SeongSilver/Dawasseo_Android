@@ -8,14 +8,20 @@ import androidx.compose.ui.graphics.Color
 private val WakepointLightScheme = lightColorScheme(
     primary = WakepointPrimary,
     onPrimary = Color.White,
+    primaryContainer = WakepointPrimaryTint08,
+    onPrimaryContainer = WakepointPrimary,
     secondary = WakepointSuccess,
+    onSecondary = Color.White,
     error = WakepointDanger,
-    background = WakepointCanvas,
+    onError = Color.White,
+    background = WakepointBackground,
     onBackground = WakepointInk,
     surface = WakepointCanvas,
     onSurface = WakepointInk,
     surfaceVariant = WakepointParchment,
-    outline = WakepointBorder
+    onSurfaceVariant = WakepointTextSecondary,
+    outline = WakepointBorder,
+    outlineVariant = WakepointDivider
 )
 
 @Composable

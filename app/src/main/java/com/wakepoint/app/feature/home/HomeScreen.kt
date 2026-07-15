@@ -5,9 +5,12 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Build
 import android.speech.RecognizerIntent
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -55,6 +59,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -74,11 +79,15 @@ import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
+import com.wakepoint.app.core.design.WakepointBorder
 import com.wakepoint.app.core.design.WakepointCanvas
+import com.wakepoint.app.core.design.WakepointIconInactive
+import com.wakepoint.app.core.design.WakepointIconMuted
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
+import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.location.PlaceSearchResult
@@ -207,7 +216,7 @@ fun HomeScreen(
         )
         Box(
             modifier = Modifier
-                .padding(horizontal = 28.dp, vertical = 28.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
                 .fillMaxWidth()
         ) {
             HomeSearchBar(
@@ -234,12 +243,12 @@ fun HomeScreen(
                     permissionLauncher.launch(FOREGROUND_LOCATION_PERMISSIONS)
                 }
             },
-            shape = RoundedCornerShape(14.dp),
+            shape = CircleShape,
             containerColor = WakepointCanvas,
-            contentColor = WakepointInk,
+            contentColor = WakepointPrimary,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 96.dp)
+                .padding(end = 20.dp, bottom = 100.dp)
                 .size(54.dp)
         ) {
             Icon(imageVector = Icons.Rounded.GpsFixed, contentDescription = null)
@@ -275,6 +284,7 @@ fun HomeScreen(
                 radius = uiState.radiusOption,
                 isSaving = uiState.isSavingAlarm,
                 errorMessage = uiState.saveErrorMessage,
+                soundTitle = uiState.selectedSoundTitle,
                 noticeMessage = if (!hasNotificationPermission) {
                     stringResource(R.string.alarm_notification_permission_hint)
                 } else {
@@ -337,6 +347,11 @@ private fun WakepointGoogleMap(
     onMapClick: (LatLng) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val markerIcon = remember {
+        val sizePx = (48 * context.resources.displayMetrics.density).toInt()
+        context.vectorToBitmapDescriptor(R.drawable.logo_point, sizePx)
+    }
     GoogleMap(
         modifier = modifier,
         cameraPositionState = cameraPositionState,
@@ -357,10 +372,20 @@ private fun WakepointGoogleMap(
         Marker(
             state = MarkerState(position = selectedTarget),
             title = stringResource(R.string.home_map_default_marker),
-            icon = BitmapDescriptorFactory.fromResource(R.drawable.logo_point)
+            icon = markerIcon
         )
     }
 }
+
+/** Renders a (vector) drawable resource into a marker BitmapDescriptor. */
+private fun Context.vectorToBitmapDescriptor(resId: Int, sizePx: Int): BitmapDescriptor? = runCatching {
+    val drawable = ContextCompat.getDrawable(this, resId) ?: return@runCatching null
+    val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, sizePx, sizePx)
+    drawable.draw(canvas)
+    BitmapDescriptorFactory.fromBitmap(bitmap)
+}.getOrNull()
 
 @Composable
 fun AlarmSetupSheet(
@@ -374,7 +399,15 @@ fun AlarmSetupSheet(
     isSaving: Boolean = false,
     errorMessage: String? = null,
     noticeMessage: String? = null,
+    soundTitle: String = "기본 벨소리",
     showAddressSearch: Boolean = false,
+    addressQuery: String = "",
+    addressResults: List<PlaceSearchResult> = emptyList(),
+    isSearchingAddress: Boolean = false,
+    addressMessage: String? = null,
+    onAddressQueryChange: (String) -> Unit = {},
+    onAddressSearch: () -> Unit = {},
+    onSelectAddress: (PlaceSearchResult) -> Unit = {},
     onLabelChange: (String) -> Unit = {},
     onRadiusChange: (String) -> Unit = {},
     onPrimaryClick: () -> Unit = {},
@@ -389,20 +422,42 @@ fun AlarmSetupSheet(
     ) {
         Text(
             text = title,
-            color = WakepointPrimary,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            color = WakepointInk,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.align(Alignment.Start)
         )
 
         if (showAddressSearch) {
             SheetSectionLabel(text = stringResource(R.string.alarm_address_search))
-            WakepointTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = stringResource(R.string.alarm_address_hint),
-                leadingIcon = Icons.Rounded.Search
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WakepointTextField(
+                    value = addressQuery,
+                    onValueChange = onAddressQueryChange,
+                    placeholder = stringResource(R.string.alarm_address_hint),
+                    leadingIcon = Icons.Rounded.Search,
+                    modifier = Modifier.weight(1f)
+                )
+                WakepointButton(
+                    text = if (isSearchingAddress) {
+                        stringResource(R.string.place_searching)
+                    } else {
+                        stringResource(R.string.place_search)
+                    },
+                    enabled = !isSearchingAddress && addressQuery.isNotBlank(),
+                    onClick = onAddressSearch,
+                    modifier = Modifier.size(width = 86.dp, height = 56.dp)
+                )
+            }
+            if (addressMessage != null) {
+                Text(
+                    text = addressMessage,
+                    color = WakepointMuted,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            addressResults.forEach { place ->
+                PlaceResultRow(place = place, onClick = { onSelectAddress(place) })
+            }
         }
 
         SheetSectionLabel(text = stringResource(R.string.alarm_location_alias))
@@ -431,15 +486,9 @@ fun AlarmSetupSheet(
 
         SheetSectionLabel(text = stringResource(R.string.alarm_sound_setting))
         SoundOptionRow(
-            title = stringResource(R.string.alarm_default_sound),
-            icon = Icons.Rounded.Notifications,
-            trailing = {
-                Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = null,
-                    tint = WakepointMuted
-                )
-            }
+            title = soundTitle,
+            subtitle = stringResource(R.string.alarm_sound_hint),
+            icon = Icons.Rounded.Notifications
         )
 
         if (noticeMessage != null) {
@@ -499,10 +548,9 @@ private fun PlaceSearchSheet(
     ) {
         Text(
             text = stringResource(R.string.place_search_title),
-            color = WakepointPrimary,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            color = WakepointInk,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.align(Alignment.Start)
         )
         WakepointTextField(
             value = query,
@@ -533,32 +581,40 @@ private fun PlaceSearchSheet(
         }
 
         results.forEach { place ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSelectPlace(place) }
-                    .padding(vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.LocationOn,
-                    contentDescription = null,
-                    tint = WakepointPrimary
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = place.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WakepointInk
-                    )
-                    Text(
-                        text = place.address,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointMuted
-                    )
-                }
-            }
+            PlaceResultRow(place = place, onClick = { onSelectPlace(place) })
+        }
+    }
+}
+
+@Composable
+private fun PlaceResultRow(
+    place: PlaceSearchResult,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.LocationOn,
+            contentDescription = null,
+            tint = WakepointPrimary
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = place.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = WakepointInk
+            )
+            Text(
+                text = place.address,
+                style = MaterialTheme.typography.bodyMedium,
+                color = WakepointMuted
+            )
         }
     }
 }
@@ -573,28 +629,29 @@ private fun HomeSearchBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(8.dp),
+            .height(54.dp),
+        shape = RoundedCornerShape(27.dp),
         color = Color.White,
         tonalElevation = 0.dp,
-        shadowElevation = 2.dp
+        shadowElevation = 8.dp,
+        border = BorderStroke(1.dp, WakepointBorder)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .clickable(onClick = onClick)
-                .padding(start = 16.dp, end = 8.dp),
+                .padding(start = 18.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
                 imageVector = Icons.Rounded.Search,
                 contentDescription = null,
-                tint = WakepointMuted
+                tint = WakepointIconInactive
             )
             Text(
                 text = placeholder,
-                color = WakepointMuted,
+                color = WakepointTextSecondary,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
@@ -602,7 +659,7 @@ private fun HomeSearchBar(
                 Icon(
                     imageVector = Icons.Rounded.Mic,
                     contentDescription = micContentDescription,
-                    tint = WakepointMuted
+                    tint = WakepointIconMuted
                 )
             }
         }
@@ -614,7 +671,7 @@ private fun SheetSectionLabel(text: String) {
     Text(
         text = text,
         color = WakepointInk,
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(top = 4.dp)
     )
 }

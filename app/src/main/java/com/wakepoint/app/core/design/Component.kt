@@ -16,16 +16,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,14 +39,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.wakepoint.app.R
 
+/** Full-width primary CTA — blue, 56dp tall, 16dp radius. */
 @Composable
 fun WakepointButton(
     text: String,
@@ -56,8 +61,14 @@ fun WakepointButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(8.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = WakepointPrimary)
+        shape = RoundedCornerShape(16.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = WakepointPrimary,
+            contentColor = Color.White,
+            disabledContainerColor = WakepointPrimary.copy(alpha = 0.4f),
+            disabledContentColor = Color.White.copy(alpha = 0.8f)
+        )
     ) {
         if (icon != null) {
             Icon(
@@ -71,6 +82,7 @@ fun WakepointButton(
     }
 }
 
+/** Neutral / ghost button — soft grey fill, ink text, 16dp radius. */
 @Composable
 fun WakepointSecondaryButton(
     text: String,
@@ -79,15 +91,17 @@ fun WakepointSecondaryButton(
     enabled: Boolean = true,
     onClick: () -> Unit = {}
 ) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, WakepointBorder),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = WakepointParchment,
-            contentColor = WakepointInk
+        shape = RoundedCornerShape(16.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = WakepointFill,
+            contentColor = WakepointInk,
+            disabledContainerColor = WakepointFill.copy(alpha = 0.5f),
+            disabledContentColor = WakepointTextTertiary
         )
     ) {
         if (icon != null) {
@@ -99,6 +113,33 @@ fun WakepointSecondaryButton(
             Spacer(modifier = Modifier.size(8.dp))
         }
         Text(text = text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** Tinted-blue secondary action (e.g. map "알람 수정하기"). */
+@Composable
+fun WakepointTintButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit = {}
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.height(52.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = WakepointPrimaryTint06,
+            contentColor = WakepointPrimary
+        )
+    ) {
+        if (icon != null) {
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.size(8.dp))
+        }
+        Text(text = text, style = MaterialTheme.typography.labelMedium)
     }
 }
 
@@ -125,28 +166,26 @@ fun WakepointConfirmDialog(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
-                        .background(WakepointPrimary.copy(alpha = 0.1f), CircleShape),
+                        .size(64.dp)
+                        .background(WakepointPrimaryTint10, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "!",
                         color = WakepointPrimary,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.headlineMedium
                     )
                 }
                 Text(
                     text = title,
                     color = WakepointInk,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = message,
-                    color = WakepointMuted,
-                    style = MaterialTheme.typography.bodyLarge,
+                    color = WakepointTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
                 Row(
@@ -169,19 +208,21 @@ fun WakepointConfirmDialog(
     }
 }
 
+/** White card — 24dp radius, hairline border, 20dp inner padding. */
 @Composable
 fun WakepointCard(
     modifier: Modifier = Modifier,
+    contentPadding: Int = 20,
     content: @Composable () -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
         border = BorderStroke(1.dp, WakepointBorder),
         colors = CardDefaults.cardColors(containerColor = WakepointCanvas),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(contentPadding.dp)) {
             content()
         }
     }
@@ -201,8 +242,68 @@ fun StatusPill(
         Text(
             text = text,
             color = color,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
+
+/** Small status dot — green when active, muted grey when off. */
+@Composable
+fun StatusDot(active: Boolean, modifier: Modifier = Modifier, size: Int = 8) {
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .background(
+                color = if (active) WakepointSuccess else WakepointFillHover,
+                shape = CircleShape
+            )
+    )
+}
+
+/** Themed switch matching the prototype toggle. */
+@Composable
+fun WakepointSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        modifier = modifier,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = Color.White,
+            checkedTrackColor = WakepointPrimary,
+            checkedBorderColor = Color.Transparent,
+            uncheckedThumbColor = Color.White,
+            uncheckedTrackColor = WakepointBorder,
+            uncheckedBorderColor = Color.Transparent
+        )
+    )
+}
+
+/** Circular avatar with a coloured background + initial. */
+@Composable
+fun WakepointAvatar(
+    name: String,
+    modifier: Modifier = Modifier,
+    size: Int = 48,
+    background: Color = WakepointPrimaryTint08,
+    foreground: Color = WakepointPrimary
+) {
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .background(background, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = name.take(1).ifBlank { "?" },
+            color = foreground,
+            style = MaterialTheme.typography.titleMedium
         )
     }
 }
@@ -212,12 +313,20 @@ fun WakepointLogo(
     modifier: Modifier = Modifier,
     horizontal: Boolean = true
 ) {
-    val content: @Composable () -> Unit = {
+    val symbolSize = if (horizontal) 30.dp else 56.dp
+    val wordmark: @Composable () -> Unit = {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineMedium,
+            color = WakepointInk
+        )
+    }
+    val symbol: @Composable () -> Unit = {
         Image(
-            painter = painterResource(R.drawable.logo),
+            painter = painterResource(R.drawable.logo_point),
             contentDescription = stringResource(R.string.app_name),
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(width = 112.dp, height = 34.dp)
+            modifier = Modifier.size(symbolSize)
         )
     }
 
@@ -225,21 +334,24 @@ fun WakepointLogo(
         Row(
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            content()
+            symbol()
+            wordmark()
         }
     } else {
         Column(
             modifier = modifier,
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            content()
+            symbol()
+            wordmark()
         }
     }
 }
 
+/** Logo header (kept for map / misc screens). */
 @Composable
 fun WakepointHeader(
     modifier: Modifier = Modifier,
@@ -254,6 +366,68 @@ fun WakepointHeader(
         WakepointLogo()
         Spacer(modifier = Modifier.weight(1f))
         action?.invoke()
+    }
+}
+
+/** Bold page-title header used on tabbed list screens. */
+@Composable
+fun WakepointPageHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    action: @Composable (() -> Unit)? = null
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = if (subtitle == null) 8.dp else 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineLarge,
+                color = WakepointInk,
+                modifier = Modifier.weight(1f)
+            )
+            action?.invoke()
+        }
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = WakepointTextSecondary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+    }
+}
+
+/** Circular icon button used in headers (add / user-plus etc.). */
+@Composable
+fun WakepointCircleIconButton(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    filled: Boolean = false,
+    tint: Color = WakepointInk
+) {
+    Box(
+        modifier = modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(if (filled) WakepointFill else WakepointCanvas)
+            .then(
+                if (filled) Modifier else Modifier.border(1.dp, WakepointBorderStrong, CircleShape)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -276,20 +450,25 @@ fun WakepointTextField(
         onValueChange = onValueChange,
         readOnly = readOnly,
         singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge,
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp),
         placeholder = {
-            Text(text = placeholder, color = WakepointMuted)
+            Text(
+                text = placeholder,
+                color = WakepointTextQuaternary,
+                style = MaterialTheme.typography.bodyLarge
+            )
         },
         leadingIcon = leadingIcon?.let {
             {
                 Icon(
                     imageVector = it,
                     contentDescription = null,
-                    tint = WakepointMuted
+                    tint = WakepointIconInactive
                 )
             }
         },
@@ -298,7 +477,7 @@ fun WakepointTextField(
                 Icon(
                     imageVector = it,
                     contentDescription = trailingIconContentDescription,
-                    tint = WakepointMuted,
+                    tint = WakepointIconMuted,
                     modifier = if (onTrailingIconClick != null) {
                         Modifier.clickable(onClick = onTrailingIconClick)
                     } else {
@@ -307,58 +486,112 @@ fun WakepointTextField(
                 )
             }
         },
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = WakepointBorder,
-            unfocusedBorderColor = WakepointBorder,
-            focusedContainerColor = WakepointCanvas,
-            unfocusedContainerColor = WakepointCanvas,
+            focusedBorderColor = WakepointPrimary,
+            unfocusedBorderColor = Color.Transparent,
+            disabledBorderColor = Color.Transparent,
+            focusedContainerColor = WakepointParchment,
+            unfocusedContainerColor = WakepointParchment,
+            disabledContainerColor = WakepointParchment,
             focusedTextColor = WakepointInk,
-            unfocusedTextColor = WakepointInk
+            unfocusedTextColor = WakepointInk,
+            disabledTextColor = WakepointInk
         )
     )
 }
 
+/** Selectable option row (sounds) — white, bordered, blue when selected. */
 @Composable
 fun SoundOptionRow(
     title: String,
-    subtitle: String? = null,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    selected: Boolean = false,
     trailing: @Composable (() -> Unit)? = null,
     onClick: () -> Unit = {}
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(WakepointParchment)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) WakepointPrimaryTint04 else WakepointCanvas)
+            .border(
+                width = if (selected) 1.5.dp else 1.dp,
+                color = if (selected) WakepointPrimary else WakepointBorderStrong,
+                shape = RoundedCornerShape(16.dp)
+            )
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Surface(
-            modifier = Modifier.size(40.dp),
-            color = WakepointCanvas,
-            shape = CircleShape
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = WakepointPrimary,
-                    modifier = Modifier.size(22.dp)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (selected) WakepointPrimary else WakepointIconMuted,
+            modifier = Modifier.size(22.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                color = WakepointInk
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WakepointTextSecondary
                 )
             }
         }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = WakepointInk)
-            if (subtitle != null) {
-                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = WakepointMuted)
-            }
-        }
         trailing?.invoke()
+    }
+}
+
+/** Grouped settings row inside a card. */
+@Composable
+fun SettingsRow(
+    icon: ImageVector,
+    title: String,
+    modifier: Modifier = Modifier,
+    danger: Boolean = false,
+    showChevron: Boolean = true,
+    onClick: () -> Unit = {}
+) {
+    val color = if (danger) WakepointDanger else WakepointInk
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (danger) WakepointDanger else WakepointIconMuted,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = color,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (showChevron) {
+            Icon(
+                imageVector = Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = WakepointIconLight,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
@@ -372,7 +605,7 @@ fun BottomSheetHandle(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .size(width = 42.dp, height = 5.dp)
                 .clip(CircleShape)
-                .background(WakepointBorder)
+                .background(WakepointBorderStrong)
         )
     }
 }
@@ -384,8 +617,8 @@ fun MapMarkerPreview(modifier: Modifier = Modifier) {
         modifier = modifier
             .size(74.dp)
             .clip(CircleShape)
-            .background(WakepointPrimary.copy(alpha = 0.15f))
-            .border(2.dp, WakepointPrimary.copy(alpha = 0.9f), CircleShape)
+            .background(WakepointPrimaryTint13)
+            .border(1.5.dp, WakepointPrimaryTint35, CircleShape)
             .padding(18.dp)
     ) {
         Image(

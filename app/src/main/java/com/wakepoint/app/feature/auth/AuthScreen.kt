@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.WakepointBorder
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointDanger
@@ -47,6 +49,7 @@ import com.wakepoint.app.core.design.WakepointLogo
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointTextField
+import com.wakepoint.app.core.design.WakepointTextSecondary
 
 @Composable
 fun SplashScreen() {
@@ -54,7 +57,7 @@ fun SplashScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(WakepointCanvas)
-            .padding(horizontal = 24.dp, vertical = 72.dp),
+            .padding(horizontal = 28.dp, vertical = 72.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.weight(1f))
@@ -62,14 +65,16 @@ fun SplashScreen() {
             painter = painterResource(R.drawable.logo_square),
             contentDescription = stringResource(R.string.app_name),
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(128.dp)
+            modifier = Modifier.size(112.dp)
         )
-        Spacer(modifier = Modifier.weight(1.5f))
+        Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = stringResource(R.string.splash_tagline),
-            style = MaterialTheme.typography.bodyMedium,
-            color = WakepointInk
+            style = MaterialTheme.typography.titleMedium,
+            color = WakepointInk,
+            textAlign = TextAlign.Center
         )
+        Spacer(modifier = Modifier.weight(1.5f))
     }
 }
 
@@ -87,22 +92,24 @@ fun AuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
+            .background(WakepointCanvas)
     ) {
         AuthTopBar()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(top = 88.dp, bottom = 28.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(top = 40.dp, bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             WakepointLogo(horizontal = false)
             Text(
                 text = stringResource(R.string.auth_intro),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 color = WakepointInk,
-                modifier = Modifier.padding(top = 28.dp, bottom = 28.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 24.dp, bottom = 28.dp)
             )
             WakepointTextField(
                 value = uiState.loginEmail,
@@ -130,7 +137,9 @@ fun AuthScreen(
                 enabled = !uiState.isSubmitting,
                 onClick = onSignIn
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            OrDivider()
+            Spacer(modifier = Modifier.height(24.dp))
             KakaoLoginButton(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isSubmitting,
@@ -173,6 +182,23 @@ fun AuthScreen(
 }
 
 @Composable
+private fun OrDivider() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        HorizontalDivider(modifier = Modifier.weight(1f), color = WakepointBorder)
+        Text(
+            text = stringResource(R.string.auth_or),
+            style = MaterialTheme.typography.bodySmall,
+            color = WakepointTextSecondary
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f), color = WakepointBorder)
+    }
+}
+
+@Composable
 private fun KakaoLoginButton(
     enabled: Boolean,
     modifier: Modifier = Modifier,
@@ -207,7 +233,7 @@ fun SignUpScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
+            .background(WakepointCanvas)
     ) {
         AuthTopBar(title = stringResource(R.string.signup_title), onBack = onBack)
         Column(
@@ -270,7 +296,7 @@ private fun AuthTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .background(WakepointParchment),
+            .background(WakepointCanvas),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {

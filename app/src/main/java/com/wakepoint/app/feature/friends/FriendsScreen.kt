@@ -37,7 +37,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -48,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,13 +58,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.StatusPill
+import com.wakepoint.app.core.design.WakepointAvatar
+import com.wakepoint.app.core.design.WakepointBackground
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
+import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
-import com.wakepoint.app.core.design.WakepointHeader
+import com.wakepoint.app.core.design.WakepointDivider
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
+import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
@@ -89,27 +96,44 @@ private data class FriendConfirmTarget(
 fun FriendsScreen(
     viewModel: FriendsViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var expandedFriendId by remember { mutableStateOf<String?>(null) }
     var showSearchSheet by remember { mutableStateOf(false) }
-    var showSendAlarm by remember { mutableStateOf(false) }
     var confirmTarget by remember { mutableStateOf<FriendConfirmTarget?>(null) }
+
+    LaunchedEffect(uiState.sendAlarmSucceeded) {
+        if (uiState.sendAlarmSucceeded) {
+            Toast.makeText(
+                context,
+                context.getString(R.string.alarm_send_success),
+                Toast.LENGTH_SHORT
+            ).show()
+            viewModel.consumeSendAlarmSuccess()
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
+            .background(WakepointBackground)
     ) {
         Column {
-            WakepointHeader(
+            WakepointPageHeader(
+                title = stringResource(R.string.friends_title),
+                subtitle = stringResource(R.string.friends_subtitle),
                 action = {
-                    Row {
-                        IconButton(onClick = viewModel::refreshFriends) {
-                            Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)
-                        }
-                        IconButton(onClick = { showSearchSheet = true }) {
-                            Icon(imageVector = Icons.Rounded.GroupAdd, contentDescription = null)
-                        }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WakepointCircleIconButton(
+                            icon = Icons.Rounded.Refresh,
+                            contentDescription = stringResource(R.string.friends_refresh),
+                            onClick = viewModel::refreshFriends
+                        )
+                        WakepointCircleIconButton(
+                            icon = Icons.Rounded.PersonAdd,
+                            contentDescription = stringResource(R.string.friends_add),
+                            onClick = { showSearchSheet = true }
+                        )
                     }
                 }
             )
@@ -117,8 +141,8 @@ fun FriendsScreen(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(bottom = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(top = 8.dp, bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 WakepointTextField(
                     value = "",
@@ -221,7 +245,7 @@ fun FriendsScreen(
                                 onClick = {
                                     expandedFriendId = if (expandedFriendId == friend.id) null else friend.id
                                 },
-                                onSendAlarm = { showSendAlarm = true },
+                                onSendAlarm = { viewModel.openSendAlarm(friend) },
                                 onRequestAlarmPermission = {
                                     viewModel.requestAlarmPermission(friend.otherUserId(uiState.currentUserId))
                                 },
@@ -275,19 +299,37 @@ fun FriendsScreen(
         }
     }
 
-    if (showSendAlarm) {
+    if (uiState.sendAlarmFriend != null) {
+        val friend = uiState.sendAlarmFriend
         ModalBottomSheet(
-            onDismissRequest = { showSendAlarm = false },
+            onDismissRequest = { viewModel.dismissSendAlarm() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
             containerColor = WakepointCanvas
         ) {
             AlarmSetupSheet(
-                title = stringResource(R.string.alarm_send_title),
+                title = friend?.let { "${it.nickname}님에게 알람 보내기" }
+                    ?: stringResource(R.string.alarm_send_title),
                 primaryButton = stringResource(R.string.alarm_send),
+                targetAddress = uiState.selectedTargetAddress,
+                label = uiState.sendAlarmLabel,
+                radius = uiState.sendAlarmRadius,
+                isSaving = uiState.isSendingAlarm,
+                errorMessage = uiState.sendAlarmErrorMessage,
                 showAddressSearch = true,
-                onPrimaryClick = { showSendAlarm = false },
-                onDismiss = { showSendAlarm = false }
+                addressQuery = uiState.addressQuery,
+                addressResults = uiState.addressResults,
+                isSearchingAddress = uiState.isSearchingAddress,
+                addressMessage = uiState.addressMessage,
+                onAddressQueryChange = viewModel::updateAddressQuery,
+                onAddressSearch = viewModel::searchAddress,
+                onSelectAddress = viewModel::selectAddress,
+                onLabelChange = viewModel::updateSendAlarmLabel,
+                onRadiusChange = viewModel::updateSendAlarmRadius,
+                onPrimaryClick = {
+                    viewModel.sendAlarm(context.getString(R.string.alarm_default_label))
+                },
+                onDismiss = { viewModel.dismissSendAlarm() }
             )
         }
     }
@@ -350,8 +392,9 @@ private fun EmptyFriendsCard(onAddFriend: () -> Unit) {
 private fun SectionTitle(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = WakepointInk
+        style = MaterialTheme.typography.titleSmall,
+        color = com.wakepoint.app.core.design.WakepointTextSecondary,
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
     )
 }
 
@@ -520,7 +563,7 @@ private fun FriendCard(
             }
 
             if (expanded) {
-                HorizontalDivider(color = WakepointParchment)
+                HorizontalDivider(color = WakepointDivider)
                 val canSendAlarm = friend.status == FriendStatus.Accepted &&
                     friend.permissionStatus == PermissionStatus.Accepted
                 val canRequestPermission = friend.status == FriendStatus.Accepted &&
@@ -645,8 +688,8 @@ private fun FriendSearchResultRow(
             )
             .clickable(enabled = status == null, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        color = if (selected) WakepointPrimary.copy(alpha = 0.06f) else WakepointParchment,
-        border = BorderStroke(1.dp, Color(0xFFE3E5E8))
+        color = if (selected) WakepointPrimary.copy(alpha = 0.06f) else WakepointCanvas,
+        border = BorderStroke(1.dp, WakepointDivider)
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -738,20 +781,7 @@ private fun FriendStatusPill(
 
 @Composable
 private fun FriendAvatar(profile: UserProfile) {
-    Surface(
-        modifier = Modifier.size(48.dp),
-        shape = CircleShape,
-        color = if (profile.avatarUrl.isNullOrBlank()) Color(0xFFE9EAEC) else Color(0xFFDDE7F8)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = profile.nickname.take(1).ifBlank { "?" },
-                color = WakepointInk,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
+    WakepointAvatar(name = profile.nickname)
 }
 
 private fun Friend.toProfile(): UserProfile = UserProfile(
