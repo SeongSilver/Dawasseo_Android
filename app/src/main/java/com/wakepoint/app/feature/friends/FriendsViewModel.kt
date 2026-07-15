@@ -2,14 +2,23 @@ package com.wakepoint.app.feature.friends
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.friend.AlarmPermissionRequest
 import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.FriendSearchResult
+import com.wakepoint.app.data.location.KakaoLocalRepository
+import com.wakepoint.app.data.location.PlaceSearchResult
+import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.Friend
 import com.wakepoint.app.domain.model.FriendStatus
 import com.wakepoint.app.domain.model.PermissionStatus
+import com.wakepoint.app.domain.model.SoundType
+import com.wakepoint.app.feature.home.DEFAULT_ALARM_RADIUS_OPTION
+import com.wakepoint.app.feature.home.MAX_ALARM_RADIUS_KM
+import com.wakepoint.app.feature.home.MIN_ALARM_RADIUS_KM
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,7 +41,20 @@ data class FriendsUiState(
     val updatingPermissionIds: Set<String> = emptySet(),
     val requestingUserIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
-    val searchMessage: String? = null
+    val searchMessage: String? = null,
+    val sendAlarmFriend: Friend? = null,
+    val sendAlarmLabel: String = "",
+    val sendAlarmRadius: String = DEFAULT_ALARM_RADIUS_OPTION,
+    val addressQuery: String = "",
+    val addressResults: List<PlaceSearchResult> = emptyList(),
+    val isSearchingAddress: Boolean = false,
+    val addressMessage: String? = null,
+    val selectedTargetLat: Double? = null,
+    val selectedTargetLng: Double? = null,
+    val selectedTargetAddress: String = "",
+    val isSendingAlarm: Boolean = false,
+    val sendAlarmErrorMessage: String? = null,
+    val sendAlarmSucceeded: Boolean = false
 ) {
     val acceptedFriends: List<Friend> = friends.filter { it.status == FriendStatus.Accepted }
     val receivedFriendRequests: List<Friend> = friends.filter {
@@ -52,7 +74,9 @@ data class FriendsUiState(
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
     private val friendRepository: FriendRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val alarmRepository: AlarmRepository,
+    private val kakaoLocalRepository: KakaoLocalRepository
 ) : ViewModel() {
     private val transientState = MutableStateFlow(FriendsUiState())
 
@@ -256,6 +280,137 @@ class FriendsViewModel @Inject constructor(
         }
     }
 
+    fun openSendAlarm(friend: Friend) {
+        transientState.update {
+            it.copy(
+                sendAlarmFriend = friend,
+                sendAlarmLabel = "",
+                sendAlarmRadius = DEFAULT_ALARM_RADIUS_OPTION,
+                addressQuery = "",
+                addressResults = emptyList(),
+                isSearchingAddress = false,
+                addressMessage = null,
+                selectedTargetLat = null,
+                selectedTargetLng = null,
+                selectedTargetAddress = "",
+                isSendingAlarm = false,
+                sendAlarmErrorMessage = null,
+                sendAlarmSucceeded = false
+            )
+        }
+    }
+
+    fun dismissSendAlarm() {
+        transientState.update { it.copy(sendAlarmFriend = null) }
+    }
+
+    fun updateSendAlarmLabel(value: String) {
+        transientState.update { it.copy(sendAlarmLabel = value, sendAlarmErrorMessage = null) }
+    }
+
+    fun updateSendAlarmRadius(value: String) {
+        transientState.update { it.copy(sendAlarmRadius = value) }
+    }
+
+    fun updateAddressQuery(value: String) {
+        transientState.update { it.copy(addressQuery = value, addressMessage = null) }
+    }
+
+    fun searchAddress() {
+        val query = transientState.value.addressQuery.trim()
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            transientState.update { it.copy(isSearchingAddress = true, addressMessage = null) }
+            val result = kakaoLocalRepository.searchKeyword(query)
+            transientState.update { current ->
+                result.fold(
+                    onSuccess = { places ->
+                        current.copy(
+                            isSearchingAddress = false,
+                            addressResults = places,
+                            addressMessage = if (places.isEmpty()) "검색 결과가 없습니다." else null
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            isSearchingAddress = false,
+                            addressMessage = error.message ?: "장소 검색에 실패했습니다."
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun selectAddress(place: PlaceSearchResult) {
+        transientState.update {
+            it.copy(
+                selectedTargetLat = place.lat,
+                selectedTargetLng = place.lng,
+                selectedTargetAddress = place.name.ifBlank { place.address }.ifBlank { "선택한 위치" },
+                addressResults = emptyList(),
+                addressQuery = "",
+                sendAlarmErrorMessage = null
+            )
+        }
+    }
+
+    fun sendAlarm(fallbackLabel: String) {
+        val state = transientState.value
+        val friend = state.sendAlarmFriend ?: return
+        val lat = state.selectedTargetLat
+        val lng = state.selectedTargetLng
+        if (lat == null || lng == null) {
+            transientState.update { it.copy(sendAlarmErrorMessage = "먼저 목적지를 검색해 선택해 주세요.") }
+            return
+        }
+        val label = state.sendAlarmLabel.trim().ifBlank { fallbackLabel }
+        viewModelScope.launch {
+            transientState.update {
+                it.copy(
+                    isSendingAlarm = true,
+                    sendAlarmErrorMessage = null,
+                    sendAlarmSucceeded = false
+                )
+            }
+            val result = runCatching {
+                val session = authRepository.requireValidSession()
+                alarmRepository.sendAlarmToFriend(
+                    Alarm(
+                        id = UUID.randomUUID().toString(),
+                        ownerId = friend.otherUserId(session.userId),
+                        createdBy = session.userId,
+                        label = label,
+                        targetLat = lat,
+                        targetLng = lng,
+                        targetAddress = state.selectedTargetAddress,
+                        radiusKm = state.sendAlarmRadius.toRadiusKm(),
+                        isActive = true,
+                        soundType = SoundType.Default,
+                        soundUri = null
+                    )
+                )
+            }
+            transientState.update { current ->
+                result.fold(
+                    onSuccess = {
+                        current.copy(isSendingAlarm = false, sendAlarmSucceeded = true)
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            isSendingAlarm = false,
+                            sendAlarmErrorMessage = error.message ?: "알람 전송에 실패했습니다."
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun consumeSendAlarmSuccess() {
+        transientState.update { it.copy(sendAlarmFriend = null, sendAlarmSucceeded = false) }
+    }
+
     private fun runFriendAction(
         friendshipId: String,
         action: suspend () -> Unit
@@ -318,3 +473,16 @@ class FriendsViewModel @Inject constructor(
 }
 
 private const val MIN_SEARCH_QUERY_LENGTH = 2
+
+private fun Friend.otherUserId(currentUserId: String): String {
+    return if (friendId == currentUserId) userId else friendId
+}
+
+private fun String.toRadiusKm(): Double {
+    val radiusKm = when {
+        endsWith("km") -> removeSuffix("km").toDoubleOrNull() ?: 0.5
+        endsWith("m") -> removeSuffix("m").toDoubleOrNull()?.div(1000.0) ?: 0.5
+        else -> 0.5
+    }
+    return radiusKm.coerceIn(MIN_ALARM_RADIUS_KM, MAX_ALARM_RADIUS_KM)
+}
