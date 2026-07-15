@@ -48,6 +48,13 @@ class DefaultAlarmRepository @Inject constructor(
         syncTracking()
     }
 
+    override suspend fun sendAlarmToFriend(alarm: Alarm) {
+        // The alarm belongs to the friend (owner), so we only persist it remotely.
+        // It must not be cached locally nor drive this device's location tracking.
+        val accessToken = requireAccessToken()
+        insertRemoteAlarm(alarm, accessToken)
+    }
+
     override suspend fun updateAlarm(alarm: Alarm) {
         val accessToken = requireAccessToken()
         patchRemoteAlarm(

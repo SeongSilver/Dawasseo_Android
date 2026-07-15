@@ -11,6 +11,7 @@ import com.wakepoint.app.data.auth.AuthSession
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,6 +28,10 @@ class UserPreferencesDataStore @Inject constructor(
 
     val pushToken: Flow<String?> = dataStore.data.map { preferences ->
         preferences[PUSH_TOKEN]
+    }
+
+    val defaultSoundUri: Flow<String?> = dataStore.data.map { preferences ->
+        preferences[DEFAULT_SOUND_URI]?.takeIf { it.isNotBlank() }
     }
 
     val authSession: Flow<AuthSession?> = combine(
@@ -55,6 +60,18 @@ class UserPreferencesDataStore @Inject constructor(
         }
     }
 
+    suspend fun saveDefaultSoundUri(uri: String) {
+        dataStore.edit { preferences ->
+            if (uri.isBlank()) {
+                preferences.remove(DEFAULT_SOUND_URI)
+            } else {
+                preferences[DEFAULT_SOUND_URI] = uri
+            }
+        }
+    }
+
+    suspend fun currentDefaultSoundUri(): String? = defaultSoundUri.first()
+
     suspend fun saveAuthSession(session: AuthSession) {
         dataStore.edit { preferences ->
             preferences[AUTH_USER_ID] = session.userId
@@ -78,6 +95,7 @@ class UserPreferencesDataStore @Inject constructor(
 
     private companion object {
         val PUSH_TOKEN = stringPreferencesKey("push_token")
+        val DEFAULT_SOUND_URI = stringPreferencesKey("default_sound_uri")
         val AUTH_USER_ID = stringPreferencesKey("auth_user_id")
         val AUTH_EMAIL = stringPreferencesKey("auth_email")
         val AUTH_ACCESS_TOKEN = stringPreferencesKey("auth_access_token")

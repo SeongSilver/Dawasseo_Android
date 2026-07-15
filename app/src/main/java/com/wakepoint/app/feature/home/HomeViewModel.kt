@@ -7,6 +7,7 @@ import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.location.KakaoLocalRepository
 import com.wakepoint.app.data.location.PlaceSearchResult
+import com.wakepoint.app.data.sound.SoundRepository
 import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.SoundType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,17 +28,35 @@ data class HomeUiState(
     val searchQuery: String = "",
     val searchResults: List<PlaceSearchResult> = emptyList(),
     val isSearching: Boolean = false,
-    val searchErrorMessage: String? = null
+    val searchErrorMessage: String? = null,
+    val selectedSoundTitle: String = "기본 벨소리",
+    val selectedSoundUri: String? = null,
+    val selectedSoundIsCustom: Boolean = false
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val authRepository: AuthRepository,
-    private val kakaoLocalRepository: KakaoLocalRepository
+    private val kakaoLocalRepository: KakaoLocalRepository,
+    private val soundRepository: SoundRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            soundRepository.observeSelectedDefaultSound().collect { sound ->
+                _uiState.update { current ->
+                    current.copy(
+                        selectedSoundTitle = sound?.title ?: "기본 벨소리",
+                        selectedSoundUri = sound?.uri,
+                        selectedSoundIsCustom = sound?.soundType == SoundType.Custom
+                    )
+                }
+            }
+        }
+    }
 
     fun updateAlarmLabel(value: String) {
         _uiState.update {
@@ -150,8 +169,8 @@ class HomeViewModel @Inject constructor(
                         targetAddress = targetAddress,
                         radiusKm = state.radiusOption.toRadiusKm(),
                         isActive = true,
-                        soundType = SoundType.Default,
-                        soundUri = null
+                        soundType = if (state.selectedSoundIsCustom) SoundType.Custom else SoundType.Default,
+                        soundUri = state.selectedSoundUri
                     )
                 )
             }

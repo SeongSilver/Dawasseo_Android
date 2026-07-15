@@ -13,6 +13,8 @@ import com.wakepoint.app.data.auth.DefaultAuthRepository
 import com.wakepoint.app.data.friend.DefaultFriendRepository
 import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.local.FriendDao
+import com.wakepoint.app.data.sound.DefaultSoundRepository
+import com.wakepoint.app.data.sound.SoundRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,6 +56,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAuthRepository(repository: DefaultAuthRepository): AuthRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideSoundRepository(repository: DefaultSoundRepository): SoundRepository = repository
 
     @Provides
     @Singleton

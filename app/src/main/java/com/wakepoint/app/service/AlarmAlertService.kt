@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import com.wakepoint.app.core.audio.AlarmAudioPlayer
 import com.wakepoint.app.core.notification.AlarmAlertContract
 import com.wakepoint.app.core.notification.AlarmNotificationManager
 import com.wakepoint.app.core.notification.AlarmVibrationController
@@ -35,6 +36,7 @@ class AlarmAlertService : Service() {
 
         val label = intent?.getStringExtra(AlarmAlertContract.EXTRA_ALARM_LABEL).orEmpty()
         val targetAddress = intent?.getStringExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS).orEmpty()
+        val soundUri = intent?.getStringExtra(AlarmAlertContract.EXTRA_SOUND_URI)
 
         val notification = notificationManager.buildArrivalNotification(
             alarmId = alarmId,
@@ -42,6 +44,7 @@ class AlarmAlertService : Service() {
             targetAddress = targetAddress
         )
         startForeground(AlarmAlertContract.notificationId(alarmId), notification)
+        AlarmAudioPlayer.start(this, soundUri)
         AlarmVibrationController.start(this)
 
         handler.removeCallbacks(stopRunnable)
@@ -51,6 +54,7 @@ class AlarmAlertService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(stopRunnable)
+        AlarmAudioPlayer.stop()
         AlarmVibrationController.stop()
         super.onDestroy()
     }
@@ -59,6 +63,7 @@ class AlarmAlertService : Service() {
 
     private fun stopAlarm() {
         handler.removeCallbacks(stopRunnable)
+        AlarmAudioPlayer.stop()
         AlarmVibrationController.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -72,12 +77,14 @@ class AlarmAlertService : Service() {
             context: Context,
             alarmId: String,
             label: String,
-            targetAddress: String
+            targetAddress: String,
+            soundUri: String?
         ): Intent {
             return Intent(context, AlarmAlertService::class.java).apply {
                 putExtra(AlarmAlertContract.EXTRA_ALARM_ID, alarmId)
                 putExtra(AlarmAlertContract.EXTRA_ALARM_LABEL, label)
                 putExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS, targetAddress)
+                putExtra(AlarmAlertContract.EXTRA_SOUND_URI, soundUri)
             }
         }
 

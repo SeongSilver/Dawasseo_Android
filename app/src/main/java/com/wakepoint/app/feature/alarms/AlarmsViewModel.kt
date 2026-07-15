@@ -3,6 +3,7 @@ package com.wakepoint.app.feature.alarms
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wakepoint.app.data.alarm.AlarmRepository
+import com.wakepoint.app.data.sound.SoundRepository
 import com.wakepoint.app.domain.model.Alarm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -18,6 +19,7 @@ data class AlarmsUiState(
     val alarms: List<Alarm> = emptyList(),
     val isUpdating: Boolean = false,
     val updatingAlarmIds: Set<String> = emptySet(),
+    val soundTitles: Map<String, String> = emptyMap(),
     val errorMessage: String? = null
 ) {
     val activeAlarms: List<Alarm> = alarms.filter { it.isActive }
@@ -26,7 +28,8 @@ data class AlarmsUiState(
 
 @HiltViewModel
 class AlarmsViewModel @Inject constructor(
-    private val alarmRepository: AlarmRepository
+    private val alarmRepository: AlarmRepository,
+    soundRepository: SoundRepository
 ) : ViewModel() {
     private val transientState = MutableStateFlow(
         AlarmsUiState(
@@ -37,9 +40,13 @@ class AlarmsViewModel @Inject constructor(
 
     val uiState: StateFlow<AlarmsUiState> = combine(
         alarmRepository.observeAlarms(),
+        soundRepository.observeSounds(),
         transientState
-    ) { alarms, state ->
-        state.copy(alarms = alarms)
+    ) { alarms, sounds, state ->
+        state.copy(
+            alarms = alarms,
+            soundTitles = sounds.associate { it.uri to it.title }
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
