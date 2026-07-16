@@ -65,7 +65,18 @@
     <string name="alarm_sound_setting">알람 사운드 설정</string>
     <string name="alarm_default_sound">기본 벨소리</string>
     <string name="alarm_sound_hint">마이 &gt; 알람 사운드 관리에서 변경</string>
+    <string name="alarm_sound_toggle">소리</string>
+    <string name="alarm_sound_toggle_hint">알람이 울릴 때 소리 재생</string>
+    <string name="alarm_vibrate_setting">진동</string>
+    <string name="alarm_vibrate_hint">알람이 울릴 때 진동</string>
+    <string name="alarm_favorite">즐겨찾기</string>
+    <string name="alarm_favorite_add">즐겨찾기 추가</string>
+    <string name="alarm_favorite_remove">즐겨찾기 해제</string>
     <string name="alarm_notification_permission_hint">알림 권한이 꺼져 있으면 도착 알람이 화면에 표시되지 않을 수 있어요.</string>
+    <string name="perm_alarm_display_title">알람을 놓치지 않으려면</string>
+    <string name="perm_alarm_display_message">목적지 도착 시 화면이 꺼져 있거나 다른 앱을 사용 중일 때도 알람 화면이 바로 뜨도록 \'다른 앱 위에 표시\'와 \'전체 화면 알림\' 권한을 허용해 주세요.</string>
+    <string name="perm_alarm_display_confirm">권한 설정</string>
+    <string name="perm_alarm_display_later">나중에</string>
     <string name="alarm_alert_channel_name">도착 알람</string>
     <string name="alarm_alert_channel_description">목적지 반경 진입 시 울리는 도착 알람</string>
     <string name="alarm_alert_arrived">목적지에 도착했어요</string>
@@ -103,18 +114,11 @@
     <string name="alarm_empty_action">첫 알람 만들기</string>
     <string name="alarm_created_by_me">직접 설정</string>
     <string name="alarm_created_by_friend">친구가 설정</string>
-    <string name="alarm_sound_list_title">알람 목록</string>
-    <string name="sound_default_1">기본 벨소리 1</string>
-    <string name="sound_default_2">기본 벨소리 2</string>
-    <string name="sound_nature">상쾌한 아침</string>
-    <string name="sound_rhythm">경쾌한 리듬</string>
-    <string name="sound_default_subtitle">기본 제공 사운드</string>
-    <string name="sound_nature_subtitle">자연의 소리</string>
-    <string name="sound_rhythm_subtitle">전자음</string>
     <string name="sound_import">가져오기</string>
     <string name="sound_record">녹음하기</string>
+    <string name="sound_system">기기 알람음</string>
+    <string name="sound_system_picker_title">기기 알람음 선택</string>
     <string name="record_title">음성 녹음</string>
-    <string name="record_time">00:04</string>
     <string name="sound_section_bundled">기본 제공</string>
     <string name="sound_section_custom">내 알림음</string>
     <string name="sound_bundled_empty">res/raw 폴더에 오디오 파일을 추가하면 여기에 표시됩니다</string>
@@ -124,6 +128,7 @@
     <string name="sound_delete_confirm_message">이 알림음을 삭제할까요?</string>
     <string name="sound_none">선택된 알림음 없음</string>
     <string name="sound_import_failed">파일을 가져오지 못했습니다</string>
+    <string name="sound_permission_denied">오디오 파일에 접근하려면 권한을 허용해주세요</string>
     <string name="sound_default_bell">기본 벨소리</string>
     <string name="record_hint">아래 버튼을 눌러 녹음을 시작하세요</string>
     <string name="record_recording">녹음 중…</string>
@@ -141,6 +146,16 @@
     <string name="friends_section">친구목록</string>
     <string name="friends_add">친구 추가</string>
     <string name="friends_send_alarm">알람 보내기</string>
+    <string name="invite_section_title">친구 초대하기</string>
+    <string name="invite_section_hint">아직 다왔어를 쓰지 않는 친구는 초대 링크를 보내보세요</string>
+    <string name="invite_share_kakao">카카오톡으로 공유</string>
+    <string name="invite_copy_link">링크 복사</string>
+    <string name="invite_link">https://play.google.com/store/apps/details?id=com.wakepoint.app</string>
+    <string name="invite_share_subject">다왔어(Wakepoint) 친구 초대</string>
+    <string name="invite_message">다왔어(Wakepoint)에서 목적지 도착 알림을 함께 받아요! 앱을 설치한 뒤 \'%1$s\'(으)로 검색해 친구로 추가해주세요.\n%2$s</string>
+    <string name="invite_message_no_email">다왔어(Wakepoint)에서 목적지 도착 알림을 함께 받아요! 아래 링크에서 앱을 설치해보세요.\n%1$s</string>
+    <string name="invite_link_copied">초대 링크를 복사했어요</string>
+    <string name="invite_kakao_unavailable">카카오톡이 없어 다른 앱으로 공유합니다</string>
     <string name="permission_accepted">대리 설정 가능</string>
     <string name="permission_pending">권한 대기</string>
     <string name="permission_rejected">거절됨</string>
@@ -158,5 +173,9 @@
     <string name="profile_stat_active">활성 알람</string>
     <string name="profile_stat_friends">지켜봐 주는 친구</string>
     <string name="profile_version">다왔어 v2.0.0</string>
-    <string name="invite_title">초대 처리</string>
+    <string name="profile_edit_nickname_title">닉네임 변경</string>
+    <string name="profile_nickname_hint">닉네임</string>
+    <string name="profile_support_email">support@wakepoint.app</string>
+    <string name="profile_support_subject">[다왔어] 문의하기</string>
+    <string name="profile_support_unavailable">메일 앱을 찾을 수 없습니다</string>
 </resources>

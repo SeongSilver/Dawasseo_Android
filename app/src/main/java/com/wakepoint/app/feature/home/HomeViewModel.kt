@@ -3,6 +3,9 @@ package com.wakepoint.app.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
+import com.wakepoint.app.core.error.UserFacingError
+import com.wakepoint.app.core.location.STANDARD_RADIUS_OPTIONS
+import com.wakepoint.app.core.location.radiusOptionToKm
 import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.location.KakaoLocalRepository
@@ -31,7 +34,9 @@ data class HomeUiState(
     val searchErrorMessage: String? = null,
     val selectedSoundTitle: String = "기본 벨소리",
     val selectedSoundUri: String? = null,
-    val selectedSoundIsCustom: Boolean = false
+    val selectedSoundIsCustom: Boolean = false,
+    val soundEnabled: Boolean = true,
+    val vibrate: Boolean = true
 )
 
 @HiltViewModel
@@ -76,6 +81,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun updateVibrate(value: Boolean) {
+        _uiState.update { it.copy(vibrate = value) }
+    }
+
+    fun updateSoundEnabled(value: Boolean) {
+        _uiState.update { it.copy(soundEnabled = value) }
+    }
+
     fun updateSearchQuery(value: String) {
         _uiState.update {
             it.copy(
@@ -107,7 +120,7 @@ class HomeViewModel @Inject constructor(
                     onFailure = { error ->
                         current.copy(
                             isSearching = false,
-                            searchErrorMessage = error.message ?: "장소 검색에 실패했습니다."
+                            searchErrorMessage = UserFacingError.of(error)
                         )
                     }
                 )
@@ -145,7 +158,10 @@ class HomeViewModel @Inject constructor(
         fallbackLabel: String
     ) {
         val state = _uiState.value
-        val label = state.alarmLabel.trim().ifBlank { fallbackLabel }
+        // 별칭을 입력하지 않으면 해당 위치의 건물/도로명 주소를 별칭으로 사용한다.
+        val label = state.alarmLabel.trim()
+            .ifBlank { targetAddress.trim() }
+            .ifBlank { fallbackLabel }
 
         viewModelScope.launch {
             _uiState.update {
@@ -170,7 +186,9 @@ class HomeViewModel @Inject constructor(
                         radiusKm = state.radiusOption.toRadiusKm(),
                         isActive = true,
                         soundType = if (state.selectedSoundIsCustom) SoundType.Custom else SoundType.Default,
-                        soundUri = state.selectedSoundUri
+                        soundUri = state.selectedSoundUri,
+                        soundEnabled = state.soundEnabled,
+                        vibrate = state.vibrate
                     )
                 )
             }
@@ -187,7 +205,7 @@ class HomeViewModel @Inject constructor(
                     onFailure = { error ->
                         current.copy(
                             isSavingAlarm = false,
-                            saveErrorMessage = error.message ?: "알람 저장에 실패했습니다."
+                            saveErrorMessage = UserFacingError.of(error)
                         )
                     }
                 )
@@ -201,22 +219,16 @@ class HomeViewModel @Inject constructor(
 
     fun syncLocationTracking() {
         viewModelScope.launch {
+            // 서버의 최신 알람(친구가 보낸 알람 포함)을 먼저 당겨와 추적 대상에 반영한다.
+            runCatching { alarmRepository.refreshAlarms() }
             alarmRepository.syncLocationTracking()
         }
     }
 }
 
-private fun String.toRadiusKm(): Double {
-    val radiusKm = when {
-        endsWith("km") -> removeSuffix("km").toDoubleOrNull() ?: 0.5
-        endsWith("m") -> removeSuffix("m").toDoubleOrNull()?.div(1000.0) ?: 0.5
-        else -> 0.5
-    }
-    return radiusKm.coerceIn(MIN_ALARM_RADIUS_KM, MAX_ALARM_RADIUS_KM)
-}
+private fun String.toRadiusKm(): Double = radiusOptionToKm(this)
 
 const val DEFAULT_ALARM_RADIUS_OPTION = "500m"
-const val MIN_ALARM_RADIUS_KM = 0.01
-const val MAX_ALARM_RADIUS_KM = 50.0
 
-val ALARM_RADIUS_OPTIONS = listOf("10m", "50m", "100m", "300m", "500m", "1km", "3km", "10km")
+/** 화면들이 참조하는 반경 옵션. 단일 진실 공급원(core/location)에 위임. */
+val ALARM_RADIUS_OPTIONS = STANDARD_RADIUS_OPTIONS

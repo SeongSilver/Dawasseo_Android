@@ -1,7 +1,12 @@
 package com.wakepoint.app.feature.alarms
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -33,6 +40,8 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsNone
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -61,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
@@ -73,6 +83,7 @@ import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
+import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPageHeader
@@ -105,6 +116,11 @@ fun AlarmsScreen(
             stringResource(R.string.alarms_summary_active, uiState.activeAlarms.size)
         else -> stringResource(R.string.alarms_summary_none)
     }
+
+    uiState.errorMessage?.let { message ->
+        WakepointMessageDialog(message = message, onDismiss = viewModel::clearError)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -124,66 +140,48 @@ fun AlarmsScreen(
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp)
                 .padding(top = 8.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val errorMessage = uiState.errorMessage
-            if (errorMessage != null) {
-                Text(
-                    text = errorMessage,
-                    color = WakepointMuted,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
             if (uiState.alarms.isEmpty()) {
                 EmptyAlarmMessage(onCreateAlarm = onCreateAlarm)
             } else {
+                val renderAlarm: @Composable (com.wakepoint.app.domain.model.Alarm) -> Unit = { alarm ->
+                    key(alarm.id) {
+                        AlarmListCard(
+                            alarm = alarm,
+                            soundTitle = alarm.resolveSoundTitle(uiState.soundTitles),
+                            expanded = expandedAlarmId == alarm.id,
+                            isUpdating = alarm.id in uiState.updatingAlarmIds,
+                            onToggleExpanded = {
+                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                            },
+                            onOpenSoundList = { onOpenSoundList(alarm.id) },
+                            onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
+                            onToggleFavorite = { viewModel.setFavorite(alarm.id, !alarm.isFavorite) },
+                            onSave = { updatedAlarm, label, radius, vibrate ->
+                                viewModel.updateAlarmSettings(updatedAlarm, label, radius, vibrate)
+                            },
+                            onDeleteRequest = { deleteTarget = alarm }
+                        )
+                    }
+                }
+
+                if (uiState.favoriteAlarms.isNotEmpty()) {
+                    SectionTitle(text = stringResource(R.string.alarm_favorite))
+                    uiState.favoriteAlarms.forEach { renderAlarm(it) }
+                }
+
                 if (uiState.activeAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_active))
-                    uiState.activeAlarms.forEach { alarm ->
-                        key(alarm.id) {
-                            AlarmListCard(
-                                alarm = alarm,
-                                soundTitle = alarm.resolveSoundTitle(uiState.soundTitles),
-                                expanded = expandedAlarmId == alarm.id,
-                                isUpdating = alarm.id in uiState.updatingAlarmIds,
-                                onToggleExpanded = {
-                                    expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
-                                },
-                                onOpenSoundList = { onOpenSoundList(alarm.id) },
-                                onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                                onSave = { updatedAlarm, label, radius ->
-                                    viewModel.updateAlarmSettings(updatedAlarm, label, radius)
-                                },
-                                onDeleteRequest = { deleteTarget = alarm }
-                            )
-                        }
-                    }
+                    uiState.activeAlarms.forEach { renderAlarm(it) }
                 }
 
                 if (uiState.inactiveAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_inactive))
-                    uiState.inactiveAlarms.forEach { alarm ->
-                        key(alarm.id) {
-                            AlarmListCard(
-                                alarm = alarm,
-                                soundTitle = alarm.resolveSoundTitle(uiState.soundTitles),
-                                expanded = expandedAlarmId == alarm.id,
-                                isUpdating = alarm.id in uiState.updatingAlarmIds,
-                                onToggleExpanded = {
-                                    expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
-                                },
-                                onOpenSoundList = { onOpenSoundList(alarm.id) },
-                                onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                                onSave = { updatedAlarm, label, radius ->
-                                    viewModel.updateAlarmSettings(updatedAlarm, label, radius)
-                                },
-                                onDeleteRequest = { deleteTarget = alarm }
-                            )
-                        }
-                    }
+                    uiState.inactiveAlarms.forEach { renderAlarm(it) }
                 }
             }
         }
@@ -216,7 +214,8 @@ private fun AlarmListCard(
     onToggleExpanded: () -> Unit,
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
-    onSave: (Alarm, String, String) -> Unit,
+    onToggleFavorite: () -> Unit,
+    onSave: (Alarm, String, String, Boolean) -> Unit,
     onDeleteRequest: () -> Unit
 ) {
     if (expanded) {
@@ -227,6 +226,7 @@ private fun AlarmListCard(
             onToggleExpanded = onToggleExpanded,
             onOpenSoundList = onOpenSoundList,
             onActiveChange = onActiveChange,
+            onToggleFavorite = onToggleFavorite,
             onSave = onSave,
             onDelete = onDeleteRequest
         )
@@ -236,7 +236,22 @@ private fun AlarmListCard(
             soundTitle = soundTitle,
             isUpdating = isUpdating,
             onToggleExpanded = onToggleExpanded,
-            onActiveChange = onActiveChange
+            onActiveChange = onActiveChange,
+            onToggleFavorite = onToggleFavorite
+        )
+    }
+}
+
+@Composable
+private fun FavoriteStarButton(isFavorite: Boolean, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(32.dp)) {
+        Icon(
+            imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+            contentDescription = stringResource(
+                if (isFavorite) R.string.alarm_favorite_remove else R.string.alarm_favorite_add
+            ),
+            tint = if (isFavorite) WakepointPrimary else WakepointMuted,
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -249,11 +264,13 @@ private fun EditableAlarmCard(
     onToggleExpanded: () -> Unit,
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
-    onSave: (Alarm, String, String) -> Unit,
+    onToggleFavorite: () -> Unit,
+    onSave: (Alarm, String, String, Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     var radius by remember(alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
     var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
+    var vibrate by remember(alarm.id, alarm.vibrate) { mutableStateOf(alarm.vibrate) }
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(
@@ -269,11 +286,7 @@ private fun EditableAlarmCard(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(1f)
                 )
-                Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = null,
-                    tint = WakepointMuted
-                )
+                FavoriteStarButton(isFavorite = alarm.isFavorite, onClick = onToggleFavorite)
                 WakepointSwitch(
                     checked = alarm.isActive,
                     onCheckedChange = onActiveChange,
@@ -306,11 +319,29 @@ private fun EditableAlarmCard(
                 },
                 onClick = onOpenSoundList
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    SectionLabel(text = stringResource(R.string.alarm_vibrate_setting))
+                    Text(
+                        text = stringResource(R.string.alarm_vibrate_hint),
+                        color = WakepointTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                WakepointSwitch(
+                    checked = vibrate,
+                    onCheckedChange = { vibrate = it },
+                    enabled = !isUpdating
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 WakepointButton(
                     text = stringResource(R.string.alarm_save),
                     enabled = !isUpdating,
-                    onClick = { onSave(alarm, label, radius) },
+                    onClick = { onSave(alarm, label, radius, vibrate) },
                     modifier = Modifier.weight(1f)
                 )
                 WakepointSecondaryButton(
@@ -330,7 +361,8 @@ private fun CompactAlarmCard(
     soundTitle: String,
     isUpdating: Boolean,
     onToggleExpanded: () -> Unit,
-    onActiveChange: (Boolean) -> Unit
+    onActiveChange: (Boolean) -> Unit,
+    onToggleFavorite: () -> Unit
 ) {
     val radiusLabel = if (alarm.radiusKm < 1.0) {
         "${(alarm.radiusKm * 1000).toInt()}m"
@@ -371,6 +403,7 @@ private fun CompactAlarmCard(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
+            FavoriteStarButton(isFavorite = alarm.isFavorite, onClick = onToggleFavorite)
             WakepointSwitch(
                 checked = alarm.isActive,
                 onCheckedChange = onActiveChange,
@@ -447,10 +480,26 @@ fun SoundListScreen(
         onDispose { viewModel.stopPreview() }
     }
 
+    val permissionDeniedMessage = stringResource(R.string.sound_permission_denied)
+    val audioReadPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_AUDIO
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) viewModel.importSound(uri)
+    }
+    val importPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            importLauncher.launch(AUDIO_MIME_TYPES)
+        } else {
+            viewModel.reportError(permissionDeniedMessage)
+        }
     }
     val recordPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -468,6 +517,44 @@ fun SoundListScreen(
         } else {
             recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
+    }
+
+    fun requestImportSound() {
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            audioReadPermission
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            importLauncher.launch(AUDIO_MIME_TYPES)
+        } else {
+            importPermissionLauncher.launch(audioReadPermission)
+        }
+    }
+
+    val systemSoundPickerTitle = stringResource(R.string.sound_system_picker_title)
+    val systemSoundLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val picked = result.data?.let { data ->
+                IntentCompat.getParcelableExtra(
+                    data,
+                    RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+                    Uri::class.java
+                )
+            }
+            if (picked != null) viewModel.addSystemSound(picked)
+        }
+    }
+
+    fun openSystemSoundPicker() {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, systemSoundPickerTitle)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+        }
+        runCatching { systemSoundLauncher.launch(intent) }
     }
 
     Column(
@@ -553,25 +640,34 @@ fun SoundListScreen(
                 }
             }
         }
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(WakepointCanvas)
+                .navigationBarsPadding()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             WakepointSecondaryButton(
-                text = stringResource(R.string.sound_import),
-                icon = Icons.Rounded.FileDownload,
-                onClick = { importLauncher.launch(arrayOf("audio/*")) },
-                modifier = Modifier.weight(1f)
+                text = stringResource(R.string.sound_system),
+                icon = Icons.Rounded.Alarm,
+                onClick = { openSystemSoundPicker() },
+                modifier = Modifier.fillMaxWidth()
             )
-            WakepointButton(
-                text = stringResource(R.string.sound_record),
-                icon = Icons.Rounded.Mic,
-                onClick = { viewModel.openRecordSheet() },
-                modifier = Modifier.weight(1f)
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                WakepointSecondaryButton(
+                    text = stringResource(R.string.sound_import),
+                    icon = Icons.Rounded.FileDownload,
+                    onClick = { requestImportSound() },
+                    modifier = Modifier.weight(1f)
+                )
+                WakepointButton(
+                    text = stringResource(R.string.sound_record),
+                    icon = Icons.Rounded.Mic,
+                    onClick = { viewModel.openRecordSheet() },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 
@@ -653,6 +749,7 @@ private fun AlarmSound.iconVector(): ImageVector = when (kind) {
     SoundKind.Bundled -> Icons.Rounded.Notifications
     SoundKind.Recorded -> Icons.Rounded.GraphicEq
     SoundKind.Imported -> Icons.Rounded.AudioFile
+    SoundKind.System -> Icons.Rounded.Alarm
 }
 
 @Composable
@@ -785,3 +882,6 @@ private fun Double.toRadiusOption(): String {
 /** 알람에 저장된 사운드 URI를 사람이 읽을 수 있는 이름으로 변환. 없으면 기본 벨소리. */
 private fun Alarm.resolveSoundTitle(titles: Map<String, String>): String =
     soundUri?.let { titles[it] } ?: "기본 벨소리"
+
+/** 오디오 파일 선택기에서 허용할 MIME 타입. */
+private val AUDIO_MIME_TYPES = arrayOf("audio/*")

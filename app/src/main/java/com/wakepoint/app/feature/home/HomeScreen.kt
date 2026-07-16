@@ -3,11 +3,14 @@ package com.wakepoint.app.feature.home
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -21,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -76,6 +80,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
+import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
@@ -89,11 +94,15 @@ import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
+import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.location.PlaceSearchResult
 import java.util.Locale
 
 private val DefaultMapTarget = LatLng(37.5665, 126.9780)
+
+/** 떠 있는 하단 탭 바가 차지하는 높이(시스템 내비게이션 바 제외). 하단 컨트롤을 탭 바 위로 올리는 데 사용. */
+private val BOTTOM_TAB_CLEARANCE = 92.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,7 +257,8 @@ fun HomeScreen(
             contentColor = WakepointPrimary,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 100.dp)
+                .navigationBarsPadding()
+                .padding(end = 20.dp, bottom = 100.dp + BOTTOM_TAB_CLEARANCE)
                 .size(54.dp)
         ) {
             Icon(imageVector = Icons.Rounded.GpsFixed, contentDescription = null)
@@ -259,11 +269,13 @@ fun HomeScreen(
                 if (!hasNotificationPermission && context.requiresPostNotificationPermission()) {
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
+                context.ensureFullScreenAlarmPermission()
                 showAlarmSheet = true
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .navigationBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 18.dp + BOTTOM_TAB_CLEARANCE)
                 .fillMaxWidth()
         )
     }
@@ -285,6 +297,8 @@ fun HomeScreen(
                 isSaving = uiState.isSavingAlarm,
                 errorMessage = uiState.saveErrorMessage,
                 soundTitle = uiState.selectedSoundTitle,
+                soundEnabled = uiState.soundEnabled,
+                vibrate = uiState.vibrate,
                 noticeMessage = if (!hasNotificationPermission) {
                     stringResource(R.string.alarm_notification_permission_hint)
                 } else {
@@ -292,6 +306,8 @@ fun HomeScreen(
                 },
                 onLabelChange = viewModel::updateAlarmLabel,
                 onRadiusChange = viewModel::updateRadiusOption,
+                onSoundEnabledChange = viewModel::updateSoundEnabled,
+                onVibrateChange = viewModel::updateVibrate,
                 onPrimaryClick = {
                     viewModel.saveAlarm(
                         target = selectedTarget,
@@ -348,14 +364,22 @@ private fun WakepointGoogleMap(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val markerIcon = remember {
-        val sizePx = (48 * context.resources.displayMetrics.density).toInt()
-        context.vectorToBitmapDescriptor(R.drawable.logo_point, sizePx)
-    }
+    // 커스텀 마커 아이콘은 Maps SDK 초기화가 끝난 뒤(onMapLoaded)에 생성한다.
+    // 초기화 전에 만들면 BitmapDescriptorFactory 가 실패해 기본(빨간) 핀으로 폴백되기 때문.
+    var markerIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    val markerState = remember { MarkerState(position = selectedTarget) }
+    LaunchedEffect(selectedTarget) { markerState.position = selectedTarget }
+
     GoogleMap(
         modifier = modifier,
         cameraPositionState = cameraPositionState,
         onMapClick = onMapClick,
+        onMapLoaded = {
+            if (markerIcon == null) {
+                val sizePx = (48 * context.resources.displayMetrics.density).toInt()
+                markerIcon = context.vectorToBitmapDescriptor(R.drawable.logo_point, sizePx)
+            }
+        },
         properties = MapProperties(
             isBuildingEnabled = true,
             isTrafficEnabled = false,
@@ -369,16 +393,22 @@ private fun WakepointGoogleMap(
             zoomControlsEnabled = false
         )
     ) {
-        Marker(
-            state = MarkerState(position = selectedTarget),
-            title = stringResource(R.string.home_map_default_marker),
-            icon = markerIcon
-        )
+        // 우리 심볼 아이콘이 준비된 뒤에만 마커를 그린다 → 기본 빨간 핀이 절대 노출되지 않음.
+        markerIcon?.let { icon ->
+            Marker(
+                state = markerState,
+                title = stringResource(R.string.home_map_default_marker),
+                icon = icon,
+                anchor = androidx.compose.ui.geometry.Offset(0.5f, 1f)
+            )
+        }
     }
 }
 
 /** Renders a (vector) drawable resource into a marker BitmapDescriptor. */
 private fun Context.vectorToBitmapDescriptor(resId: Int, sizePx: Int): BitmapDescriptor? = runCatching {
+    // 혹시 초기화 전이라도 안전하도록 명시적으로 초기화.
+    com.google.android.gms.maps.MapsInitializer.initialize(this)
     val drawable = ContextCompat.getDrawable(this, resId) ?: return@runCatching null
     val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
@@ -400,6 +430,8 @@ fun AlarmSetupSheet(
     errorMessage: String? = null,
     noticeMessage: String? = null,
     soundTitle: String = "기본 벨소리",
+    soundEnabled: Boolean? = null,
+    vibrate: Boolean? = null,
     showAddressSearch: Boolean = false,
     addressQuery: String = "",
     addressResults: List<PlaceSearchResult> = emptyList(),
@@ -410,6 +442,8 @@ fun AlarmSetupSheet(
     onSelectAddress: (PlaceSearchResult) -> Unit = {},
     onLabelChange: (String) -> Unit = {},
     onRadiusChange: (String) -> Unit = {},
+    onSoundEnabledChange: (Boolean) -> Unit = {},
+    onVibrateChange: (Boolean) -> Unit = {},
     onPrimaryClick: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
@@ -420,12 +454,7 @@ fun AlarmSetupSheet(
             .padding(bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Text(
-            text = title,
-            color = WakepointInk,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.Start)
-        )
+        BottomSheetTitle(title = title)
 
         if (showAddressSearch) {
             SheetSectionLabel(text = stringResource(R.string.alarm_address_search))
@@ -484,12 +513,53 @@ fun AlarmSetupSheet(
             onSelected = onRadiusChange
         )
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_sound_setting))
-        SoundOptionRow(
-            title = soundTitle,
-            subtitle = stringResource(R.string.alarm_sound_hint),
-            icon = Icons.Rounded.Notifications
-        )
+        if (soundEnabled != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    SheetSectionLabel(text = stringResource(R.string.alarm_sound_toggle))
+                    Text(
+                        text = stringResource(R.string.alarm_sound_toggle_hint),
+                        color = WakepointTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                WakepointSwitch(checked = soundEnabled, onCheckedChange = onSoundEnabledChange)
+            }
+            if (soundEnabled) {
+                SoundOptionRow(
+                    title = soundTitle,
+                    subtitle = stringResource(R.string.alarm_sound_hint),
+                    icon = Icons.Rounded.Notifications
+                )
+            }
+        } else {
+            SheetSectionLabel(text = stringResource(R.string.alarm_sound_setting))
+            SoundOptionRow(
+                title = soundTitle,
+                subtitle = stringResource(R.string.alarm_sound_hint),
+                icon = Icons.Rounded.Notifications
+            )
+        }
+
+        if (vibrate != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    SheetSectionLabel(text = stringResource(R.string.alarm_vibrate_setting))
+                    Text(
+                        text = stringResource(R.string.alarm_vibrate_hint),
+                        color = WakepointTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                WakepointSwitch(checked = vibrate, onCheckedChange = onVibrateChange)
+            }
+        }
 
         if (noticeMessage != null) {
             Text(
@@ -546,12 +616,7 @@ private fun PlaceSearchSheet(
             .padding(bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(
-            text = stringResource(R.string.place_search_title),
-            color = WakepointInk,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.Start)
-        )
+        BottomSheetTitle(title = stringResource(R.string.place_search_title))
         WakepointTextField(
             value = query,
             onValueChange = onQueryChange,
@@ -704,6 +769,40 @@ private fun Context.hasPostNotificationPermission(): Boolean {
             this,
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
+}
+
+/**
+ * 실제 알람처럼 도착 시 알람 화면이 즉시 뜨도록 필요한 특수 권한을 확인/요청한다.
+ * 두 권한은 시스템 설정 화면으로 각각 이동해야 해서, 한 번에 하나씩만 안내한다.
+ *
+ * 1) 전체화면 알림 권한(Android 14+): 없으면 도착 알림이 헤드업으로만 표시됨.
+ * 2) 다른 앱 위에 표시(SYSTEM_ALERT_WINDOW): 백그라운드/다른 앱 사용 중에도
+ *    알람 화면을 곧바로 실행하기 위한 백그라운드 액티비티 시작 예외.
+ */
+private fun Context.ensureFullScreenAlarmPermission() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        if (notificationManager != null && !notificationManager.canUseFullScreenIntent()) {
+            runCatching {
+                startActivity(
+                    Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
+                        .setData(Uri.fromParts("package", packageName, null))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
+            return
+        }
+    }
+
+    if (!Settings.canDrawOverlays(this)) {
+        runCatching {
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                    .setData(Uri.fromParts("package", packageName, null))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
 }
 
 private fun FusedLocationProviderClient.fetchCurrentLocation(
