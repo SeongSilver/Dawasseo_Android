@@ -26,7 +26,9 @@ object AlarmAudioPlayer {
         stop()
 
         val uri = resolveUri(context, soundUri) ?: run {
-            Log.w(TAG, "재생 가능한 알람 사운드를 찾지 못했습니다.")
+            // 지정된 사운드를 찾을 수 없으면(예: 다른 기기에서 만들어진 로컬 파일 경로) 무음 대신 기본 벨소리로 폴백.
+            Log.w(TAG, "재생 가능한 알람 사운드를 찾지 못해 기본 벨소리로 폴백합니다.")
+            playFallback(context)
             return
         }
 

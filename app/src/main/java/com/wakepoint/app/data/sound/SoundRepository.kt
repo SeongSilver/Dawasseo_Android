@@ -17,6 +17,9 @@ interface SoundRepository {
     /** 기기에서 오디오 파일을 가져와 내부 저장소에 복사. */
     suspend fun importSound(uri: Uri): Result<AlarmSound>
 
+    /** 기기(시스템) 알람음을 카탈로그에 추가. */
+    suspend fun addSystemSound(uri: String): Result<AlarmSound>
+
     /** 녹음을 시작(임시 파일에 기록). */
     fun startRecording(): Result<Unit>
 

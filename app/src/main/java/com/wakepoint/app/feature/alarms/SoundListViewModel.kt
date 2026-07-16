@@ -177,6 +177,17 @@ class SoundListViewModel @Inject constructor(
         }
     }
 
+    /** 기기 시스템 알람음을 카탈로그에 추가하고 곧바로 선택한다. */
+    fun addSystemSound(uri: Uri) {
+        viewModelScope.launch {
+            soundRepository.addSystemSound(uri.toString())
+                .onSuccess { sound -> selectSound(sound) }
+                .onFailure { error ->
+                    transientState.update { it.copy(errorMessage = error.message) }
+                }
+        }
+    }
+
     fun deleteSound(sound: AlarmSound) {
         viewModelScope.launch {
             val result = soundRepository.deleteSound(sound)
@@ -188,6 +199,10 @@ class SoundListViewModel @Inject constructor(
 
     fun consumeError() {
         transientState.update { it.copy(errorMessage = null) }
+    }
+
+    fun reportError(message: String) {
+        transientState.update { it.copy(errorMessage = message) }
     }
 
     fun stopPreview() {

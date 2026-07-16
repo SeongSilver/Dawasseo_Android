@@ -3,6 +3,7 @@ package com.wakepoint.app.data.sound
 import android.content.Context
 import android.database.Cursor
 import android.media.MediaRecorder
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
@@ -41,7 +42,9 @@ class DefaultSoundRepository @Inject constructor(
     private val refreshTrigger = MutableStateFlow(0)
 
     override fun observeSounds(): Flow<List<AlarmSound>> {
-        return refreshTrigger.map { loadAllSounds() }
+        return combine(refreshTrigger, userPreferences.systemSounds) { _, systemSounds ->
+            loadBundledSounds() + systemSounds.toAlarmSounds() + loadCustomSounds()
+        }
     }
 
     override fun observeSelectedDefaultSound(): Flow<AlarmSound?> {
@@ -63,6 +66,15 @@ class DefaultSoundRepository @Inject constructor(
             } ?: error("오디오 파일을 열 수 없습니다.")
             refreshTrigger.value += 1
             target.toAlarmSound()
+        }
+    }
+
+    override suspend fun addSystemSound(uri: String): Result<AlarmSound> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(uri.isNotBlank()) { "선택한 알람음을 확인할 수 없습니다." }
+            val title = resolveRingtoneTitle(uri).ifBlank { "기기 알람음" }
+            userPreferences.addSystemSound(uri, title)
+            systemSound(uri, title)
         }
     }
 
@@ -121,9 +133,13 @@ class DefaultSoundRepository @Inject constructor(
     override suspend fun deleteSound(sound: AlarmSound): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
             check(sound.kind != SoundKind.Bundled) { "기본 제공 사운드는 삭제할 수 없습니다." }
-            val file = File(sound.uri)
-            if (file.exists() && !file.delete()) {
-                error("사운드 파일을 삭제하지 못했습니다.")
+            if (sound.kind == SoundKind.System) {
+                userPreferences.removeSystemSound(sound.uri)
+            } else {
+                val file = File(sound.uri)
+                if (file.exists() && !file.delete()) {
+                    error("사운드 파일을 삭제하지 못했습니다.")
+                }
             }
             // 삭제한 사운드가 기본값이었다면 기본값 선택을 해제.
             if (userPreferences.currentDefaultSoundUri() == sound.uri) {
@@ -133,9 +149,20 @@ class DefaultSoundRepository @Inject constructor(
         }
     }
 
-    private fun loadAllSounds(): List<AlarmSound> {
-        return loadBundledSounds() + loadCustomSounds()
-    }
+    private fun List<Pair<String, String>>.toAlarmSounds(): List<AlarmSound> =
+        map { (uri, title) -> systemSound(uri, title) }
+
+    private fun systemSound(uri: String, title: String): AlarmSound = AlarmSound(
+        id = "$SYSTEM_PREFIX$uri",
+        title = title.ifBlank { "기기 알람음" },
+        subtitle = "기기 알람음",
+        uri = uri,
+        kind = SoundKind.System
+    )
+
+    private fun resolveRingtoneTitle(uri: String): String = runCatching {
+        RingtoneManager.getRingtone(context, Uri.parse(uri))?.getTitle(context).orEmpty()
+    }.getOrDefault("")
 
     private fun loadBundledSounds(): List<AlarmSound> {
         val rawClass = runCatching {
@@ -225,6 +252,7 @@ class DefaultSoundRepository @Inject constructor(
         const val RECORDED_PREFIX = "rec_"
         const val RECORDED_EXTENSION = ".m4a"
         const val IMPORTED_PREFIX = "imp_"
+        const val SYSTEM_PREFIX = "system_"
         const val NAME_SEPARATOR = "__"
 
         val recordingDateFormat = SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.KOREA)

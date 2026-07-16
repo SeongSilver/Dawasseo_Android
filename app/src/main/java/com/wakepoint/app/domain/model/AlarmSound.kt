@@ -27,5 +27,8 @@ enum class SoundKind {
     Recorded,
 
     /** 사용자가 기기에서 가져온 오디오 파일. */
-    Imported
+    Imported,
+
+    /** 기기에 내장된 시스템 알람음(RingtoneManager). */
+    System
 }
