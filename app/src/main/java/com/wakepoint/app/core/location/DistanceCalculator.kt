@@ -9,8 +9,6 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 private const val EARTH_RADIUS_KM = 6371.0
-const val MIN_RADIUS_KM = 0.1
-const val MAX_RADIUS_KM = 50.0
 
 fun calculateDistance(
     startLat: Double,

@@ -1,6 +1,8 @@
 package com.wakepoint.app.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,11 +10,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,10 +27,10 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,9 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -56,6 +63,9 @@ import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
 import com.wakepoint.app.feature.auth.AuthViewModel
+import com.wakepoint.app.core.permission.AlarmDisplayPermissionGate
+import com.wakepoint.app.core.permission.StartupPermissionRequester
+import com.wakepoint.app.core.sync.AppSyncViewModel
 import com.wakepoint.app.feature.auth.SignUpScreen
 import com.wakepoint.app.feature.auth.SplashScreen
 import com.wakepoint.app.feature.friends.FriendsScreen
@@ -94,6 +104,24 @@ fun WakepointApp() {
     val currentRoute = backStackEntry?.destination?.route ?: MainRoute.Home.route
     val showBottomBar = mainRoutes.any { it.route == currentRoute }
 
+    // 앱 초기 실행 시 필요한 권한을 한 번에 요청 (미허용분은 기능 사용 시점에 재요청)
+    StartupPermissionRequester()
+    // 로그인 후, 도착 알람이 즉시 전체화면으로 뜨도록 특수 권한을 1회 안내
+    AlarmDisplayPermissionGate(enabled = authUiState.isAuthenticated && showBottomBar)
+
+    // 앱이 포그라운드로 돌아올 때 서버의 최신 알람(친구 발신/타 기기)을 로컬에 반영
+    val appSyncViewModel: AppSyncViewModel = hiltViewModel()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, authUiState.isAuthenticated) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && authUiState.isAuthenticated) {
+                appSyncViewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     LaunchedEffect(authUiState.isCheckingSession, authUiState.isAuthenticated) {
         if (!authUiState.isCheckingSession) {
             val targetRoute = if (authUiState.isAuthenticated) {
@@ -110,30 +138,21 @@ fun WakepointApp() {
         }
     }
 
-    Scaffold(
-        containerColor = WakepointBackground,
-        bottomBar = {
-            if (showBottomBar) {
-                WakepointTabBar(
-                    items = mainRoutes,
-                    currentRoute = currentRoute,
-                    onSelect = { item ->
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WakepointBackground)
+    ) {
         NavHost(
             navController = navController,
             startDestination = AppRoute.Splash,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
         ) {
             composable(AppRoute.Splash) { SplashScreen() }
             composable(AppRoute.Auth) {
@@ -143,7 +162,9 @@ fun WakepointApp() {
                     onLoginPasswordChange = authViewModel::updateLoginPassword,
                     onSignIn = authViewModel::signIn,
                     onKakaoLogin = authViewModel::kakaoOAuthUrl,
-                    onSignUp = { navController.navigate(AppRoute.SignUp) }
+                    onSignUp = { navController.navigate(AppRoute.SignUp) },
+                    onForgotPassword = authViewModel::sendPasswordReset,
+                    onDismissMessage = authViewModel::consumeMessage
                 )
             }
             composable(AppRoute.SignUp) {
@@ -154,7 +175,8 @@ fun WakepointApp() {
                     onPasswordConfirmChange = authViewModel::updateSignUpPasswordConfirm,
                     onNameChange = authViewModel::updateSignUpName,
                     onSubmit = authViewModel::signUp,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onDismissMessage = authViewModel::consumeMessage
                 )
             }
             composable(
@@ -193,11 +215,27 @@ fun WakepointApp() {
             composable(MainRoute.Friends.route) { FriendsScreen() }
             composable(MainRoute.Profile.route) {
                 ProfileScreen(
-                    email = authUiState.session?.email.orEmpty(),
                     onOpenSoundList = { navController.navigate(AppRoute.soundList()) },
                     onLogout = authViewModel::signOut
                 )
             }
+        }
+
+        if (showBottomBar) {
+            WakepointTabBar(
+                items = mainRoutes,
+                currentRoute = currentRoute,
+                onSelect = { item ->
+                    navController.navigate(item.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }
@@ -206,10 +244,11 @@ fun WakepointApp() {
 private fun WakepointTabBar(
     items: List<MainRoute>,
     currentRoute: String,
-    onSelect: (MainRoute) -> Unit
+    onSelect: (MainRoute) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(horizontal = 20.dp, vertical = 12.dp),

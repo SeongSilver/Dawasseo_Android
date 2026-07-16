@@ -610,6 +610,38 @@ fun BottomSheetHandle(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Standard header for bottom sheets. Uses the title (not headline) type scale and adds
+ * breathing room below the drag handle, matching 2026 sheet patterns (e.g. Toss):
+ * compact left-aligned title, tight optional subtitle.
+ */
+@Composable
+fun BottomSheetTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = title,
+            color = WakepointInk,
+            style = MaterialTheme.typography.titleMedium
+        )
+        if (!subtitle.isNullOrBlank()) {
+            Text(
+                text = subtitle,
+                color = WakepointTextSecondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
 @Composable
 fun MapMarkerPreview(modifier: Modifier = Modifier) {
     Box(
