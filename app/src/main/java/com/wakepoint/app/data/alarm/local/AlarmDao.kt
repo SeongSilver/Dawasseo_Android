@@ -58,7 +58,10 @@ interface AlarmDao {
         vibrate: Boolean
     )
 
-    @Query("UPDATE alarms SET is_active = :isActive WHERE id = :alarmId")
+    // is_active 를 로컬에서 바꿀 때는 동기화 대기(pending_sync=1)로 함께 표시한다.
+    // 이렇게 해야 아직 서버에 반영되기 전, refresh 병합이 서버의 옛 값(예: is_active=1)으로
+    // 이 변경을 되돌리지 못한다. "현재 위치에서 껐는데 다시 켜지는" 재발동 루프의 핵심 방어.
+    @Query("UPDATE alarms SET is_active = :isActive, pending_sync = 1 WHERE id = :alarmId")
     suspend fun setAlarmActive(alarmId: String, isActive: Boolean)
 
     @Query("UPDATE alarms SET is_favorite = :isFavorite WHERE id = :alarmId")
