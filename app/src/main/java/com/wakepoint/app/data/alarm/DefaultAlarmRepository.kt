@@ -51,16 +51,25 @@ class DefaultAlarmRepository @Inject constructor(
         if (!config.isConfigured) return
         val session = runCatching { authRepository.requireValidSession() }.getOrNull() ?: return
 
-        // 서버 상태를 받기 전에, 아직 반영되지 못한 로컬 변경분(내 알람·친구 전송분)을 먼저 올려 유실/역전을 막는다.
+        // 서버 상태를 받기 전에, 아직 반영되지 못한 로컬 변경분(내 알람·친구 전송분·삭제분)을 먼저 올려
+        // 유실/역전을 막는다. 특히 삭제분을 먼저 확정해야 방금 지운 알람이 아래 병합에서 되살아나지 않는다.
         pushPendingAlarms(session.accessToken)
         pushPendingFriendAlarms(session.accessToken)
+        pushPendingDeletions(session.accessToken)
 
         val remote = fetchRemoteAlarms(ownerId = session.userId, accessToken = session.accessToken)
         val existing = alarmDao.getAllAlarms().associateBy { it.id }
+        // 원격 삭제가 아직 확정되지 못한(오프라인 등) 알람 id — 병합 시 다시 만들지 않는다.
+        val pendingDeletions = userPreferences.pendingDeletions()
 
         // 원격 필드로 갱신하되, 기기 로컬 전용 설정(진동/즐겨찾기/사운드 on)은 보존한다.
         remote.forEach { dto ->
+            // 로컬에서 삭제했지만 서버 삭제가 밀린 알람은 되살리지 않는다.
+            if (dto.id in pendingDeletions) return@forEach
             val local = existing[dto.id]
+            // 아직 서버에 올리지 못한 로컬 변경(껐다/설정 변경 등)은 서버 값으로 덮어쓰지 않는다.
+            // 이 가드가 없으면 "현재 위치에서 껐는데 refresh 가 다시 켜는" 무한 재활성 루프가 생긴다.
+            if (local?.pendingSync == true) return@forEach
             alarmDao.upsertAlarm(
                 AlarmEntity(
                     id = dto.id,
@@ -76,7 +85,8 @@ class DefaultAlarmRepository @Inject constructor(
                     soundUri = dto.soundUri,
                     soundEnabled = local?.soundEnabled ?: true,
                     vibrate = local?.vibrate ?: true,
-                    isFavorite = local?.isFavorite ?: false
+                    isFavorite = local?.isFavorite ?: false,
+                    pendingSync = false
                 )
             )
         }
@@ -136,21 +146,24 @@ class DefaultAlarmRepository @Inject constructor(
     }
 
     override suspend fun deleteAlarm(alarmId: String) {
-        // 로컬 먼저 삭제(오프라인에도 즉시 삭제 반영). 서버에 이미 있던 알람만 원격 삭제 시도.
-        val entity = alarmDao.getAlarm(alarmId)
+        // 로컬 먼저 삭제(오프라인에도 즉시 삭제 반영)하고 삭제 대기에 기록한다.
+        // 삭제 대기 기록은 이후 refresh 병합이나 트리거 재삽입으로 알람이 되살아나는 것을 원천 차단한다.
         alarmDao.deleteAlarm(alarmId)
+        userPreferences.addPendingDeletion(alarmId)
         syncTracking()
-        if (entity != null && !entity.pendingSync) {
-            runCatching { deleteRemoteAlarm(alarmId, requireAccessToken()) }
-        }
+        // 서버에도 삭제 반영(DELETE 는 멱등이라 로컬 전용 알람이어도 무해). 성공하면 다음 동기화 때
+        // pushPendingDeletions 가 대기 목록을 정리한다. 실패(오프라인 등)해도 대기 목록에 남아 재시도된다.
+        val session = runCatching { authRepository.requireValidSession() }.getOrNull() ?: return
+        runCatching { deleteRemoteAlarm(alarmId, session.accessToken) }
     }
 
     override suspend fun syncLocationTracking() {
-        // 앱 열림/부팅 등 동기화 시점에 밀린 원격 반영(내 알람·친구 전송분)을 함께 재시도한다.
+        // 앱 열림/부팅 등 동기화 시점에 밀린 원격 반영(내 알람·친구 전송분·삭제분)을 함께 재시도한다.
         runCatching {
             val token = requireAccessToken()
             pushPendingAlarms(token)
             pushPendingFriendAlarms(token)
+            pushPendingDeletions(token)
         }
         syncTracking()
     }
@@ -182,6 +195,16 @@ class DefaultAlarmRepository @Inject constructor(
             runCatching {
                 insertRemoteAlarm(entity.toDomain(), accessToken)
                 alarmDao.setPendingSync(entity.id, false)
+            }
+        }
+    }
+
+    /** 로컬에서 삭제했지만 서버 삭제가 밀린 알람들을 일괄 재삭제하고, 성공분은 대기 목록에서 제거한다. */
+    private suspend fun pushPendingDeletions(accessToken: String) {
+        userPreferences.pendingDeletions().forEach { alarmId ->
+            runCatching {
+                deleteRemoteAlarm(alarmId, accessToken)
+                userPreferences.removePendingDeletion(alarmId)
             }
         }
     }

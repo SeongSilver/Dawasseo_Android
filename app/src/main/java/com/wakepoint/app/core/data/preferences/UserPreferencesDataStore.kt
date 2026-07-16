@@ -103,6 +103,26 @@ class UserPreferencesDataStore @Inject constructor(
         }
     }
 
+    /** 로컬에서 삭제했지만 아직 서버 삭제를 확정하지 못한 알람 id들(삭제가 refresh 로 되살아나는 것을 방지). */
+    suspend fun pendingDeletions(): Set<String> =
+        dataStore.data.first()[PENDING_ALARM_DELETIONS] ?: emptySet()
+
+    suspend fun addPendingDeletion(alarmId: String) {
+        dataStore.edit { preferences ->
+            val existing = preferences[PENDING_ALARM_DELETIONS].orEmpty().toMutableSet()
+            existing.add(alarmId)
+            preferences[PENDING_ALARM_DELETIONS] = existing
+        }
+    }
+
+    suspend fun removePendingDeletion(alarmId: String) {
+        dataStore.edit { preferences ->
+            val existing = preferences[PENDING_ALARM_DELETIONS]?.toMutableSet() ?: return@edit
+            existing.remove(alarmId)
+            preferences[PENDING_ALARM_DELETIONS] = existing
+        }
+    }
+
     suspend fun addSystemSound(uri: String, title: String) {
         if (uri.isBlank()) return
         dataStore.edit { preferences ->
@@ -167,6 +187,7 @@ class UserPreferencesDataStore @Inject constructor(
         val DEFAULT_SOUND_URI = stringPreferencesKey("default_sound_uri")
         val SYSTEM_SOUNDS = stringSetPreferencesKey("system_sounds")
         val PENDING_FRIEND_ALARMS = stringSetPreferencesKey("pending_friend_alarms")
+        val PENDING_ALARM_DELETIONS = stringSetPreferencesKey("pending_alarm_deletions")
         val WAKEUP_COUNT = longPreferencesKey("wakeup_count")
         val AUTH_USER_ID = stringPreferencesKey("auth_user_id")
         val AUTH_EMAIL = stringPreferencesKey("auth_email")
