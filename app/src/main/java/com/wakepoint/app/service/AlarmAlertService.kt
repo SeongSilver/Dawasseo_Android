@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import com.wakepoint.app.core.audio.AlarmAudioPlayer
+import com.wakepoint.app.feature.alarmalert.AlarmAlertActivity
 import com.wakepoint.app.core.notification.AlarmAlertContract
 import com.wakepoint.app.core.notification.AlarmNotificationManager
 import com.wakepoint.app.core.notification.AlarmVibrationController
@@ -37,6 +38,8 @@ class AlarmAlertService : Service() {
         val label = intent?.getStringExtra(AlarmAlertContract.EXTRA_ALARM_LABEL).orEmpty()
         val targetAddress = intent?.getStringExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS).orEmpty()
         val soundUri = intent?.getStringExtra(AlarmAlertContract.EXTRA_SOUND_URI)
+        val soundEnabled = intent?.getBooleanExtra(AlarmAlertContract.EXTRA_SOUND_ENABLED, true) ?: true
+        val vibrate = intent?.getBooleanExtra(AlarmAlertContract.EXTRA_VIBRATE, true) ?: true
 
         val notification = notificationManager.buildArrivalNotification(
             alarmId = alarmId,
@@ -44,8 +47,28 @@ class AlarmAlertService : Service() {
             targetAddress = targetAddress
         )
         startForeground(AlarmAlertContract.notificationId(alarmId), notification)
-        AlarmAudioPlayer.start(this, soundUri)
-        AlarmVibrationController.start(this)
+
+        // Try to bring the full-screen "알람 끄기" UI to the foreground directly.
+        // The full-screen-intent notification already covers the locked-screen
+        // case; this covers foreground/unlocked devices where it would otherwise
+        // only appear as a heads-up notification.
+        runCatching {
+            startActivity(
+                AlarmAlertActivity.launchIntent(
+                    context = this,
+                    alarmId = alarmId,
+                    label = label,
+                    targetAddress = targetAddress
+                )
+            )
+        }
+
+        if (soundEnabled) {
+            AlarmAudioPlayer.start(this, soundUri)
+        }
+        if (vibrate) {
+            AlarmVibrationController.start(this)
+        }
 
         handler.removeCallbacks(stopRunnable)
         handler.postDelayed(stopRunnable, MAX_RING_MILLIS)
@@ -78,13 +101,17 @@ class AlarmAlertService : Service() {
             alarmId: String,
             label: String,
             targetAddress: String,
-            soundUri: String?
+            soundUri: String?,
+            soundEnabled: Boolean,
+            vibrate: Boolean
         ): Intent {
             return Intent(context, AlarmAlertService::class.java).apply {
                 putExtra(AlarmAlertContract.EXTRA_ALARM_ID, alarmId)
                 putExtra(AlarmAlertContract.EXTRA_ALARM_LABEL, label)
                 putExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS, targetAddress)
                 putExtra(AlarmAlertContract.EXTRA_SOUND_URI, soundUri)
+                putExtra(AlarmAlertContract.EXTRA_SOUND_ENABLED, soundEnabled)
+                putExtra(AlarmAlertContract.EXTRA_VIBRATE, vibrate)
             }
         }
 

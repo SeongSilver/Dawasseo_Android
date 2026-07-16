@@ -35,6 +35,20 @@ fun Alarm.toDto(): AlarmDto = AlarmDto(
     soundUri = soundUri
 )
 
+fun alarmDtoFromJson(json: JSONObject): AlarmDto = AlarmDto(
+    id = json.getString("id"),
+    ownerId = json.optString("owner_id"),
+    createdBy = json.optString("created_by"),
+    label = json.optString("label"),
+    targetLat = json.optDouble("target_lat", 0.0),
+    targetLng = json.optDouble("target_lng", 0.0),
+    targetAddress = json.optString("target_address"),
+    radiusKm = json.optDouble("radius_km", 0.5),
+    isActive = json.optBoolean("is_active", true),
+    soundType = json.optString("sound_type", "default"),
+    soundUri = if (json.isNull("sound_uri")) null else json.optString("sound_uri").takeIf { it.isNotBlank() }
+)
+
 fun AlarmDto.toJson(): JSONObject {
     return JSONObject()
         .put("id", id)

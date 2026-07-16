@@ -1,6 +1,7 @@
 package com.wakepoint.app.feature.alarmalert
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -92,6 +93,24 @@ class AlarmAlertActivity : ComponentActivity() {
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
             )
+        }
+    }
+
+    companion object {
+        fun launchIntent(
+            context: Context,
+            alarmId: String,
+            label: String,
+            targetAddress: String
+        ): Intent {
+            return Intent(context, AlarmAlertActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(AlarmAlertContract.EXTRA_ALARM_ID, alarmId)
+                putExtra(AlarmAlertContract.EXTRA_ALARM_LABEL, label)
+                putExtra(AlarmAlertContract.EXTRA_TARGET_ADDRESS, targetAddress)
+            }
         }
     }
 }

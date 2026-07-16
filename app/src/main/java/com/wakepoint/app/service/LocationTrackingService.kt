@@ -14,8 +14,11 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.wakepoint.app.core.location.accuracyBufferKm
 import com.wakepoint.app.core.location.calculateDistance
 import com.wakepoint.app.core.location.calculateDistanceToSegment
+import com.wakepoint.app.core.location.isWithinRadius
 import com.wakepoint.app.core.notification.AlarmNotificationManager
 import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.domain.model.Alarm
@@ -42,6 +45,7 @@ class LocationTrackingService : Service() {
     private var observeJob: Job? = null
     private var isLocationUpdatesStarted = false
     private var previousLocation: Location? = null
+    private var initialFixRequested = false
     private val triggeringAlarmIds = mutableSetOf<String>()
 
     private val locationCallback = object : LocationCallback() {
@@ -57,13 +61,18 @@ class LocationTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // startForegroundService()로 시작됐으므로 5초 내 반드시 startForeground()를 호출해야 한다.
+        // 권한이 없어 곧바로 종료하는 경우에도 먼저 포그라운드 승격을 시도한 뒤 정리해
+        // ForegroundServiceDidNotStartInTime 크래시를 피한다.
+        val activeAlarmCount = intent?.getIntExtra(EXTRA_ACTIVE_ALARM_COUNT, 0) ?: 0
+        val promoted = runCatching { updateTrackingNotification(activeAlarmCount) }.isSuccess
+
         if (!hasForegroundLocationPermission()) {
+            if (promoted) stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
         }
 
-        val activeAlarmCount = intent?.getIntExtra(EXTRA_ACTIVE_ALARM_COUNT, 0) ?: 0
-        updateTrackingNotification(activeAlarmCount)
         observeActiveAlarms()
         startLocationUpdates()
         return START_STICKY
@@ -89,6 +98,12 @@ class LocationTrackingService : Service() {
                     stopSelf()
                 } else {
                     updateTrackingNotification(alarms.size)
+                    // 주기 업데이트(≤5초)를 기다리지 않고, 활성 알람이 처음 로드되면 즉시 1회 현재 위치로 평가.
+                    // 재부팅/재실행 시 이미 목적지 안에 있는 경우를 곧바로 잡아낸다.
+                    if (!initialFixRequested) {
+                        initialFixRequested = true
+                        requestImmediateLocation()
+                    }
                 }
             }
         }
@@ -125,6 +140,18 @@ class LocationTrackingService : Service() {
         }
     }
 
+    private fun requestImmediateLocation() {
+        if (!hasForegroundLocationPermission()) return
+        runCatching {
+            locationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                CancellationTokenSource().token
+            ).addOnSuccessListener { location ->
+                location?.let(::handleLocation)
+            }
+        }
+    }
+
     private fun handleLocation(location: Location) {
         val previous = previousLocation
         previousLocation = location
@@ -156,27 +183,28 @@ class LocationTrackingService : Service() {
         currentLocation: Location,
         previousLocation: Location?
     ): Boolean {
-        val effectiveRadiusKm = alarm.radiusKm + currentLocation.accuracyBufferKm()
+        val bufferKm = accuracyBufferKm(currentLocation.accuracy, currentLocation.hasAccuracy())
         val currentDistanceKm = calculateDistance(
             startLat = currentLocation.latitude,
             startLng = currentLocation.longitude,
             endLat = alarm.targetLat,
             endLng = alarm.targetLng
         )
-        if (currentDistanceKm <= effectiveRadiusKm) return true
+        if (isWithinRadius(currentDistanceKm, alarm.radiusKm, bufferKm)) return true
 
         if (previousLocation == null || !canUseSegment(previousLocation, currentLocation)) {
             return false
         }
 
-        return calculateDistanceToSegment(
+        val segmentDistanceKm = calculateDistanceToSegment(
             segmentStartLat = previousLocation.latitude,
             segmentStartLng = previousLocation.longitude,
             segmentEndLat = currentLocation.latitude,
             segmentEndLng = currentLocation.longitude,
             targetLat = alarm.targetLat,
             targetLng = alarm.targetLng
-        ) <= effectiveRadiusKm
+        )
+        return isWithinRadius(segmentDistanceKm, alarm.radiusKm, bufferKm)
     }
 
     private fun canUseSegment(previousLocation: Location, currentLocation: Location): Boolean {
@@ -198,11 +226,6 @@ class LocationTrackingService : Service() {
         return segmentLengthKm <= MAX_SEGMENT_DISTANCE_KM
     }
 
-    private fun Location.accuracyBufferKm(): Double {
-        if (!hasAccuracy()) return 0.0
-        return (accuracy / 1000.0).coerceAtMost(MAX_ACCURACY_BUFFER_KM)
-    }
-
     private fun hasForegroundLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             this,
@@ -220,7 +243,6 @@ class LocationTrackingService : Service() {
         private const val LOCATION_MAX_DELAY_MILLIS = 5_000L
         private const val MAX_SEGMENT_GAP_SECONDS = 300L
         private const val MAX_SEGMENT_DISTANCE_KM = 10.0
-        private const val MAX_ACCURACY_BUFFER_KM = 0.05
 
         private const val EXTRA_ACTIVE_ALARM_COUNT = "extra_active_alarm_count"
 

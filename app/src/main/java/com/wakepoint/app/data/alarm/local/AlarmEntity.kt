@@ -18,7 +18,11 @@ data class AlarmEntity(
     @ColumnInfo(name = "radius_km") val radiusKm: Double,
     @ColumnInfo(name = "is_active") val isActive: Boolean,
     @ColumnInfo(name = "sound_type") val soundType: String,
-    @ColumnInfo(name = "sound_uri") val soundUri: String?
+    @ColumnInfo(name = "sound_uri") val soundUri: String?,
+    @ColumnInfo(name = "sound_enabled", defaultValue = "1") val soundEnabled: Boolean = true,
+    @ColumnInfo(name = "vibrate", defaultValue = "1") val vibrate: Boolean = true,
+    @ColumnInfo(name = "is_favorite", defaultValue = "0") val isFavorite: Boolean = false,
+    @ColumnInfo(name = "pending_sync", defaultValue = "0") val pendingSync: Boolean = false
 )
 
 fun AlarmEntity.toDomain(): Alarm = Alarm(
@@ -35,7 +39,11 @@ fun AlarmEntity.toDomain(): Alarm = Alarm(
         SoundType.Custom.name -> SoundType.Custom
         else -> SoundType.Default
     },
-    soundUri = soundUri
+    soundUri = soundUri,
+    soundEnabled = soundEnabled,
+    vibrate = vibrate,
+    isFavorite = isFavorite,
+    pendingSync = pendingSync
 )
 
 fun Alarm.toEntity(): AlarmEntity = AlarmEntity(
@@ -49,5 +57,9 @@ fun Alarm.toEntity(): AlarmEntity = AlarmEntity(
     radiusKm = radiusKm,
     isActive = isActive,
     soundType = soundType.name,
-    soundUri = soundUri
+    soundUri = soundUri,
+    soundEnabled = soundEnabled,
+    vibrate = vibrate,
+    isFavorite = isFavorite,
+    pendingSync = pendingSync
 )

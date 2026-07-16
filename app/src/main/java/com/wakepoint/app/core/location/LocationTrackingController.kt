@@ -24,10 +24,13 @@ class LocationTrackingController @Inject constructor(
 
     private fun startTracking(activeAlarmCount: Int) {
         val intent = LocationTrackingService.startIntent(context, activeAlarmCount)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ContextCompat.startForegroundService(context, intent)
-        } else {
-            context.startService(intent)
+        // 백그라운드/부팅 시점에는 OS 정책상 포그라운드 서비스 시작이 거부될 수 있으므로 방어적으로 처리.
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(context, intent)
+            } else {
+                context.startService(intent)
+            }
         }
     }
 

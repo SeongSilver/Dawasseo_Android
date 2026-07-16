@@ -5,6 +5,8 @@ object AlarmAlertContract {
     const val EXTRA_ALARM_LABEL = "extra_alarm_label"
     const val EXTRA_TARGET_ADDRESS = "extra_target_address"
     const val EXTRA_SOUND_URI = "extra_sound_uri"
+    const val EXTRA_SOUND_ENABLED = "extra_sound_enabled"
+    const val EXTRA_VIBRATE = "extra_vibrate"
 
     fun notificationId(alarmId: String): Int {
         val id = alarmId.hashCode() and Int.MAX_VALUE

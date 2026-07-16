@@ -11,7 +11,7 @@ import com.wakepoint.app.data.friend.local.FriendEntity
 
 @Database(
     entities = [AlarmEntity::class, FriendEntity::class],
-    version = 4,
+    version = 7,
     exportSchema = true
 )
 abstract class WakepointDatabase : RoomDatabase() {
@@ -96,6 +96,25 @@ abstract class WakepointDatabase : RoomDatabase() {
                 )
                 db.execSQL("DROP TABLE alarms")
                 db.execSQL("ALTER TABLE alarms_new RENAME TO alarms")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE alarms ADD COLUMN vibrate INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE alarms ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE alarms ADD COLUMN sound_enabled INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE alarms ADD COLUMN pending_sync INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

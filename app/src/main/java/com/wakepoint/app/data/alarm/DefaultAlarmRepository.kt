@@ -1,10 +1,14 @@
 package com.wakepoint.app.data.alarm
 
+import com.wakepoint.app.core.data.preferences.UserPreferencesDataStore
+import com.wakepoint.app.core.network.retryingNetwork
 import com.wakepoint.app.core.supabase.SupabaseConfig
 import com.wakepoint.app.core.location.LocationTrackingController
 import com.wakepoint.app.data.alarm.local.AlarmDao
+import com.wakepoint.app.data.alarm.local.AlarmEntity
 import com.wakepoint.app.data.alarm.local.toDomain
 import com.wakepoint.app.data.alarm.local.toEntity
+import com.wakepoint.app.data.alarm.remote.alarmDtoFromJson
 import com.wakepoint.app.data.alarm.remote.toDto
 import com.wakepoint.app.data.alarm.remote.toJson
 import com.wakepoint.app.data.auth.AuthRepository
@@ -20,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
 @Singleton
@@ -27,7 +32,8 @@ class DefaultAlarmRepository @Inject constructor(
     private val alarmDao: AlarmDao,
     private val authRepository: AuthRepository,
     private val config: SupabaseConfig,
-    private val locationTrackingController: LocationTrackingController
+    private val locationTrackingController: LocationTrackingController,
+    private val userPreferences: UserPreferencesDataStore
 ) : AlarmRepository {
     override fun observeAlarms(): Flow<List<Alarm>> {
         return alarmDao.observeAlarms().map { alarms ->
@@ -41,76 +47,160 @@ class DefaultAlarmRepository @Inject constructor(
         }
     }
 
-    override suspend fun saveAlarm(alarm: Alarm) {
-        val accessToken = requireAccessToken()
-        insertRemoteAlarm(alarm, accessToken)
-        alarmDao.upsertAlarm(alarm.toEntity())
+    override suspend fun refreshAlarms() {
+        if (!config.isConfigured) return
+        val session = runCatching { authRepository.requireValidSession() }.getOrNull() ?: return
+
+        // 서버 상태를 받기 전에, 아직 반영되지 못한 로컬 변경분(내 알람·친구 전송분)을 먼저 올려 유실/역전을 막는다.
+        pushPendingAlarms(session.accessToken)
+        pushPendingFriendAlarms(session.accessToken)
+
+        val remote = fetchRemoteAlarms(ownerId = session.userId, accessToken = session.accessToken)
+        val existing = alarmDao.getAllAlarms().associateBy { it.id }
+
+        // 원격 필드로 갱신하되, 기기 로컬 전용 설정(진동/즐겨찾기/사운드 on)은 보존한다.
+        remote.forEach { dto ->
+            val local = existing[dto.id]
+            alarmDao.upsertAlarm(
+                AlarmEntity(
+                    id = dto.id,
+                    ownerId = dto.ownerId,
+                    createdBy = dto.createdBy,
+                    label = dto.label,
+                    targetLat = dto.targetLat,
+                    targetLng = dto.targetLng,
+                    targetAddress = dto.targetAddress,
+                    radiusKm = dto.radiusKm,
+                    isActive = dto.isActive,
+                    soundType = if (dto.soundType == "custom") SoundType.Custom.name else SoundType.Default.name,
+                    soundUri = dto.soundUri,
+                    soundEnabled = local?.soundEnabled ?: true,
+                    vibrate = local?.vibrate ?: true,
+                    isFavorite = local?.isFavorite ?: false
+                )
+            )
+        }
+
+        // 서버에서 삭제된(다른 기기/친구가 지운) 알람은 로컬에서도 제거하되,
+        // 아직 서버에 반영되지 못한 pending 로컬 알람은 지우지 않는다.
+        val remoteIds = remote.map { it.id }
+        if (remoteIds.isEmpty()) {
+            alarmDao.deleteSyncedAlarms()
+        } else {
+            alarmDao.deleteSyncedAlarmsNotIn(remoteIds)
+        }
         syncTracking()
     }
 
+    override suspend fun saveAlarm(alarm: Alarm) {
+        // 로컬 우선 저장: 오프라인이어도 유실 없이 즉시 위치 추적을 시작할 수 있다.
+        // 원격 반영에 성공하면 pending 을 해제하고, 실패하면 pending 으로 남겨 다음 동기화 때 재전송한다.
+        alarmDao.upsertAlarm(alarm.copy(pendingSync = true).toEntity())
+        syncTracking()
+        pushRow(alarm.id)
+    }
+
     override suspend fun sendAlarmToFriend(alarm: Alarm) {
-        // The alarm belongs to the friend (owner), so we only persist it remotely.
-        // It must not be cached locally nor drive this device's location tracking.
-        val accessToken = requireAccessToken()
-        insertRemoteAlarm(alarm, accessToken)
+        // 이 알람의 소유자는 친구이므로 로컬에 캐시하거나 내 위치 추적에 반영하지 않고 원격에만 저장한다.
+        // 전송 실패(오프라인 등) 시 유실을 막기 위해 대기 큐에 넣고 다음 동기화 때 재전송한다.
+        val dtoJson = alarm.toDto().toJson().toString()
+        val result = runCatching { insertRemoteAlarm(alarm, requireAccessToken()) }
+        if (result.isFailure) {
+            userPreferences.addPendingFriendAlarm(dtoJson)
+        }
     }
 
     override suspend fun updateAlarm(alarm: Alarm) {
-        val accessToken = requireAccessToken()
-        patchRemoteAlarm(
-            alarmId = alarm.id,
-            body = JSONObject()
-                .put("label", alarm.label)
-                .put("radius_km", alarm.radiusKm)
-                .put(
-                    "sound_type",
-                    when (alarm.soundType) {
-                        SoundType.Default -> "default"
-                        SoundType.Custom -> "custom"
-                    }
-                )
-                .put("sound_uri", alarm.soundUri),
-            accessToken = accessToken
-        )
+        // 로컬 먼저 갱신 후 원격은 멱등 upsert 로 반영(실패 시 pending 으로 남아 재전송).
         alarmDao.updateAlarmSettings(
             alarmId = alarm.id,
             label = alarm.label,
             radiusKm = alarm.radiusKm,
             soundType = alarm.soundType.name,
-            soundUri = alarm.soundUri
+            soundUri = alarm.soundUri,
+            vibrate = alarm.vibrate
         )
         syncTracking()
+        pushRow(alarm.id)
     }
 
     override suspend fun setAlarmActive(alarmId: String, isActive: Boolean) {
-        val accessToken = requireAccessToken()
-        patchRemoteAlarm(
-            alarmId = alarmId,
-            body = JSONObject().put("is_active", isActive),
-            accessToken = accessToken
-        )
         alarmDao.setAlarmActive(alarmId, isActive)
         syncTracking()
+        pushRow(alarmId)
+    }
+
+    override suspend fun setFavorite(alarmId: String, isFavorite: Boolean) {
+        // 즐겨찾기는 기기 로컬 설정으로만 유지한다(원격 스키마 미변경).
+        alarmDao.setFavorite(alarmId, isFavorite)
     }
 
     override suspend fun deleteAlarm(alarmId: String) {
-        val accessToken = requireAccessToken()
-        deleteRemoteAlarm(alarmId, accessToken)
+        // 로컬 먼저 삭제(오프라인에도 즉시 삭제 반영). 서버에 이미 있던 알람만 원격 삭제 시도.
+        val entity = alarmDao.getAlarm(alarmId)
         alarmDao.deleteAlarm(alarmId)
         syncTracking()
+        if (entity != null && !entity.pendingSync) {
+            runCatching { deleteRemoteAlarm(alarmId, requireAccessToken()) }
+        }
     }
 
     override suspend fun syncLocationTracking() {
+        // 앱 열림/부팅 등 동기화 시점에 밀린 원격 반영(내 알람·친구 전송분)을 함께 재시도한다.
+        runCatching {
+            val token = requireAccessToken()
+            pushPendingAlarms(token)
+            pushPendingFriendAlarms(token)
+        }
         syncTracking()
     }
 
     override suspend fun handleTriggeredAlarm(alarmId: String) {
-        alarmDao.deleteAlarm(alarmId)
+        // 울린 알람은 삭제하지 않고 비활성화해 목록에 남긴다(재사용/즐겨찾기 가능).
+        alarmDao.setAlarmActive(alarmId, false)
+        userPreferences.incrementWakeupCount()
         syncTracking()
+        pushRow(alarmId)
     }
 
     private suspend fun syncTracking() {
         locationTrackingController.syncTracking(alarmDao.countActiveAlarms())
+    }
+
+    /** 한 알람의 현재 로컬 상태를 원격에 멱등 반영하고, 성공/실패에 따라 pending 플래그를 갱신한다. */
+    private suspend fun pushRow(alarmId: String) {
+        val entity = alarmDao.getAlarm(alarmId) ?: return
+        val synced = runCatching {
+            insertRemoteAlarm(entity.toDomain(), requireAccessToken())
+        }.isSuccess
+        alarmDao.setPendingSync(alarmId, !synced)
+    }
+
+    /** 아직 서버에 반영되지 못한 로컬 알람들을 일괄 재전송한다. */
+    private suspend fun pushPendingAlarms(accessToken: String) {
+        alarmDao.pendingSyncAlarms().forEach { entity ->
+            runCatching {
+                insertRemoteAlarm(entity.toDomain(), accessToken)
+                alarmDao.setPendingSync(entity.id, false)
+            }
+        }
+    }
+
+    /** 오프라인 등으로 전송하지 못한 친구 알람들을 일괄 재전송한다. */
+    private suspend fun pushPendingFriendAlarms(accessToken: String) {
+        userPreferences.pendingFriendAlarms().forEach { dtoJson ->
+            runCatching {
+                val url = URL("${config.url.trimEnd('/')}/rest/v1/alarms?on_conflict=id")
+                executeRemoteRequest(
+                    url = url,
+                    method = "POST",
+                    body = JSONObject(dtoJson),
+                    accessToken = accessToken,
+                    prefer = "return=minimal,resolution=merge-duplicates"
+                )
+                userPreferences.removePendingFriendAlarm(dtoJson)
+            }
+        }
     }
 
     private suspend fun requireAccessToken(): String {
@@ -120,29 +210,40 @@ class DefaultAlarmRepository @Inject constructor(
         return authRepository.requireValidSession().accessToken
     }
 
+    private suspend fun fetchRemoteAlarms(
+        ownerId: String,
+        accessToken: String
+    ): List<com.wakepoint.app.data.alarm.remote.AlarmDto> = retryingNetwork { withContext(Dispatchers.IO) {
+        val url = URL(
+            "${config.url.trimEnd('/')}/rest/v1/alarms?owner_id=eq.$ownerId&select=*"
+        )
+        val connection = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer $accessToken")
+            setRequestProperty("Accept", "application/json")
+        }
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException(parseErrorMessage(responseText))
+        }
+        val array = JSONArray(responseText.ifBlank { "[]" })
+        (0 until array.length()).map { index ->
+            alarmDtoFromJson(array.getJSONObject(index))
+        }
+    } }
+
+    // 멱등 upsert(on_conflict=id). 재시도/유령 행 재전송 시에도 409 없이 안전하게 반영된다.
     private suspend fun insertRemoteAlarm(alarm: Alarm, accessToken: String) {
-        val url = URL("${config.url.trimEnd('/')}/rest/v1/alarms")
+        val url = URL("${config.url.trimEnd('/')}/rest/v1/alarms?on_conflict=id")
         executeRemoteRequest(
             url = url,
             method = "POST",
             body = alarm.toDto().toJson(),
             accessToken = accessToken,
-            prefer = "return=minimal"
-        )
-    }
-
-    private suspend fun patchRemoteAlarm(
-        alarmId: String,
-        body: JSONObject,
-        accessToken: String
-    ) {
-        val url = URL("${config.url.trimEnd('/')}/rest/v1/alarms?id=eq.$alarmId")
-        executeRemoteRequest(
-            url = url,
-            method = "PATCH",
-            body = body,
-            accessToken = accessToken,
-            prefer = "return=minimal"
+            prefer = "return=minimal,resolution=merge-duplicates"
         )
     }
 
@@ -163,7 +264,7 @@ class DefaultAlarmRepository @Inject constructor(
         body: JSONObject?,
         accessToken: String,
         prefer: String
-    ) = withContext(Dispatchers.IO) {
+    ) = retryingNetwork { withContext(Dispatchers.IO) {
         val connection = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 15_000
@@ -185,7 +286,7 @@ class DefaultAlarmRepository @Inject constructor(
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(parseErrorMessage(responseText))
         }
-    }
+    } }
 
     private fun HttpURLConnection.readResponseText(): String {
         val stream = if (responseCode in 200..299) inputStream else errorStream

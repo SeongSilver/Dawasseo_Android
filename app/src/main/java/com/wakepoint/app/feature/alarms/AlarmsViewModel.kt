@@ -2,6 +2,8 @@ package com.wakepoint.app.feature.alarms
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wakepoint.app.core.error.UserFacingError
+import com.wakepoint.app.core.location.radiusOptionToKm
 import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.data.sound.SoundRepository
 import com.wakepoint.app.domain.model.Alarm
@@ -22,8 +24,9 @@ data class AlarmsUiState(
     val soundTitles: Map<String, String> = emptyMap(),
     val errorMessage: String? = null
 ) {
-    val activeAlarms: List<Alarm> = alarms.filter { it.isActive }
-    val inactiveAlarms: List<Alarm> = alarms.filterNot { it.isActive }
+    val favoriteAlarms: List<Alarm> = alarms.filter { it.isFavorite }
+    val activeAlarms: List<Alarm> = alarms.filter { it.isActive && !it.isFavorite }
+    val inactiveAlarms: List<Alarm> = alarms.filter { !it.isActive && !it.isFavorite }
 }
 
 @HiltViewModel
@@ -53,6 +56,25 @@ class AlarmsViewModel @Inject constructor(
         initialValue = AlarmsUiState()
     )
 
+    init {
+        refreshAlarms()
+    }
+
+    /** 서버의 최신 알람(친구가 보낸 알람 포함)을 로컬에 반영한다. */
+    fun refreshAlarms() {
+        viewModelScope.launch {
+            val result = runCatching { alarmRepository.refreshAlarms() }
+            result.exceptionOrNull()?.let { error ->
+                transientState.update { it.copy(errorMessage = UserFacingError.of(error)) }
+            }
+        }
+    }
+
+    /** 오류 팝업을 닫을 때 메시지를 소비한다. */
+    fun clearError() {
+        transientState.update { it.copy(errorMessage = null) }
+    }
+
     fun setAlarmActive(alarmId: String, isActive: Boolean) {
         viewModelScope.launch {
             transientState.update { state ->
@@ -70,7 +92,29 @@ class AlarmsViewModel @Inject constructor(
                 current.copy(
                     isUpdating = updatingAlarmIds.isNotEmpty(),
                     updatingAlarmIds = updatingAlarmIds,
-                    errorMessage = result.exceptionOrNull()?.message
+                    errorMessage = result.exceptionOrNull()?.let { UserFacingError.of(it) }
+                )
+            }
+        }
+    }
+
+    fun setFavorite(alarmId: String, isFavorite: Boolean) {
+        viewModelScope.launch {
+            transientState.update { state ->
+                state.copy(
+                    updatingAlarmIds = state.updatingAlarmIds + alarmId,
+                    errorMessage = null
+                )
+            }
+            val result = runCatching {
+                alarmRepository.setFavorite(alarmId, isFavorite)
+            }
+            transientState.update { current ->
+                val updatingAlarmIds = current.updatingAlarmIds - alarmId
+                current.copy(
+                    isUpdating = updatingAlarmIds.isNotEmpty(),
+                    updatingAlarmIds = updatingAlarmIds,
+                    errorMessage = result.exceptionOrNull()?.let { UserFacingError.of(it) }
                 )
             }
         }
@@ -79,7 +123,8 @@ class AlarmsViewModel @Inject constructor(
     fun updateAlarmSettings(
         alarm: Alarm,
         label: String,
-        radiusOption: String
+        radiusOption: String,
+        vibrate: Boolean
     ) {
         viewModelScope.launch {
             transientState.update { state ->
@@ -91,7 +136,8 @@ class AlarmsViewModel @Inject constructor(
             }
             val updatedAlarm = alarm.copy(
                 label = label.trim().ifBlank { alarm.label },
-                radiusKm = radiusOption.toRadiusKm()
+                radiusKm = radiusOption.toRadiusKm(),
+                vibrate = vibrate
             )
             val result = runCatching {
                 alarmRepository.updateAlarm(updatedAlarm)
@@ -101,7 +147,7 @@ class AlarmsViewModel @Inject constructor(
                 current.copy(
                     isUpdating = updatingAlarmIds.isNotEmpty(),
                     updatingAlarmIds = updatingAlarmIds,
-                    errorMessage = result.exceptionOrNull()?.message
+                    errorMessage = result.exceptionOrNull()?.let { UserFacingError.of(it) }
                 )
             }
         }
@@ -124,22 +170,11 @@ class AlarmsViewModel @Inject constructor(
                 current.copy(
                     isUpdating = updatingAlarmIds.isNotEmpty(),
                     updatingAlarmIds = updatingAlarmIds,
-                    errorMessage = result.exceptionOrNull()?.message
+                    errorMessage = result.exceptionOrNull()?.let { UserFacingError.of(it) }
                 )
             }
         }
     }
 }
 
-private fun String.toRadiusKm(): Double {
-    val radiusKm = when {
-        endsWith("km") -> removeSuffix("km").toDoubleOrNull() ?: DEFAULT_RADIUS_KM
-        endsWith("m") -> removeSuffix("m").toDoubleOrNull()?.div(1000.0) ?: DEFAULT_RADIUS_KM
-        else -> DEFAULT_RADIUS_KM
-    }
-    return radiusKm.coerceIn(MIN_RADIUS_KM, MAX_RADIUS_KM)
-}
-
-private const val DEFAULT_RADIUS_KM = 0.5
-private const val MIN_RADIUS_KM = 0.01
-private const val MAX_RADIUS_KM = 50.0
+private fun String.toRadiusKm(): Double = radiusOptionToKm(this)

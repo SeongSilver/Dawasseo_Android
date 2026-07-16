@@ -67,7 +67,9 @@ class AlarmNotificationManager(
             alarmId = alarm.id,
             label = alarm.label,
             targetAddress = alarm.targetAddress,
-            soundUri = alarm.soundUri
+            soundUri = alarm.soundUri,
+            soundEnabled = alarm.soundEnabled,
+            vibrate = alarm.vibrate
         )
         startForegroundService(context, intent)
     }
