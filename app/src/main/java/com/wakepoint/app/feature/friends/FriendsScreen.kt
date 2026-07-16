@@ -1,5 +1,10 @@
 package com.wakepoint.app.feature.friends
 
+import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -24,9 +30,11 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -57,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
+import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.StatusPill
 import com.wakepoint.app.core.design.WakepointAvatar
 import com.wakepoint.app.core.design.WakepointBackground
@@ -65,6 +74,7 @@ import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
+import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointDivider
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
@@ -113,6 +123,10 @@ fun FriendsScreen(
         }
     }
 
+    uiState.errorMessage?.let { message ->
+        WakepointMessageDialog(message = message, onDismiss = viewModel::clearError)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -140,6 +154,7 @@ fun FriendsScreen(
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
                     .padding(horizontal = 20.dp)
                     .padding(top = 8.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -152,14 +167,6 @@ fun FriendsScreen(
                     readOnly = true,
                     modifier = Modifier.clickable { showSearchSheet = true }
                 )
-
-                uiState.errorMessage?.let { message ->
-                    Text(
-                        text = message,
-                        color = WakepointMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
 
                 val hasFriendContent = uiState.acceptedFriends.isNotEmpty() ||
                     uiState.receivedFriendRequests.isNotEmpty() ||
@@ -194,8 +201,6 @@ fun FriendsScreen(
                                     friend = friend,
                                     isIncoming = false,
                                     isUpdating = friend.id in uiState.updatingFriendIds,
-                                    onAccept = {},
-                                    onReject = {},
                                     onCancel = { viewModel.deleteFriend(friend.id) }
                                 )
                             }
@@ -224,9 +229,7 @@ fun FriendsScreen(
                                 AlarmPermissionRequestCard(
                                     request = request,
                                     currentUserId = uiState.currentUserId,
-                                    isUpdating = request.id in uiState.updatingPermissionIds,
-                                    onAccept = {},
-                                    onReject = {}
+                                    isUpdating = request.id in uiState.updatingPermissionIds
                                 )
                             }
                         }
@@ -269,7 +272,8 @@ fun FriendsScreen(
             shape = CircleShape,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 28.dp)
+                .navigationBarsPadding()
+                .padding(end = 20.dp, bottom = 28.dp + 92.dp)
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 18.dp),
@@ -289,12 +293,27 @@ fun FriendsScreen(
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
             containerColor = WakepointCanvas
         ) {
+            val inviteLink = stringResource(R.string.invite_link)
+            val inviteMessage = if (uiState.currentUserEmail.isBlank()) {
+                stringResource(R.string.invite_message_no_email, inviteLink)
+            } else {
+                stringResource(R.string.invite_message, uiState.currentUserEmail, inviteLink)
+            }
+            val shareSubject = stringResource(R.string.invite_share_subject)
+            val kakaoUnavailable = stringResource(R.string.invite_kakao_unavailable)
+            val linkCopied = stringResource(R.string.invite_link_copied)
             FriendSearchSheet(
                 uiState = uiState,
                 onQueryChange = viewModel::updateSearchQuery,
                 onSearch = viewModel::searchUsers,
                 onSelectResult = viewModel::selectSearchResult,
-                onSendRequest = viewModel::sendFriendRequest
+                onSendRequest = viewModel::sendFriendRequest,
+                onShareKakao = {
+                    context.shareInviteViaKakao(inviteMessage, shareSubject, kakaoUnavailable)
+                },
+                onCopyLink = {
+                    context.copyInviteLink(inviteLink, linkCopied)
+                }
             )
         }
     }
@@ -314,6 +333,8 @@ fun FriendsScreen(
                 targetAddress = uiState.selectedTargetAddress,
                 label = uiState.sendAlarmLabel,
                 radius = uiState.sendAlarmRadius,
+                soundEnabled = uiState.sendAlarmSoundEnabled,
+                vibrate = uiState.sendAlarmVibrate,
                 isSaving = uiState.isSendingAlarm,
                 errorMessage = uiState.sendAlarmErrorMessage,
                 showAddressSearch = true,
@@ -326,6 +347,8 @@ fun FriendsScreen(
                 onSelectAddress = viewModel::selectAddress,
                 onLabelChange = viewModel::updateSendAlarmLabel,
                 onRadiusChange = viewModel::updateSendAlarmRadius,
+                onSoundEnabledChange = viewModel::updateSendAlarmSoundEnabled,
+                onVibrateChange = viewModel::updateSendAlarmVibrate,
                 onPrimaryClick = {
                     viewModel.sendAlarm(context.getString(R.string.alarm_default_label))
                 },
@@ -403,9 +426,9 @@ private fun FriendRequestCard(
     friend: Friend,
     isIncoming: Boolean,
     isUpdating: Boolean,
-    onAccept: () -> Unit,
-    onReject: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onAccept: () -> Unit = {},
+    onReject: () -> Unit = {}
 ) {
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -461,8 +484,8 @@ private fun AlarmPermissionRequestCard(
     request: AlarmPermissionRequest,
     currentUserId: String,
     isUpdating: Boolean,
-    onAccept: () -> Unit,
-    onReject: () -> Unit
+    onAccept: () -> Unit = {},
+    onReject: () -> Unit = {}
 ) {
     val isIncoming = request.targetId == currentUserId
     val profile = if (isIncoming) request.requesterProfile else request.targetProfile
@@ -613,7 +636,9 @@ private fun FriendSearchSheet(
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
     onSelectResult: (String) -> Unit,
-    onSendRequest: (String) -> Unit
+    onSendRequest: (String) -> Unit,
+    onShareKakao: () -> Unit,
+    onCopyLink: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -622,12 +647,7 @@ private fun FriendSearchSheet(
             .padding(bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "친구 검색",
-            style = MaterialTheme.typography.titleLarge,
-            color = WakepointInk,
-            fontWeight = FontWeight.SemiBold
-        )
+        BottomSheetTitle(title = "친구 검색")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             WakepointTextField(
                 value = uiState.searchQuery,
@@ -643,6 +663,8 @@ private fun FriendSearchSheet(
                 modifier = Modifier.size(width = 86.dp, height = 56.dp)
             )
         }
+
+        InviteSection(onShareKakao = onShareKakao, onCopyLink = onCopyLink)
 
         uiState.searchMessage?.let { message ->
             Text(
@@ -664,6 +686,80 @@ private fun FriendSearchSheet(
             }
         }
     }
+}
+
+@Composable
+private fun InviteSection(
+    onShareKakao: () -> Unit,
+    onCopyLink: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp)),
+        shape = RoundedCornerShape(14.dp),
+        color = WakepointParchment
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.invite_section_title),
+                style = MaterialTheme.typography.bodyLarge,
+                color = WakepointInk,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(R.string.invite_section_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = WakepointMuted
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WakepointButton(
+                    text = stringResource(R.string.invite_share_kakao),
+                    icon = Icons.Rounded.Share,
+                    onClick = onShareKakao,
+                    modifier = Modifier.weight(1f)
+                )
+                WakepointSecondaryButton(
+                    text = stringResource(R.string.invite_copy_link),
+                    icon = Icons.Rounded.Link,
+                    onClick = onCopyLink,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+private const val KAKAO_TALK_PACKAGE = "com.kakao.talk"
+
+/** 카카오톡을 지정해 초대 메시지를 공유하고, 미설치 시 일반 공유 시트로 폴백한다. */
+private fun Context.shareInviteViaKakao(
+    message: String,
+    subject: String,
+    kakaoUnavailable: String
+) {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, subject)
+        putExtra(Intent.EXTRA_TEXT, message)
+    }
+    val kakaoIntent = Intent(sendIntent).setPackage(KAKAO_TALK_PACKAGE)
+    try {
+        startActivity(kakaoIntent)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(this, kakaoUnavailable, Toast.LENGTH_SHORT).show()
+        startActivity(Intent.createChooser(sendIntent, subject))
+    }
+}
+
+/** 초대 링크를 클립보드에 복사한다. */
+private fun Context.copyInviteLink(link: String, copiedMessage: String) {
+    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+    clipboard.setPrimaryClip(ClipData.newPlainText("wakepoint_invite", link))
+    Toast.makeText(this, copiedMessage, Toast.LENGTH_SHORT).show()
 }
 
 @Composable

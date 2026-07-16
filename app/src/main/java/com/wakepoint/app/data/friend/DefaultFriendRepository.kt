@@ -1,5 +1,6 @@
 package com.wakepoint.app.data.friend
 
+import com.wakepoint.app.core.network.retryingNetwork
 import com.wakepoint.app.core.supabase.SupabaseConfig
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.friend.local.FriendDao
@@ -343,32 +344,38 @@ class DefaultFriendRepository @Inject constructor(
         body: JSONObject?,
         accessToken: String,
         prefer: String
-    ): String = withContext(Dispatchers.IO) {
-        check(config.isConfigured) {
-            "Supabase 설정이 비어 있습니다. local.properties에 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력해주세요."
-        }
-        val connection = (URL("${config.url.trimEnd('/')}$path").openConnection() as HttpURLConnection).apply {
-            requestMethod = method
-            connectTimeout = 15_000
-            readTimeout = 15_000
-            doOutput = body != null
-            setRequestProperty("Content-Type", "application/json")
-            setRequestProperty("apikey", config.anonKey)
-            setRequestProperty("Authorization", "Bearer $accessToken")
-            setRequestProperty("Prefer", prefer)
-        }
+    ): String {
+        // GET(멱등 읽기)만 일시 오류에 재시도한다. POST/PATCH 등 변경 요청은 중복 위험이 있어 재시도하지 않는다.
+        val attempts = if (method.equals("GET", ignoreCase = true)) 3 else 1
+        return retryingNetwork(maxAttempts = attempts) {
+            withContext(Dispatchers.IO) {
+                check(config.isConfigured) {
+                    "Supabase 설정이 비어 있습니다. local.properties에 SUPABASE_URL과 SUPABASE_ANON_KEY를 입력해주세요."
+                }
+                val connection = (URL("${config.url.trimEnd('/')}$path").openConnection() as HttpURLConnection).apply {
+                    requestMethod = method
+                    connectTimeout = 15_000
+                    readTimeout = 15_000
+                    doOutput = body != null
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("apikey", config.anonKey)
+                    setRequestProperty("Authorization", "Bearer $accessToken")
+                    setRequestProperty("Prefer", prefer)
+                }
 
-        if (body != null) {
-            connection.outputStream.use { output ->
-                output.write(body.toString().toByteArray(Charsets.UTF_8))
+                if (body != null) {
+                    connection.outputStream.use { output ->
+                        output.write(body.toString().toByteArray(Charsets.UTF_8))
+                    }
+                }
+
+                val responseText = connection.readResponseText()
+                if (connection.responseCode !in 200..299) {
+                    throw IllegalStateException(parseErrorMessage(responseText))
+                }
+                responseText
             }
         }
-
-        val responseText = connection.readResponseText()
-        if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(parseErrorMessage(responseText))
-        }
-        responseText
     }
 
     private fun String.toJsonArray(): JSONArray {
