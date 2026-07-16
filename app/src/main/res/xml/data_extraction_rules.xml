@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 31+ (클라우드 백업 및 기기 간 전송) 규칙.
+  인증 세션(액세스/리프레시 토큰)이 담긴 DataStore는 백업/전송에서 제외해 토큰 유출을 막는다.
+  파일: files/datastore/wakepoint_user_preferences.preferences_pb (UserPreferencesDataStore)
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="datastore/wakepoint_user_preferences.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="datastore/wakepoint_user_preferences.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API ≤ 30 (Auto Backup) 규칙.
+  인증 세션(액세스/리프레시 토큰)이 담긴 DataStore는 백업에서 제외한다.
+  파일: files/datastore/wakepoint_user_preferences.preferences_pb (UserPreferencesDataStore)
+-->
+<full-backup-content>
+    <exclude domain="file" path="datastore/wakepoint_user_preferences.preferences_pb" />
+</full-backup-content>
