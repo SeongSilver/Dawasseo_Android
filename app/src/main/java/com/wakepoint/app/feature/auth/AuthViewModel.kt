@@ -2,6 +2,8 @@ package com.wakepoint.app.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wakepoint.app.core.error.UserFacingError
+import com.wakepoint.app.core.push.PushTokenSyncManager
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.auth.AuthSession
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +32,8 @@ data class AuthUiState(
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val pushTokenSyncManager: PushTokenSyncManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -48,6 +51,10 @@ class AuthViewModel @Inject constructor(
                         isCheckingSession = false,
                         session = validSession
                     )
+                }
+                // 로그인 상태가 확인되면 FCM 푸시 토큰을 서버에 반영(친구 알람 푸시 수신에 필요).
+                if (validSession != null) {
+                    pushTokenSyncManager.sync()
                 }
             }
         }
@@ -101,7 +108,7 @@ class AuthViewModel @Inject constructor(
                     onFailure = { error ->
                         current.copy(
                             isSubmitting = false,
-                            errorMessage = error.message ?: "로그인에 실패했습니다."
+                            errorMessage = UserFacingError.of(error)
                         )
                     }
                 )
@@ -144,7 +151,7 @@ class AuthViewModel @Inject constructor(
                     onFailure = { error ->
                         current.copy(
                             isSubmitting = false,
-                            errorMessage = error.message ?: "회원가입에 실패했습니다."
+                            errorMessage = UserFacingError.of(error)
                         )
                     }
                 )
@@ -157,9 +164,40 @@ class AuthViewModel @Inject constructor(
             authRepository.kakaoOAuthUrl()
         }.onFailure { error ->
             _uiState.update {
-                it.copy(errorMessage = error.message ?: "카카오 로그인을 시작하지 못했습니다.")
+                it.copy(errorMessage = UserFacingError.of(error))
             }
         }.getOrNull()
+    }
+
+    /** 로그인 화면에 입력된 이메일로 비밀번호 재설정 메일을 요청한다. */
+    fun sendPasswordReset() {
+        val email = _uiState.value.loginEmail.trim()
+        if (email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "가입한 이메일을 입력한 뒤 다시 눌러주세요.") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true, errorMessage = null, infoMessage = null) }
+            val result = authRepository.sendPasswordReset(email)
+            _uiState.update { current ->
+                result.fold(
+                    onSuccess = {
+                        current.copy(
+                            isSubmitting = false,
+                            infoMessage = "비밀번호 재설정 메일을 보냈어요. 메일함을 확인해 주세요."
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(isSubmitting = false, errorMessage = UserFacingError.of(error))
+                    }
+                )
+            }
+        }
+    }
+
+    /** 오류/안내 팝업을 닫을 때 메시지를 소비한다. */
+    fun consumeMessage() {
+        _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
     }
 
     fun signOut() {

@@ -46,6 +46,7 @@ import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointDanger
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLogo
+import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointTextField
@@ -85,9 +86,13 @@ fun AuthScreen(
     onLoginPasswordChange: (String) -> Unit,
     onSignIn: () -> Unit,
     onKakaoLogin: () -> String?,
-    onSignUp: () -> Unit
+    onSignUp: () -> Unit,
+    onForgotPassword: () -> Unit = {},
+    onDismissMessage: () -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    AuthMessageDialog(uiState = uiState, onDismiss = onDismissMessage)
 
     Column(
         modifier = Modifier
@@ -125,8 +130,7 @@ fun AuthScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-            AuthMessage(uiState = uiState)
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             WakepointButton(
                 text = if (uiState.isSubmitting) {
                     stringResource(R.string.auth_processing)
@@ -153,7 +157,8 @@ fun AuthScreen(
                 Text(
                     text = stringResource(R.string.auth_forgot_password),
                     color = WakepointInk,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable(enabled = !uiState.isSubmitting, onClick = onForgotPassword)
                 )
                 Text(text = "|", color = WakepointMuted)
                 Text(
@@ -228,8 +233,11 @@ fun SignUpScreen(
     onPasswordConfirmChange: (String) -> Unit,
     onNameChange: (String) -> Unit,
     onSubmit: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onDismissMessage: () -> Unit = {}
 ) {
+    AuthMessageDialog(uiState = uiState, onDismiss = onDismissMessage)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -271,7 +279,6 @@ fun SignUpScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-            AuthMessage(uiState = uiState)
             Spacer(modifier = Modifier.height(12.dp))
             WakepointButton(
                 text = if (uiState.isSubmitting) {
@@ -313,17 +320,14 @@ private fun AuthTopBar(
 }
 
 @Composable
-private fun AuthMessage(uiState: AuthUiState) {
+private fun AuthMessageDialog(uiState: AuthUiState, onDismiss: () -> Unit) {
+    val isError = uiState.errorMessage != null
     val message = uiState.errorMessage ?: uiState.infoMessage
     if (message != null) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (uiState.errorMessage != null) WakepointDanger else WakepointMuted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            textAlign = TextAlign.Center
+        WakepointMessageDialog(
+            message = message,
+            onDismiss = onDismiss,
+            isError = isError
         )
     }
 }

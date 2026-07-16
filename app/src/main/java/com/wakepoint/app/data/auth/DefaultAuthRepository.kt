@@ -2,6 +2,7 @@ package com.wakepoint.app.data.auth
 
 import android.net.Uri
 import com.wakepoint.app.core.data.preferences.UserPreferencesDataStore
+import com.wakepoint.app.core.network.retryingNetwork
 import com.wakepoint.app.core.supabase.SupabaseConfig
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -12,6 +13,7 @@ import java.net.URLEncoder
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -54,11 +56,13 @@ class DefaultAuthRepository @Inject constructor(
             .put("password", password)
             .put("data", JSONObject().put("nickname", nickname))
         val response = postAuth("/auth/v1/signup", body)
-        val session = parseSession(response)
+        val session = parseSession(response)?.let {
+            it.copy(nickname = it.nickname.ifBlank { nickname })
+        }
         if (session != null) {
             upsertUserProfile(
                 session = session,
-                nickname = nickname
+                nickname = session.nickname.ifBlank { nickname }
             )
             preferences.saveAuthSession(session)
             AuthOperationResult(sessionStarted = true)
@@ -95,9 +99,11 @@ class DefaultAuthRepository @Inject constructor(
             ?: error("카카오 로그인 사용자 정보를 확인하지 못했습니다.")
         val email = user.optString("email").takeIf { it.isNotBlank() }
             ?: "$userId@kakao.local"
+        val nickname = user.oauthNickname() ?: email.substringBefore("@")
         val session = AuthSession(
             userId = userId,
             email = email,
+            nickname = nickname,
             accessToken = accessToken,
             refreshToken = params["refresh_token"],
             expiresAtEpochSeconds = params.tokenExpiresAt()
@@ -105,7 +111,7 @@ class DefaultAuthRepository @Inject constructor(
 
         upsertUserProfile(
             session = session,
-            nickname = user.oauthNickname() ?: email.substringBefore("@")
+            nickname = nickname
         )
         preferences.saveAuthSession(session)
         AuthOperationResult(sessionStarted = true)
@@ -125,17 +131,26 @@ class DefaultAuthRepository @Inject constructor(
             }
 
             val body = JSONObject().put("refresh_token", refreshToken)
-            val response = runCatching {
-                postAuth("/auth/v1/token?grant_type=refresh_token", body)
-            }.getOrElse {
-                preferences.clearAuthSession()
-                throw it
-            }
-            val refreshedSession = parseSession(response)
-                ?: run {
+            val refreshedSession = try {
+                parseSession(postAuth("/auth/v1/token?grant_type=refresh_token", body))
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (http: AuthHttpException) {
+                // 401/400(invalid_grant 등) = refresh 토큰 자체가 무효 → 재로그인 필요.
+                // 그 외(5xx 등 서버 일시 오류)는 세션을 지우지 않고 기존 세션을 유지한다.
+                if (http.statusCode == 400 || http.statusCode == 401) {
                     preferences.clearAuthSession()
-                    error("세션 갱신 응답을 확인하지 못했습니다.")
+                    throw http
                 }
+                return@withLock session
+            } catch (network: Exception) {
+                // 네트워크/타임아웃 등 일시적 오류 → 세션 유지(기존 access token은 만료 임박 창 내에서 대개 유효).
+                return@withLock session
+            }
+            // 200 이지만 세션 파싱 실패 → 강제 로그아웃 대신 기존 세션 유지.
+            if (refreshedSession == null) {
+                return@withLock session
+            }
             preferences.saveAuthSession(refreshedSession)
             refreshedSession
         }
@@ -145,6 +160,79 @@ class DefaultAuthRepository @Inject constructor(
         return refreshSessionIfNeeded().getOrThrow()
             ?: error("로그인이 필요합니다.")
     }
+
+    override suspend fun updateNickname(nickname: String): Result<Unit> = runCatching {
+        ensureConfigured()
+        val trimmed = nickname.trim()
+        check(trimmed.isNotBlank()) { "닉네임을 입력해주세요." }
+        val session = requireValidSession()
+        patchUserProfileNickname(session, trimmed)
+        preferences.saveNickname(trimmed)
+    }
+
+    override suspend fun uploadPushToken(token: String): Result<Unit> = runCatching {
+        ensureConfigured()
+        check(token.isNotBlank()) { "푸시 토큰이 비어 있습니다." }
+        val session = requireValidSession()
+        patchUserProfileField(session, "push_token", token)
+    }
+
+    private suspend fun patchUserProfileField(
+        session: AuthSession,
+        field: String,
+        value: String
+    ) = retryingNetwork { withContext(Dispatchers.IO) {
+        val endpoint = URL("${config.url.trimEnd('/')}/rest/v1/user_profiles?id=eq.${session.userId}")
+        val body = JSONObject().put(field, value)
+
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "PATCH"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer ${session.accessToken}")
+            setRequestProperty("Prefer", "return=minimal")
+        }
+
+        connection.outputStream.use { output ->
+            output.write(body.toString().toByteArray(Charsets.UTF_8))
+        }
+
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw AuthHttpException(connection.responseCode, parseErrorMessage(responseText))
+        }
+    } }
+
+    private suspend fun patchUserProfileNickname(
+        session: AuthSession,
+        nickname: String
+    ) = retryingNetwork { withContext(Dispatchers.IO) {
+        val endpoint = URL("${config.url.trimEnd('/')}/rest/v1/user_profiles?id=eq.${session.userId}")
+        val body = JSONObject().put("nickname", nickname)
+
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "PATCH"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer ${session.accessToken}")
+            setRequestProperty("Prefer", "return=minimal")
+        }
+
+        connection.outputStream.use { output ->
+            output.write(body.toString().toByteArray(Charsets.UTF_8))
+        }
+
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException(parseErrorMessage(responseText))
+        }
+    } }
 
     override suspend fun signOut() {
         val session = authSession.first()
@@ -158,6 +246,12 @@ class DefaultAuthRepository @Inject constructor(
             }
         }
         preferences.clearAuthSession()
+    }
+
+    override suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
+        ensureConfigured()
+        postAuth("/auth/v1/recover", JSONObject().put("email", email.trim()))
+        Unit
     }
 
     private fun ensureConfigured() {
@@ -188,7 +282,7 @@ class DefaultAuthRepository @Inject constructor(
 
         val responseText = connection.readResponseText()
         if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(parseErrorMessage(responseText))
+            throw AuthHttpException(connection.responseCode, parseErrorMessage(responseText))
         }
         if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
     }
@@ -260,6 +354,7 @@ class DefaultAuthRepository @Inject constructor(
         return AuthSession(
             userId = userId,
             email = email,
+            nickname = user.oauthNickname().orEmpty(),
             accessToken = accessToken,
             refreshToken = response.optString("refresh_token").takeIf { it.isNotBlank() },
             expiresAtEpochSeconds = response.tokenExpiresAt()
@@ -307,11 +402,8 @@ class DefaultAuthRepository @Inject constructor(
         if (expiresAt > 0L) return expiresAt
 
         val expiresIn = optLong("expires_in", 0L)
-        return if (expiresIn > 0L) {
-            Instant.now().epochSecond + expiresIn
-        } else {
-            0L
-        }
+        // 만료 정보가 없으면(카카오/일부 응답) 매 요청 refresh 를 막기 위해 기본 수명을 부여한다.
+        return Instant.now().epochSecond + (expiresIn.takeIf { it > 0L } ?: DEFAULT_SESSION_LIFETIME_SECONDS)
     }
 
     private fun Map<String, String>.tokenExpiresAt(): Long {
@@ -319,16 +411,14 @@ class DefaultAuthRepository @Inject constructor(
         if (expiresAt != null && expiresAt > 0L) return expiresAt
 
         val expiresIn = this["expires_in"]?.toLongOrNull()
-        return if (expiresIn != null && expiresIn > 0L) {
-            Instant.now().epochSecond + expiresIn
-        } else {
-            0L
-        }
+        // 만료 정보가 없으면 기본 수명을 부여(카카오 OAuth 콜백 등).
+        return Instant.now().epochSecond + (expiresIn?.takeIf { it > 0L } ?: DEFAULT_SESSION_LIFETIME_SECONDS)
     }
 
     companion object {
         const val OAUTH_REDIRECT_URI = "com.wakepoint.app://auth-callback"
         private const val KAKAO_OAUTH_SCOPES = "profile_nickname profile_image"
         private const val REFRESH_WINDOW_SECONDS = 300L
+        private const val DEFAULT_SESSION_LIFETIME_SECONDS = 3600L
     }
 }
