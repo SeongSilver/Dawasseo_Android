@@ -9,18 +9,20 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.wakepoint.app.R
 
-val PretendardFontFamily = FontFamily(
-    Font(R.font.pretendard_light, FontWeight.Light),
-    Font(R.font.pretendard_regular, FontWeight.Normal),
-    Font(R.font.pretendard_regular, FontWeight.Medium),
-    Font(R.font.pretendard_semibold, FontWeight.SemiBold),
-    Font(R.font.pretendard_bold, FontWeight.Bold)
+val SpoqaFontFamily = FontFamily(
+    Font(R.font.spoqa_han_sans_neo_thin, FontWeight.Thin),
+    Font(R.font.spoqa_han_sans_neo_light, FontWeight.Light),
+    Font(R.font.spoqa_han_sans_neo_regular, FontWeight.Normal),
+    Font(R.font.spoqa_han_sans_neo_medium, FontWeight.Medium),
+    // Spoqa Han Sans Neo에는 SemiBold(600)가 없어 Medium(500)으로 매핑한다.
+    Font(R.font.spoqa_han_sans_neo_medium, FontWeight.SemiBold),
+    Font(R.font.spoqa_han_sans_neo_bold, FontWeight.Bold)
 )
 
 val WakepointTypography = Typography(
     // Splash / onboarding display
     displayMedium = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 34.sp,
         lineHeight = 45.sp,
         fontWeight = FontWeight.Bold,
@@ -28,14 +30,14 @@ val WakepointTypography = Typography(
     ),
     // Page & login titles ("알람", "어서 오세요…")
     headlineLarge = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 28.sp,
         lineHeight = 38.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = (-0.024).em
     ),
     headlineMedium = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 24.sp,
         lineHeight = 30.sp,
         fontWeight = FontWeight.Bold,
@@ -43,7 +45,7 @@ val WakepointTypography = Typography(
     ),
     // Arrival card place name
     titleLarge = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 22.sp,
         lineHeight = 28.sp,
         fontWeight = FontWeight.Bold,
@@ -51,7 +53,7 @@ val WakepointTypography = Typography(
     ),
     // List item title / profile name
     titleMedium = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 19.sp,
         lineHeight = 24.sp,
         fontWeight = FontWeight.Bold,
@@ -59,7 +61,7 @@ val WakepointTypography = Typography(
     ),
     // Section header inside forms
     titleSmall = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 15.sp,
         lineHeight = 20.sp,
         fontWeight = FontWeight.Bold,
@@ -67,7 +69,7 @@ val WakepointTypography = Typography(
     ),
     // Body / input text / place names
     bodyLarge = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         fontWeight = FontWeight.Medium,
@@ -75,7 +77,7 @@ val WakepointTypography = Typography(
     ),
     // Body secondary / meta summary
     bodyMedium = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 15.sp,
         lineHeight = 22.sp,
         fontWeight = FontWeight.Medium,
@@ -83,7 +85,7 @@ val WakepointTypography = Typography(
     ),
     // Captions / addresses / meta lines
     bodySmall = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 13.sp,
         lineHeight = 20.sp,
         fontWeight = FontWeight.Medium,
@@ -91,7 +93,7 @@ val WakepointTypography = Typography(
     ),
     // Primary button / list labels
     labelLarge = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 16.sp,
         lineHeight = 20.sp,
         fontWeight = FontWeight.SemiBold,
@@ -99,7 +101,7 @@ val WakepointTypography = Typography(
     ),
     // Small buttons / secondary labels
     labelMedium = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 14.sp,
         lineHeight = 18.sp,
         fontWeight = FontWeight.SemiBold,
@@ -107,7 +109,7 @@ val WakepointTypography = Typography(
     ),
     // Tab labels / alias tags
     labelSmall = TextStyle(
-        fontFamily = PretendardFontFamily,
+        fontFamily = SpoqaFontFamily,
         fontSize = 12.sp,
         lineHeight = 14.sp,
         fontWeight = FontWeight.Bold,
