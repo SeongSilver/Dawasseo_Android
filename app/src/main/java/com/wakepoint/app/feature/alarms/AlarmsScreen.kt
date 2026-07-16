@@ -7,10 +7,13 @@ import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +37,7 @@ import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.GraphicEq
@@ -40,6 +45,8 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsNone
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.Stop
@@ -54,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -68,6 +76,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -78,14 +87,17 @@ import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.StatusDot
 import com.wakepoint.app.core.design.WakepointBackground
+import com.wakepoint.app.core.design.WakepointBorder
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
+import com.wakepoint.app.core.design.WakepointDanger
 import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
+import com.wakepoint.app.core.design.WakepointPrimaryTint06
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
@@ -109,6 +121,26 @@ fun AlarmsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var expandedAlarmId by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<Alarm?>(null) }
+    var selectionMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var showBatchDelete by remember { mutableStateOf(false) }
+
+    fun exitSelection() {
+        selectionMode = false
+        selectedIds = emptySet()
+    }
+
+    // 동기화 등으로 알람이 사라지면 선택 집합에서 유효하지 않은 id를 정리한다.
+    LaunchedEffect(uiState.alarms) {
+        if (selectionMode) {
+            val existing = uiState.alarms.mapTo(mutableSetOf()) { it.id }
+            val pruned = selectedIds intersect existing
+            if (pruned != selectedIds) selectedIds = pruned
+            if (uiState.alarms.isEmpty()) exitSelection()
+        }
+    }
+
+    BackHandler(enabled = selectionMode) { exitSelection() }
 
     val summary = when {
         uiState.alarms.isEmpty() -> null
@@ -126,17 +158,33 @@ fun AlarmsScreen(
             .fillMaxSize()
             .background(WakepointBackground)
     ) {
-        WakepointPageHeader(
-            title = stringResource(R.string.alarms_title),
-            subtitle = summary,
-            action = {
-                WakepointCircleIconButton(
-                    icon = Icons.Rounded.Add,
-                    contentDescription = stringResource(R.string.alarm_add),
-                    onClick = onCreateAlarm
-                )
-            }
-        )
+        if (selectionMode) {
+            AlarmSelectionHeader(
+                count = selectedIds.size,
+                allSelected = uiState.alarms.isNotEmpty() && selectedIds.size == uiState.alarms.size,
+                onClose = { exitSelection() },
+                onToggleSelectAll = {
+                    selectedIds = if (selectedIds.size == uiState.alarms.size) {
+                        emptySet()
+                    } else {
+                        uiState.alarms.mapTo(mutableSetOf()) { it.id }
+                    }
+                },
+                onDelete = { showBatchDelete = true }
+            )
+        } else {
+            WakepointPageHeader(
+                title = stringResource(R.string.alarms_title),
+                subtitle = summary,
+                action = {
+                    WakepointCircleIconButton(
+                        icon = Icons.Rounded.Add,
+                        contentDescription = stringResource(R.string.alarm_add),
+                        onClick = onCreateAlarm
+                    )
+                }
+            )
+        }
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -153,8 +201,22 @@ fun AlarmsScreen(
                         AlarmListCard(
                             alarm = alarm,
                             soundTitle = alarm.resolveSoundTitle(uiState.soundTitles),
-                            expanded = expandedAlarmId == alarm.id,
+                            selectionMode = selectionMode,
+                            selected = alarm.id in selectedIds,
+                            expanded = !selectionMode && expandedAlarmId == alarm.id,
                             isUpdating = alarm.id in uiState.updatingAlarmIds,
+                            onToggleSelect = {
+                                selectedIds = if (alarm.id in selectedIds) {
+                                    selectedIds - alarm.id
+                                } else {
+                                    selectedIds + alarm.id
+                                }
+                            },
+                            onEnterSelection = {
+                                expandedAlarmId = null
+                                selectionMode = true
+                                selectedIds = setOf(alarm.id)
+                            },
                             onToggleExpanded = {
                                 expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
                             },
@@ -203,14 +265,80 @@ fun AlarmsScreen(
             }
         )
     }
+
+    if (showBatchDelete) {
+        WakepointConfirmDialog(
+            title = stringResource(R.string.alarm_delete_confirm_title),
+            message = stringResource(R.string.alarm_delete_confirm_message_multi, selectedIds.size),
+            cancelText = stringResource(R.string.alarm_cancel),
+            confirmText = stringResource(R.string.alarm_delete),
+            onDismiss = { showBatchDelete = false },
+            onConfirm = {
+                viewModel.deleteAlarms(selectedIds)
+                showBatchDelete = false
+                exitSelection()
+            }
+        )
+    }
+}
+
+@Composable
+private fun AlarmSelectionHeader(
+    count: Int,
+    allSelected: Boolean,
+    onClose: () -> Unit,
+    onToggleSelectAll: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .padding(top = 12.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onClose) {
+            Icon(
+                imageVector = Icons.Rounded.Close,
+                contentDescription = stringResource(R.string.alarm_selection_close),
+                tint = WakepointInk
+            )
+        }
+        Text(
+            text = stringResource(R.string.alarm_selection_count, count),
+            style = MaterialTheme.typography.titleMedium,
+            color = WakepointInk,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 4.dp)
+        )
+        IconButton(onClick = onToggleSelectAll) {
+            Icon(
+                imageVector = Icons.Rounded.SelectAll,
+                contentDescription = stringResource(R.string.alarm_select_all),
+                tint = if (allSelected) WakepointPrimary else WakepointInk
+            )
+        }
+        IconButton(onClick = onDelete, enabled = count > 0) {
+            Icon(
+                imageVector = Icons.Rounded.DeleteOutline,
+                contentDescription = stringResource(R.string.alarm_delete_selected),
+                tint = if (count > 0) WakepointDanger else WakepointMuted
+            )
+        }
+    }
 }
 
 @Composable
 private fun AlarmListCard(
     alarm: Alarm,
     soundTitle: String,
+    selectionMode: Boolean,
+    selected: Boolean,
     expanded: Boolean,
     isUpdating: Boolean,
+    onToggleSelect: () -> Unit,
+    onEnterSelection: () -> Unit,
     onToggleExpanded: () -> Unit,
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
@@ -218,8 +346,14 @@ private fun AlarmListCard(
     onSave: (Alarm, String, String, Boolean) -> Unit,
     onDeleteRequest: () -> Unit
 ) {
-    if (expanded) {
-        EditableAlarmCard(
+    when {
+        selectionMode -> SelectableAlarmCard(
+            alarm = alarm,
+            soundTitle = soundTitle,
+            selected = selected,
+            onToggleSelect = onToggleSelect
+        )
+        expanded -> EditableAlarmCard(
             alarm = alarm,
             soundTitle = soundTitle,
             isUpdating = isUpdating,
@@ -230,14 +364,96 @@ private fun AlarmListCard(
             onSave = onSave,
             onDelete = onDeleteRequest
         )
-    } else {
-        CompactAlarmCard(
+        else -> CompactAlarmCard(
             alarm = alarm,
             soundTitle = soundTitle,
             isUpdating = isUpdating,
             onToggleExpanded = onToggleExpanded,
+            onLongClick = onEnterSelection,
             onActiveChange = onActiveChange,
             onToggleFavorite = onToggleFavorite
+        )
+    }
+}
+
+/** 선택 모드에서 표시되는 카드. 카드 전체를 탭하면 선택이 토글되고, 왼쪽 체크로 상태를 표시한다. */
+@Composable
+private fun SelectableAlarmCard(
+    alarm: Alarm,
+    soundTitle: String,
+    selected: Boolean,
+    onToggleSelect: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .clickable(onClick = onToggleSelect),
+        shape = RoundedCornerShape(24.dp),
+        color = if (selected) WakepointPrimaryTint06 else WakepointCanvas,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (selected) WakepointPrimary else WakepointBorder
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                contentDescription = stringResource(R.string.alarm_select_item),
+                tint = if (selected) WakepointPrimary else WakepointMuted,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(14.dp))
+            AlarmCardInfo(
+                alarm = alarm,
+                soundTitle = soundTitle,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+/** 컴팩트/선택 카드가 공유하는 알람 요약 정보(상태 점·별칭·주소·메타). */
+@Composable
+private fun AlarmCardInfo(
+    alarm: Alarm,
+    soundTitle: String,
+    modifier: Modifier = Modifier
+) {
+    val radiusLabel = if (alarm.radiusKm < 1.0) {
+        "${(alarm.radiusKm * 1000).toInt()}m"
+    } else {
+        "${alarm.radiusKm.toInt()}km"
+    }
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            StatusDot(active = alarm.isActive, size = 7)
+            Text(
+                text = alarm.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (alarm.isActive) WakepointPrimary else WakepointTextDisabled
+            )
+        }
+        Text(
+            text = alarm.targetAddress,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (alarm.isActive) WakepointInk else WakepointTextTertiary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = stringResource(R.string.alarm_meta_line, radiusLabel, soundTitle),
+            color = WakepointTextSecondary,
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
@@ -355,54 +571,29 @@ private fun EditableAlarmCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CompactAlarmCard(
     alarm: Alarm,
     soundTitle: String,
     isUpdating: Boolean,
     onToggleExpanded: () -> Unit,
+    onLongClick: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onToggleFavorite: () -> Unit
 ) {
-    val radiusLabel = if (alarm.radiusKm < 1.0) {
-        "${(alarm.radiusKm * 1000).toInt()}m"
-    } else {
-        "${alarm.radiusKm.toInt()}km"
-    }
-    WakepointCard(modifier = Modifier.clickable(onClick = onToggleExpanded)) {
+    WakepointCard(
+        modifier = Modifier.combinedClickable(
+            onClick = onToggleExpanded,
+            onLongClick = onLongClick
+        )
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    StatusDot(active = alarm.isActive, size = 7)
-                    Text(
-                        text = alarm.label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (alarm.isActive) WakepointPrimary else WakepointTextDisabled
-                    )
-                }
-                Text(
-                    text = alarm.targetAddress,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (alarm.isActive) WakepointInk else WakepointTextTertiary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = stringResource(
-                        R.string.alarm_meta_line,
-                        radiusLabel,
-                        soundTitle
-                    ),
-                    color = WakepointTextSecondary,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            AlarmCardInfo(
+                alarm = alarm,
+                soundTitle = soundTitle,
+                modifier = Modifier.weight(1f)
+            )
             FavoriteStarButton(isFavorite = alarm.isFavorite, onClick = onToggleFavorite)
             WakepointSwitch(
                 checked = alarm.isActive,

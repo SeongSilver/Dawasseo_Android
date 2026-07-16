@@ -175,6 +175,31 @@ class AlarmsViewModel @Inject constructor(
             }
         }
     }
+
+    /** 선택 모드에서 고른 여러 알람을 한 번에 삭제한다. 하나라도 실패하면 사용자 오류를 노출한다. */
+    fun deleteAlarms(alarmIds: Set<String>) {
+        if (alarmIds.isEmpty()) return
+        viewModelScope.launch {
+            transientState.update { state ->
+                state.copy(
+                    isUpdating = true,
+                    updatingAlarmIds = state.updatingAlarmIds + alarmIds,
+                    errorMessage = null
+                )
+            }
+            val result = runCatching {
+                alarmIds.forEach { alarmRepository.deleteAlarm(it) }
+            }
+            transientState.update { current ->
+                val updatingAlarmIds = current.updatingAlarmIds - alarmIds
+                current.copy(
+                    isUpdating = updatingAlarmIds.isNotEmpty(),
+                    updatingAlarmIds = updatingAlarmIds,
+                    errorMessage = result.exceptionOrNull()?.let { UserFacingError.of(it) }
+                )
+            }
+        }
+    }
 }
 
 private fun String.toRadiusKm(): Double = radiusOptionToKm(this)
