@@ -94,6 +94,31 @@ private enum class MainRoute(
     Profile("profile", R.string.tab_profile, Icons.Rounded.Person)
 }
 
+/**
+ * 인증 상태와 현재 화면을 보고 이동이 "필요할 때만" 목적지 라우트를 돌려준다(테스트 대상).
+ *
+ * - 세션 확인 중이거나 NavHost 가 아직 준비되지 않았으면(currentRoute == null) 대기.
+ * - 로그인 상태인데 스플래시/로그인/가입 화면에 있으면 → 홈으로.
+ * - 비로그인 상태인데 인증 영역 밖에 있으면(세션 만료·로그아웃) → 로그인 화면으로.
+ * - 그 외에는 null: 사용자가 보던 화면을 그대로 유지한다.
+ */
+internal fun resolveAuthRedirect(
+    isCheckingSession: Boolean,
+    isAuthenticated: Boolean,
+    currentRoute: String?
+): String? {
+    if (isCheckingSession || currentRoute == null) return null
+    val onAuthFlow = currentRoute == AppRoute.Auth || currentRoute == AppRoute.SignUp
+    return when {
+        // 스플래시는 항상 상태가 확정되는 즉시 벗어난다
+        currentRoute == AppRoute.Splash ->
+            if (isAuthenticated) MainRoute.Home.route else AppRoute.Auth
+        isAuthenticated && onAuthFlow -> MainRoute.Home.route
+        !isAuthenticated && !onAuthFlow -> AppRoute.Auth
+        else -> null
+    }
+}
+
 @Composable
 fun WakepointApp() {
     val navController = rememberNavController()
@@ -122,15 +147,19 @@ fun WakepointApp() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(authUiState.isCheckingSession, authUiState.isAuthenticated) {
-        if (!authUiState.isCheckingSession) {
-            val targetRoute = if (authUiState.isAuthenticated) {
-                MainRoute.Home.route
-            } else {
-                AppRoute.Auth
-            }
+    // 인증 상태에 따른 라우팅. 현재 화면이 이미 올바른 영역에 있으면 아무것도 하지 않는다(idempotent).
+    // 이전에는 조건 없이 navigate(Home) 을 호출해, 초기 로딩이 끝나기 전에 다른 탭으로 이동했거나
+    // 액티비티가 재생성된 경우(권한 설정 왕복, 다크모드 전환 등) 사용자를 지도 첫 화면으로
+    // 강제로 되돌리는 문제가 있었다.
+    LaunchedEffect(authUiState.isCheckingSession, authUiState.isAuthenticated, backStackEntry) {
+        val targetRoute = resolveAuthRedirect(
+            isCheckingSession = authUiState.isCheckingSession,
+            isAuthenticated = authUiState.isAuthenticated,
+            currentRoute = backStackEntry?.destination?.route
+        )
+        if (targetRoute != null) {
             navController.navigate(targetRoute) {
-                popUpTo(AppRoute.Splash) {
+                popUpTo(navController.graph.id) {
                     inclusive = true
                 }
                 launchSingleTop = true

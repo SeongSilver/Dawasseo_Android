@@ -16,6 +16,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,7 +28,9 @@ class DefaultAuthRepository @Inject constructor(
     private val config: SupabaseConfig,
     private val preferences: UserPreferencesDataStore
 ) : AuthRepository {
-    override val authSession: Flow<AuthSession?> = preferences.authSession
+    // 같은 DataStore 의 다른 키(푸시 토큰, 대기 삭제 목록 등)가 바뀔 때마다 재방출되지 않도록
+    // 세션 값이 실제로 달라졌을 때만 하류(AuthViewModel 등)에 전달한다.
+    override val authSession: Flow<AuthSession?> = preferences.authSession.distinctUntilChanged()
     private val refreshMutex = Mutex()
 
     override suspend fun signInWithEmail(

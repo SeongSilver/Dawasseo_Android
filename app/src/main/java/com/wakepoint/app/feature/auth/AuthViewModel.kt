@@ -39,24 +39,27 @@ class AuthViewModel @Inject constructor(
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     init {
+        // 저장된 세션으로 즉시 화면을 결정한다(stale-while-revalidate). 이전에는 토큰 갱신
+        // 네트워크 호출이 끝날 때까지 스플래시에 머물러 초기 로딩이 길어지고, 로딩이 끝나기 전
+        // 사용자가 한 행동이 뒤늦은 상태 확정에 밀려 초기화되는 문제가 있었다.
         viewModelScope.launch {
             authRepository.authSession.collect { session ->
-                val validSession = if (session != null) {
-                    authRepository.refreshSessionIfNeeded().getOrNull()
-                } else {
-                    null
-                }
                 _uiState.update {
                     it.copy(
                         isCheckingSession = false,
-                        session = validSession
+                        session = session
                     )
                 }
                 // 로그인 상태가 확인되면 FCM 푸시 토큰을 서버에 반영(친구 알람 푸시 수신에 필요).
-                if (validSession != null) {
+                if (session != null) {
                     pushTokenSyncManager.sync()
                 }
             }
+        }
+        // 토큰 검증/갱신은 백그라운드로 수행한다. 갱신 성공(새 토큰 저장)이나 실패(세션 삭제 →
+        // 재로그인 필요)는 DataStore 를 거쳐 위 collect 로 다시 흘러들어와 화면에 반영된다.
+        viewModelScope.launch {
+            authRepository.refreshSessionIfNeeded()
         }
     }
 
