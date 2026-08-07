@@ -124,7 +124,8 @@ class AlarmsViewModel @Inject constructor(
         alarm: Alarm,
         label: String,
         radiusOption: String,
-        vibrate: Boolean
+        vibrate: Boolean,
+        repeating: Boolean
     ) {
         viewModelScope.launch {
             transientState.update { state ->
@@ -137,7 +138,8 @@ class AlarmsViewModel @Inject constructor(
             val updatedAlarm = alarm.copy(
                 label = label.trim().ifBlank { alarm.label },
                 radiusKm = radiusOption.toRadiusKm(),
-                vibrate = vibrate
+                vibrate = vibrate,
+                repeating = repeating
             )
             val result = runCatching {
                 alarmRepository.updateAlarm(updatedAlarm)

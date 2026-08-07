@@ -69,6 +69,8 @@
     <string name="alarm_sound_toggle_hint">알람이 울릴 때 소리 재생</string>
     <string name="alarm_vibrate_setting">진동</string>
     <string name="alarm_vibrate_hint">알람이 울릴 때 진동</string>
+    <string name="alarm_repeating_setting">계속 유지</string>
+    <string name="alarm_repeating_hint">한 번 울려도 꺼지지 않고, 설정한 반경을 벗어났다가 다시 들어오면 재발동</string>
     <string name="alarm_favorite">즐겨찾기</string>
     <string name="alarm_favorite_add">즐겨찾기 추가</string>
     <string name="alarm_favorite_remove">즐겨찾기 해제</string>

@@ -11,7 +11,7 @@ import com.wakepoint.app.data.friend.local.FriendEntity
 
 @Database(
     entities = [AlarmEntity::class, FriendEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class WakepointDatabase : RoomDatabase() {
@@ -115,6 +115,12 @@ abstract class WakepointDatabase : RoomDatabase() {
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE alarms ADD COLUMN pending_sync INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE alarms ADD COLUMN repeating INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

@@ -86,6 +86,7 @@ class DefaultAlarmRepository @Inject constructor(
                     soundEnabled = local?.soundEnabled ?: true,
                     vibrate = local?.vibrate ?: true,
                     isFavorite = local?.isFavorite ?: false,
+                    repeating = local?.repeating ?: false,
                     pendingSync = false
                 )
             )
@@ -128,7 +129,8 @@ class DefaultAlarmRepository @Inject constructor(
             radiusKm = alarm.radiusKm,
             soundType = alarm.soundType.name,
             soundUri = alarm.soundUri,
-            vibrate = alarm.vibrate
+            vibrate = alarm.vibrate,
+            repeating = alarm.repeating
         )
         syncTracking()
         pushRow(alarm.id)
@@ -169,9 +171,13 @@ class DefaultAlarmRepository @Inject constructor(
     }
 
     override suspend fun handleTriggeredAlarm(alarmId: String) {
-        // 울린 알람은 삭제하지 않고 비활성화해 목록에 남긴다(재사용/즐겨찾기 가능).
-        alarmDao.setAlarmActive(alarmId, false)
         userPreferences.incrementWakeupCount()
+        // 계속 유지(반복) 알람은 울려도 비활성화하지 않고 그대로 둔다.
+        // 반경 이탈 후 재진입 시 다시 울리도록 재무장은 위치 추적 서비스가 담당한다.
+        val entity = alarmDao.getAlarm(alarmId)
+        if (entity?.repeating == true) return
+        // 일반 알람: 삭제하지 않고 비활성화해 목록에 남긴다(재사용/즐겨찾기 가능).
+        alarmDao.setAlarmActive(alarmId, false)
         syncTracking()
         pushRow(alarmId)
     }

@@ -223,8 +223,8 @@ fun AlarmsScreen(
                             onOpenSoundList = { onOpenSoundList(alarm.id) },
                             onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
                             onToggleFavorite = { viewModel.setFavorite(alarm.id, !alarm.isFavorite) },
-                            onSave = { updatedAlarm, label, radius, vibrate ->
-                                viewModel.updateAlarmSettings(updatedAlarm, label, radius, vibrate)
+                            onSave = { updatedAlarm, label, radius, vibrate, repeating ->
+                                viewModel.updateAlarmSettings(updatedAlarm, label, radius, vibrate, repeating)
                             },
                             onDeleteRequest = { deleteTarget = alarm }
                         )
@@ -343,7 +343,7 @@ private fun AlarmListCard(
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onToggleFavorite: () -> Unit,
-    onSave: (Alarm, String, String, Boolean) -> Unit,
+    onSave: (Alarm, String, String, Boolean, Boolean) -> Unit,
     onDeleteRequest: () -> Unit
 ) {
     when {
@@ -481,12 +481,13 @@ private fun EditableAlarmCard(
     onOpenSoundList: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onToggleFavorite: () -> Unit,
-    onSave: (Alarm, String, String, Boolean) -> Unit,
+    onSave: (Alarm, String, String, Boolean, Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     var radius by remember(alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
     var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
     var vibrate by remember(alarm.id, alarm.vibrate) { mutableStateOf(alarm.vibrate) }
+    var repeating by remember(alarm.id, alarm.repeating) { mutableStateOf(alarm.repeating) }
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(
@@ -553,11 +554,29 @@ private fun EditableAlarmCard(
                     enabled = !isUpdating
                 )
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    SectionLabel(text = stringResource(R.string.alarm_repeating_setting))
+                    Text(
+                        text = stringResource(R.string.alarm_repeating_hint),
+                        color = WakepointTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                WakepointSwitch(
+                    checked = repeating,
+                    onCheckedChange = { repeating = it },
+                    enabled = !isUpdating
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 WakepointButton(
                     text = stringResource(R.string.alarm_save),
                     enabled = !isUpdating,
-                    onClick = { onSave(alarm, label, radius, vibrate) },
+                    onClick = { onSave(alarm, label, radius, vibrate, repeating) },
                     modifier = Modifier.weight(1f)
                 )
                 WakepointSecondaryButton(

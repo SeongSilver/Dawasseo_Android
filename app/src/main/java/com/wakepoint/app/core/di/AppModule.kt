@@ -40,6 +40,7 @@ object AppModule {
         .addMigrations(WakepointDatabase.MIGRATION_4_5)
         .addMigrations(WakepointDatabase.MIGRATION_5_6)
         .addMigrations(WakepointDatabase.MIGRATION_6_7)
+        .addMigrations(WakepointDatabase.MIGRATION_7_8)
         .build()
 
     @Provides

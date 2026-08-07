@@ -15,8 +15,10 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.wakepoint.app.core.location.AlarmTriggerAction
 import com.wakepoint.app.core.location.accuracyBufferKm
 import com.wakepoint.app.core.location.calculateDistance
+import com.wakepoint.app.core.location.decideAlarmTriggerAction
 import com.wakepoint.app.core.location.calculateDistanceToSegment
 import com.wakepoint.app.core.location.isWithinRadius
 import com.wakepoint.app.core.notification.AlarmNotificationManager
@@ -156,24 +158,33 @@ class LocationTrackingService : Service() {
         val previous = previousLocation
         previousLocation = location
 
-        val triggeredAlarms = activeAlarms.filter { alarm ->
-            isAlarmReached(
+        activeAlarms.forEach { alarm ->
+            val reached = isAlarmReached(
                 alarm = alarm,
                 currentLocation = location,
                 previousLocation = previous
             )
-        }
-
-        triggeredAlarms.forEach { alarm ->
-            if (!triggeringAlarmIds.add(alarm.id)) return@forEach
-
-            serviceScope.launch {
-                runCatching {
-                    alarmNotificationManager.showArrivalAlarm(alarm)
-                    alarmRepository.handleTriggeredAlarm(alarm.id)
-                }.onFailure {
-                    triggeringAlarmIds.remove(alarm.id)
+            when (
+                decideAlarmTriggerAction(
+                    reached = reached,
+                    repeating = alarm.repeating,
+                    currentlyTriggering = alarm.id in triggeringAlarmIds
+                )
+            ) {
+                AlarmTriggerAction.FIRE -> {
+                    triggeringAlarmIds.add(alarm.id)
+                    serviceScope.launch {
+                        runCatching {
+                            alarmNotificationManager.showArrivalAlarm(alarm)
+                            alarmRepository.handleTriggeredAlarm(alarm.id)
+                        }.onFailure {
+                            triggeringAlarmIds.remove(alarm.id)
+                        }
+                    }
                 }
+                // 반복 알람이 반경을 벗어남 → 재무장(다음 재진입 때 다시 울림).
+                AlarmTriggerAction.REARM -> triggeringAlarmIds.remove(alarm.id)
+                AlarmTriggerAction.NONE -> Unit
             }
         }
     }

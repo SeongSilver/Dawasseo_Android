@@ -45,7 +45,8 @@ interface AlarmDao {
             radius_km = :radiusKm,
             sound_type = :soundType,
             sound_uri = :soundUri,
-            vibrate = :vibrate
+            vibrate = :vibrate,
+            repeating = :repeating
         WHERE id = :alarmId
         """
     )
@@ -55,7 +56,8 @@ interface AlarmDao {
         radiusKm: Double,
         soundType: String,
         soundUri: String?,
-        vibrate: Boolean
+        vibrate: Boolean,
+        repeating: Boolean
     )
 
     // is_active 를 로컬에서 바꿀 때는 동기화 대기(pending_sync=1)로 함께 표시한다.
