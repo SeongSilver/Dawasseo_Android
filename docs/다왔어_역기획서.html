@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>다왔어(Wakepoint) 역기획서 · 요구사항 명세서</title>
+<style>
+  :root {
+    --ink: #1e2430;
+    --muted: #5b6472;
+    --line: #d9dee6;
+    --accent: #2f6fed;
+    --bg-soft: #f4f6fa;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.62;
+  }
+  .page { padding: 0 4mm; }
+
+  /* 표지 */
+  .cover { padding: 60mm 4mm 0; page-break-after: always; }
+  .cover .doc-type { color: var(--accent); font-weight: 700; letter-spacing: 2px; font-size: 11pt; }
+  .cover h1 { font-size: 30pt; margin: 6mm 0 2mm; line-height: 1.25; }
+  .cover .subtitle { font-size: 13pt; color: var(--muted); margin-bottom: 18mm; }
+  .cover table { width: 60%; }
+
+  h1.sec {
+    font-size: 16pt; margin: 10mm 0 4mm; padding-bottom: 2mm;
+    border-bottom: 2.5px solid var(--ink);
+    page-break-after: avoid;
+  }
+  h2 { font-size: 12.5pt; margin: 7mm 0 2.5mm; color: var(--ink); page-break-after: avoid; }
+  h2 .no { color: var(--accent); margin-right: 2mm; }
+  h3 { font-size: 11pt; margin: 5mm 0 1.5mm; page-break-after: avoid; }
+  p { margin: 1.5mm 0; }
+  ul, ol { margin: 1.5mm 0 2.5mm; padding-left: 6mm; }
+  li { margin: 0.8mm 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 2.5mm 0 4mm; font-size: 9.5pt; page-break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 1.6mm 2.2mm; vertical-align: top; text-align: left; }
+  th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+  tr { page-break-inside: avoid; }
+  td.id { white-space: nowrap; font-weight: 700; color: var(--accent); font-size: 9pt; }
+  td.pri { white-space: nowrap; text-align: center; }
+
+  code, .mono { font-family: "SF Mono", Menlo, monospace; font-size: 0.92em; background: var(--bg-soft); padding: 0 1.2mm; border-radius: 2px; }
+  .callout { background: var(--bg-soft); border-left: 3px solid var(--accent); padding: 2.5mm 3.5mm; margin: 3mm 0; border-radius: 0 4px 4px 0; }
+  .muted { color: var(--muted); }
+  .small { font-size: 9pt; }
+
+  .toc { page-break-after: always; }
+  .toc ol { list-style: none; padding-left: 0; font-size: 11pt; }
+  .toc li { margin: 1.6mm 0; }
+  .toc .n { display: inline-block; width: 9mm; color: var(--accent); font-weight: 700; }
+
+  .brk { page-break-before: always; }
+  @page { size: A4; margin: 16mm 14mm 18mm; }
+</style>
+</head>
+<body>
+
+<!-- ===================== 표지 ===================== -->
+<div class="cover">
+  <div class="doc-type">REVERSE PLANNING DOCUMENT</div>
+  <h1>다왔어 (Wakepoint)<br>역기획서 · 요구사항 명세서</h1>
+  <div class="subtitle">위치 기반 도착 알람 서비스 — Android</div>
+  <table>
+    <tr><th>문서 버전</th><td>v1.0</td></tr>
+    <tr><th>작성일</th><td>2026-08-07</td></tr>
+    <tr><th>작성 방식</th><td>구현 코드베이스 역분석 (Android 소스 · Room 스키마 · Supabase 스키마 문서 기준)</td></tr>
+    <tr><th>대상 버전</th><td>앱 표기 v2.0.0 (versionName 0.1.0 / versionCode 1)</td></tr>
+    <tr><th>플랫폼</th><td>Android (minSdk 26 / targetSdk 34 / compileSdk 35)</td></tr>
+  </table>
+</div>
+
+<!-- ===================== 목차 ===================== -->
+<div class="page toc">
+  <h1 class="sec">목차</h1>
+  <ol>
+    <li><span class="n">1</span> 서비스 개요</li>
+    <li><span class="n">2</span> 서비스 구조 및 화면 흐름</li>
+    <li><span class="n">3</span> 기능 정의 (기능 ID 기준)</li>
+    <li><span class="n">4</span> 화면별 상세 명세</li>
+    <li><span class="n">5</span> 핵심 정책 및 동작 규칙</li>
+    <li><span class="n">6</span> 데이터 모델</li>
+    <li><span class="n">7</span> 서버 스키마 및 보안 (Supabase)</li>
+    <li><span class="n">8</span> 외부 연동 및 기술 스택</li>
+    <li><span class="n">9</span> 권한 체계</li>
+    <li><span class="n">10</span> 비기능 요구사항</li>
+    <li><span class="n">11</span> 미구현 · 향후 과제</li>
+  </ol>
+</div>
+
+<div class="page">
+
+<!-- ===================== 1. 서비스 개요 ===================== -->
+<h1 class="sec">1. 서비스 개요</h1>
+
+<h2><span class="no">1.1</span>서비스 정의</h2>
+<p><b>다왔어(Wakepoint)</b>는 목적지를 지정해 두면, 사용자의 기기가 해당 목적지 반경에 진입하는 순간
+전체화면 알람(소리·진동)으로 깨워주는 <b>위치 기반 도착 알람 앱</b>이다.
+대중교통 이동 중 잠들거나 딴짓을 하다 내릴 곳을 지나치는 문제를 해결한다.</p>
+
+<h2><span class="no">1.2</span>핵심 가치</h2>
+<ul>
+  <li><b>놓치지 않는 알람</b> — 화면이 꺼져 있거나 다른 앱 사용 중, 잠금화면 상태에서도 전체화면 알람이 즉시 뜬다.</li>
+  <li><b>서로 깨워주는 관계</b> — 친구에게 권한을 받으면 친구의 기기에 도착 알람을 대신 설정해줄 수 있다 ("지켜봐 주는 친구").</li>
+  <li><b>위치 프라이버시</b> — 위치 판정과 알람 발동은 전적으로 기기 로컬에서 수행한다. 서버·푸시·로그 어디에도 위치, 근접, 도착 여부를 기록하지 않는다.</li>
+  <li><b>오프라인 내성</b> — 알람 생성·수정·삭제는 로컬 우선으로 즉시 반영되고, 네트워크 복구 시 서버와 자동 동기화된다.</li>
+</ul>
+
+<h2><span class="no">1.3</span>타깃 사용자</h2>
+<ul>
+  <li>대중교통(버스·지하철·기차)에서 하차 지점을 놓치기 쉬운 통근·통학자, 여행자</li>
+  <li>가족·연인·친구가 목적지에 잘 내리도록 챙겨주고 싶은 사용자 (대리 알람 설정)</li>
+</ul>
+
+<h2><span class="no">1.4</span>핵심 사용자 시나리오</h2>
+<table>
+  <tr><th style="width:14mm">시나리오</th><th>흐름</th></tr>
+  <tr><td>S1. 내 도착 알람</td><td>지도에서 목적지 선택(탭/검색/음성) → 별칭·반경·소리·진동 설정 → 알람 저장 → 이동 중 백그라운드 위치 추적 → 반경 진입 시 전체화면 알람 → "알람 끄기"</td></tr>
+  <tr><td>S2. 친구 깨우기</td><td>친구 검색/초대 → 친구 수락 → 알람 설정 권한 요청 → 친구가 권한 수락 → 친구에게 알람 전송 → 친구 기기에 FCM으로 알람 동기화 → 친구 기기가 로컬에서 위치 판정 후 알람 발동</td></tr>
+  <tr><td>S3. 반복 구간 알람</td><td>알람의 "계속 유지" 활성화 → 도착해 울린 뒤에도 꺼지지 않음 → 반경을 벗어나면 재무장(REARM) → 재진입 시 다시 발동</td></tr>
+</table>
+
+<!-- ===================== 2. 구조 ===================== -->
+<h1 class="sec brk">2. 서비스 구조 및 화면 흐름</h1>
+
+<h2><span class="no">2.1</span>정보 구조 (IA)</h2>
+<ul>
+  <li><b>진입</b>: 스플래시 → (비로그인) 로그인 · 회원가입 / (로그인) 메인</li>
+  <li><b>메인 하단 탭 4개</b>: 지도(home) · 알람(alarms) · 친구(friends) · 마이(profile)</li>
+  <li><b>서브 화면</b>: 회원가입(sign-up), 사운드 목록(sound-list — 전역 기본 사운드 또는 특정 알람 사운드 편집)</li>
+  <li><b>독립 화면</b>: 도착 알람 전체화면(AlarmAlertActivity — 잠금화면 위 표시)</li>
+</ul>
+
+<h2><span class="no">2.2</span>인증 라우팅 규칙</h2>
+<ul>
+  <li>세션 확인 중에는 화면 전환을 보류하고, 저장된 세션으로 즉시 분기한다(토큰 검증·갱신은 백그라운드, stale-while-revalidate).</li>
+  <li>스플래시는 상태 확정 즉시 벗어난다. 로그인 상태로 인증 화면에 있으면 홈으로, 비로그인 상태로 인증 영역 밖에 있으면(세션 만료·로그아웃) 로그인 화면으로 보낸다.</li>
+  <li>그 외에는 <b>사용자가 보던 화면을 절대 이동시키지 않는다</b>(권한 설정 왕복, 다크모드 전환, 액티비티 재생성 등에서 첫 화면으로 튕기지 않음).</li>
+</ul>
+
+<h2><span class="no">2.3</span>백그라운드 구성요소</h2>
+<table>
+  <tr><th style="width:42mm">구성요소</th><th>역할</th></tr>
+  <tr><td>위치 추적 포그라운드 서비스</td><td>활성 알람이 1개 이상이면 상시 위치 확인(5초 간격), 도착 판정 및 알람 발동</td></tr>
+  <tr><td>알람 실행 서비스</td><td>전체화면 알람 표시, 소리·진동 재생, 최대 30초 후 자동 정지</td></tr>
+  <tr><td>FCM 수신 서비스</td><td>친구 알람 전송 등 서버 변경 신호 수신 → 알람 재동기화</td></tr>
+  <tr><td>주기 동기화 워커</td><td>30분 주기(네트워크 연결 시) 서버 알람 catch-up 동기화</td></tr>
+  <tr><td>부팅 리시버</td><td>재부팅·앱 업데이트 후 활성 알람의 위치 추적 자동 재개</td></tr>
+</table>
+
+<!-- ===================== 3. 기능 정의 ===================== -->
+<h1 class="sec brk">3. 기능 정의</h1>
+<p class="muted small">우선순위: P0 = 핵심(없으면 서비스 불성립) · P1 = 주요 · P2 = 보조. 모든 항목은 현재 구현 완료 상태이다.</p>
+
+<h2><span class="no">3.1</span>인증 (AUTH)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">AUTH-01</td><td>이메일 로그인</td><td>이메일+비밀번호 로그인. 빈 값 검증("이메일과 비밀번호를 입력해주세요."). 처리 중 버튼 비활성.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">AUTH-02</td><td>카카오 로그인</td><td>Supabase OAuth(provider=kakao)로 브라우저 인증 후 딥링크(<code>com.wakepoint.app://auth-callback</code>) 복귀. 프로필 닉네임·이미지 scope.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">AUTH-03</td><td>회원가입</td><td>이름·이메일·비밀번호(6자 이상)·비밀번호 확인. 가입 즉시 세션 발급 시 프로필 생성 후 홈 진입, 이메일 확인 정책 시 안내 문구 노출.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">AUTH-04</td><td>비밀번호 재설정</td><td>로그인 화면에서 이메일 입력 후 재설정 메일 발송.</td><td class="pri">P1</td></tr>
+  <tr><td class="id">AUTH-05</td><td>세션 유지·자동 갱신</td><td>세션을 로컬 보관, 만료 300초 전부터 refresh token으로 갱신. 401/400이면 세션 삭제 후 재로그인 유도, 일시 오류(5xx·네트워크)면 기존 세션 유지.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">AUTH-06</td><td>로그아웃</td><td>서버 로그아웃 + 로컬 세션 삭제 → 로그인 화면 이동.</td><td class="pri">P0</td></tr>
+</table>
+
+<h2><span class="no">3.2</span>지도 · 알람 생성 (MAP)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">MAP-01</td><td>지도 표시·내 위치</td><td>Google Map 기반. 위치 권한 허용 시 내 위치 표시 및 카메라 이동, 현재 위치가 기본 목적지. 기본 카메라: 서울시청(줌 15). 내 위치 FAB 제공(실패 시 서울시청 폴백).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">MAP-02</td><td>지도 탭으로 목적지 선택</td><td>지도 탭 → 마커 표시 + 좌표→주소 역지오코딩(도로명 우선, 지번 차선, 실패 시 "지도에서 선택한 위치").</td><td class="pri">P0</td></tr>
+  <tr><td class="id">MAP-03</td><td>장소 검색</td><td>카카오 키워드+주소 통합 검색(중복 제거). 결과 선택 시 카메라 이동(줌 16)·목적지 지정.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">MAP-04</td><td>음성 검색</td><td>시스템 음성인식(한국어)으로 검색어 입력("목적지를 말해주세요"). 미지원 기기는 토스트 안내.</td><td class="pri">P2</td></tr>
+  <tr><td class="id">MAP-05</td><td>알람 설정 시트</td><td>별칭(미입력 시 주소→"목적지 알람" 폴백), 반경(100m/300m/500m/1km/3km/10km, 기본 500m), 소리 on/off + 선택 사운드 표기, 진동 on/off. 저장 시 알람 탭으로 이동 + 위치 추적 동기화.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">MAP-06</td><td>생성 전 권한 게이트</td><td>알람 만들기 시 알림 권한(13+)과 전체화면 알람 특수권한을 확인·요청.</td><td class="pri">P1</td></tr>
+</table>
+
+<h2><span class="no">3.3</span>알람 관리 (ALM)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">ALM-01</td><td>알람 목록·분류</td><td>즐겨찾기 / 활성 알람 / 지난 알람 3개 섹션. 활성 우선, 별칭 오름차순 정렬. 발신 구분 표기(직접 설정/친구가 설정).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">ALM-02</td><td>요약 헤더</td><td>활성 N개 시 "지금 N개의 알람이 지켜보고 있어요", 0개 시 "모든 알람이 꺼져 있어요".</td><td class="pri">P2</td></tr>
+  <tr><td class="id">ALM-03</td><td>알람 편집</td><td>카드 확장 후 별칭·반경·사운드·진동·반복 수정, 저장. 항목별 진행 표시.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">ALM-04</td><td>활성 on/off</td><td>스위치 토글. 변경 즉시 로컬 반영 + 동기화 플래그(서버 이전 값으로 되살아나는 문제 방지).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">ALM-05</td><td>즐겨찾기</td><td>별 아이콘 토글, 즐겨찾기 섹션 상단 고정(로컬 전용 설정).</td><td class="pri">P1</td></tr>
+  <tr><td class="id">ALM-06</td><td>계속 유지(반복)</td><td>한 번 울려도 꺼지지 않고, 반경 이탈 후 재진입 시 재발동(로컬 전용 설정).</td><td class="pri">P1</td></tr>
+  <tr><td class="id">ALM-07</td><td>삭제(단건)</td><td>확인 다이얼로그("삭제한 알람은 다시 복구할 수 없습니다.") 후 삭제.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">ALM-08</td><td>다중 선택 삭제</td><td>롱프레스로 선택 모드 진입, 개별/전체 선택, 선택 개수 표시, 일괄 삭제 확인. 뒤로가기로 선택 모드 종료. 동기화로 사라진 알람은 선택 집합에서 자동 정리.</td><td class="pri">P1</td></tr>
+  <tr><td class="id">ALM-09</td><td>빈 상태</td><td>"아직 알람이 없어요" + "첫 알람 만들기" CTA(지도 탭 이동).</td><td class="pri">P2</td></tr>
+</table>
+
+<h2><span class="no">3.4</span>알람 사운드 (SND)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">SND-01</td><td>사운드 목록·선택</td><td>기본 제공(앱 번들) / 내 알림음(녹음·가져옴·기기 알람음) 2개 섹션. 탭 시 미리듣기 + 선택 저장(체크 표시).</td><td class="pri">P1</td></tr>
+  <tr><td class="id">SND-02</td><td>이중 스코프</td><td>전역 기본 사운드(마이 &gt; 알람 사운드 관리)와 개별 알람 사운드(알람 편집에서 진입)를 같은 화면으로 편집.</td><td class="pri">P1</td></tr>
+  <tr><td class="id">SND-03</td><td>기기 알람음 선택</td><td>시스템 알람음 피커(RingtoneManager) 연동, 선택 항목을 내 알림음에 추가.</td><td class="pri">P2</td></tr>
+  <tr><td class="id">SND-04</td><td>오디오 파일 가져오기</td><td>SAF로 audio/* 파일 가져오기(13+ READ_MEDIA_AUDIO / ≤32 READ_EXTERNAL_STORAGE 권한).</td><td class="pri">P2</td></tr>
+  <tr><td class="id">SND-05</td><td>음성 녹음</td><td>마이크 권한 후 녹음 시트(Idle→Recording→Recorded, mm:ss 표시). M4A/AAC 128kbps 44.1kHz 저장.</td><td class="pri">P2</td></tr>
+  <tr><td class="id">SND-06</td><td>커스텀 사운드 삭제</td><td>확인 후 삭제(번들 사운드는 불가). 기본값이었다면 기본값 해제.</td><td class="pri">P2</td></tr>
+</table>
+
+<h2><span class="no">3.5</span>친구 · 대리 알람 (FRD)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">FRD-01</td><td>친구 검색·요청</td><td>이메일 또는 닉네임으로 검색(최소 2글자) → 요청 전송. 본인·기존 관계 요청 방지.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">FRD-02</td><td>요청 수락·거절·취소</td><td>받은 요청은 수락/거절, 보낸 요청은 취소. 섹션별로 구분 노출.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">FRD-03</td><td>친구 초대</td><td>카카오톡 공유(미설치 시 일반 공유 시트 폴백) / 링크 복사. 초대 문구에 내 이메일 검색 유도 + Play 스토어 링크 포함.</td><td class="pri">P1</td></tr>
+  <tr><td class="id">FRD-04</td><td>친구 차단·삭제</td><td>친구 카드에서 차단/삭제(확인 다이얼로그).</td><td class="pri">P1</td></tr>
+  <tr><td class="id">FRD-05</td><td>알람 설정 권한</td><td>"친구 기기에 알람을 대신 설정할 권한"을 요청 → 상대가 수락/거절. 상태 표기(대리 설정 가능/권한 대기/거절됨), 만료 없음(영구).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">FRD-06</td><td>친구에게 알람 보내기</td><td>권한 Accepted인 친구에게만 가능. 주소 검색으로 목적지 선택 후 별칭·반경·소리·진동 설정 → 전송. 사운드는 앱 번들 사운드만 전파(개인 녹음·파일은 상대 기기 재생 불가 → 시스템 기본 알람음 폴백).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">FRD-07</td><td>수신 알람 동기화</td><td>친구가 보낸 알람은 FCM 신호 → 수신자 기기가 서버에서 알람을 내려받아 로컬 등록, 위치 추적 시작.</td><td class="pri">P0</td></tr>
+</table>
+
+<h2><span class="no">3.6</span>마이페이지 (PRF)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">PRF-01</td><td>프로필·닉네임 변경</td><td>닉네임·이메일 표시, 탭하여 닉네임 변경(서버 반영).</td><td class="pri">P1</td></tr>
+  <tr><td class="id">PRF-02</td><td>활동 통계</td><td>깨워드린 횟수(누적) · 활성 알람 수 · 지켜봐 주는 친구 수 3종 카드.</td><td class="pri">P2</td></tr>
+  <tr><td class="id">PRF-03</td><td>설정 바로가기</td><td>시스템 앱 알림 설정 / 위치 권한 관리(앱 상세 설정) / 알람 사운드 관리 이동.</td><td class="pri">P2</td></tr>
+  <tr><td class="id">PRF-04</td><td>고객센터</td><td>support@wakepoint.app 메일 작성 연결. 버전 표기.</td><td class="pri">P2</td></tr>
+</table>
+
+<h2><span class="no">3.7</span>알람 발동 엔진 (TRG)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">TRG-01</td><td>백그라운드 위치 추적</td><td>활성 알람 ≥1개면 포그라운드 서비스 시작(고정밀, 5초 간격·최소 2초), 0개면 자동 중단. 상시 알림 "활성 알람 N개를 확인하고 있어요"(저중요도).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">TRG-02</td><td>도착 판정</td><td>거리 ≤ 반경 + GPS 정확도 버퍼(정확도/1000, 최대 50m). 추가로 직전→현재 이동 선분과 목적지의 최근접 거리 판정(간격 ≤300초·선분 ≤10km 조건)으로 고속 이동 시 반경 통과 누락 방지.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">TRG-03</td><td>발동·재무장 상태기계</td><td>반경 진입+미발동 → FIRE / 반복 알람이 반경 이탈+발동 상태 → REARM / 그 외 NONE. 서비스 시작 직후 현재 위치 1회 즉시 평가(이미 반경 안인 경우 포착).</td><td class="pri">P0</td></tr>
+  <tr><td class="id">TRG-04</td><td>전체화면 알람</td><td>잠금화면 위·화면 꺼짐에도 알람 화면 표시(전체화면 알림 + 오버레이). 목적지 별칭·주소 표시, "알람 끄기" 버튼. 소리(USAGE_ALARM, 반복, 실패 시 시스템 알람음 폴백)·진동(0/700/250/700ms 패턴) 동시 실행, 최대 30초 후 자동 정지.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">TRG-05</td><td>발동 후 처리</td><td>깨움 횟수 +1. 일반 알람은 삭제 대신 비활성화(재사용 가능), 반복 알람은 활성 유지. 서버에 상태 반영.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">TRG-06</td><td>부팅·업데이트 복원</td><td>재부팅/앱 업데이트 완료 시 활성 알람이 있으면 위치 추적 자동 재개.</td><td class="pri">P1</td></tr>
+</table>
+
+<h2><span class="no">3.8</span>동기화 · 오프라인 (SYN)</h2>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:30mm">기능</th><th>정의</th><th style="width:10mm">우선</th></tr>
+  <tr><td class="id">SYN-01</td><td>오프라인 우선 저장</td><td>알람 생성·수정·삭제·친구 알람 전송은 로컬 먼저 반영 후 서버 전송. 실패분은 pending 큐(미전송 알람·미전송 친구 알람·삭제 대기)로 보관, 다음 동기화 때 재전송.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">SYN-02</td><td>병합 규칙</td><td>동기화 시 pending 업로드 선행 → 서버 조회. 삭제 대기 id는 되살리지 않고, 로컬 변경 중(pending) 항목은 서버 값으로 덮지 않으며, 로컬 전용 설정(진동·즐겨찾기·소리on·반복)은 보존. 서버에서 사라진 알람은 로컬에서도 제거.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">SYN-03</td><td>동기화 트리거</td><td>앱 포그라운드 복귀 / 알람·친구 화면 진입 / FCM 수신 / 30분 주기 워커 / 부팅·업데이트 / 저장·수정·삭제 직후.</td><td class="pri">P0</td></tr>
+  <tr><td class="id">SYN-04</td><td>네트워크 정책</td><td>타임아웃 15초. 멱등 GET만 최대 3회 재시도, 변경 요청(POST/PATCH/DELETE)은 중복 방지를 위해 재시도하지 않음. 알람 upsert는 id 기준 멱등.</td><td class="pri">P1</td></tr>
+  <tr><td class="id">SYN-05</td><td>푸시 토큰 관리</td><td>로그인 후 FCM 토큰 조회→로컬 저장→서버 업로드. 토큰 갱신 시 즉시 재업로드, 실패 시 다음 로그인 때 재시도.</td><td class="pri">P1</td></tr>
+</table>
+
+<!-- ===================== 4. 화면 상세 ===================== -->
+<h1 class="sec brk">4. 화면별 상세 명세</h1>
+
+<h2><span class="no">4.1</span>스플래시</h2>
+<ul>
+  <li>로고 + 태그라인 "목적지 도착 알림의 시작".</li>
+  <li>저장된 세션 즉시 평가 후 홈/로그인 분기. 네트워크 토큰 검증을 기다리지 않는다.</li>
+</ul>
+
+<h2><span class="no">4.2</span>로그인 / 회원가입</h2>
+<ul>
+  <li>구성: 이메일·비밀번호 입력, 로그인 버튼, 비밀번호 재설정 링크, 카카오 로그인 버튼, 회원가입 링크.</li>
+  <li>처리 중 상태("처리 중...")로 중복 제출 방지. 오류·안내는 다이얼로그로 구분 표시.</li>
+  <li>회원가입: 이름/이메일/비밀번호/비밀번호 확인 4개 필드 + 유효성 검증(§3.1 AUTH-03). 뒤로가기 지원.</li>
+  <li class="muted">참고: 전화번호·생년월일·인증번호 리소스는 존재하나 MVP에서 미노출.</li>
+</ul>
+
+<h2><span class="no">4.3</span>지도 홈</h2>
+<ul>
+  <li>상단 검색바(+음성 검색 버튼), 지도 영역, 내 위치 FAB, "알람 만들기" 버튼.</li>
+  <li>목적지 선택 상태: 커스텀 마커 + 해석된 주소 표기.</li>
+  <li>검색 시트: 키워드 입력 → 결과 목록(장소명·주소) → 선택 시 지도 이동.</li>
+  <li>알람 설정 바텀시트: 별칭 / 목적지(읽기 전용) / 반경 선택기 / 소리 토글(선택 사운드명 + "마이 &gt; 알람 사운드 관리에서 변경" 안내) / 진동 토글 / 저장.</li>
+</ul>
+
+<h2><span class="no">4.4</span>알람 목록</h2>
+<ul>
+  <li>헤더: 제목 + 요약 + 알람 추가 버튼(지도 탭 이동).</li>
+  <li>컴팩트 카드: 상태 점, 별칭, 주소, "반경 X · 사운드명" 메타, 즐겨찾기 별, 활성 스위치.</li>
+  <li>탭 → 편집 카드 확장(별칭·반경·사운드·진동·계속 유지·저장·삭제) / 롱프레스 → 다중 선택 모드(전체 선택·N개 선택·일괄 삭제).</li>
+</ul>
+
+<h2><span class="no">4.5</span>사운드 목록</h2>
+<ul>
+  <li>섹션: 기본 제공 사운드 / 내 알림음. 각 항목: 제목·부제·체크. 탭 시 미리듣기+선택.</li>
+  <li>하단 액션: 기기 알람음 선택 · 가져오기 · 녹음하기. 커스텀 항목 삭제 지원.</li>
+  <li>진입 경로에 따라 전역 기본 사운드 또는 특정 알람 사운드를 편집.</li>
+</ul>
+
+<h2><span class="no">4.6</span>친구</h2>
+<ul>
+  <li>섹션 순서: 받은 친구 요청 → 보낸 친구 요청 → 받은 알람 권한 요청 → 보낸 알람 권한 요청 → 친구 목록("서로의 도착을 지켜봐 주는 사이예요").</li>
+  <li>친구 카드 확장: 알람 보내기 · 권한 요청 · 차단 · 삭제. 권한 상태 배지.</li>
+  <li>친구 검색 시트(2글자 이상), 초대 카드(카카오톡 공유/링크 복사). 빈 상태 "아직 친구가 없습니다."</li>
+</ul>
+
+<h2><span class="no">4.7</span>마이</h2>
+<ul>
+  <li>프로필 카드(닉네임 변경), 통계 3종, 설정 그룹(알림 설정·위치 권한·사운드 관리·고객센터), 로그아웃, 버전 표기.</li>
+</ul>
+
+<h2><span class="no">4.8</span>도착 알람 화면</h2>
+<ul>
+  <li>잠금화면 위 표시·화면 자동 켜짐·꺼짐 방지. 로고 + "목적지에 도착했어요" + 별칭·주소 + "알람 끄기".</li>
+  <li>알람 끄기 → 소리·진동 정지, 알림 제거, 화면 종료.</li>
+</ul>
+
+<!-- ===================== 5. 정책 ===================== -->
+<h1 class="sec brk">5. 핵심 정책 및 동작 규칙</h1>
+
+<h2><span class="no">5.1</span>반경 · 도착 판정</h2>
+<ul>
+  <li>반경 옵션: <b>100m / 300m / 500m(기본) / 1km / 3km / 10km</b> (시스템 허용치 0.1~50km. 10m·50m는 GPS 정확도보다 작아 제외).</li>
+  <li>도착 = 목적지까지 거리 ≤ 반경 + GPS 정확도 버퍼(위치 정확도 기반, 최대 50m).</li>
+  <li>이동 선분 보조 판정: 직전 위치→현재 위치 선분이 목적지 반경을 통과했으면 도착 처리(두 위치 간격 300초 이내, 선분 10km 이내일 때만).</li>
+</ul>
+
+<h2><span class="no">5.2</span>알람 상태 전이</h2>
+<div class="callout">
+생성(활성) → <b>[도착 발동]</b> → 일반 알람: <b>비활성화 + 목록 유지</b>(삭제하지 않음 — 재사용·즐겨찾기 가능)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ 반복(계속 유지) 알람: <b>활성 유지</b> → 반경 이탈 시 재무장 → 재진입 시 재발동<br>
+활성 토글은 항상 동기화 대기 플래그와 함께 기록되어, 서버의 이전 값으로 되돌아가 "껐는데 다시 켜지는" 문제를 차단한다.
+</div>
+
+<h2><span class="no">5.3</span>위치 프라이버시 원칙</h2>
+<ul>
+  <li>위치 수집·근접 판단·알람 발동·확인은 <b>알람 소유자(울릴 사람) 기기 로컬에서만</b> 수행한다.</li>
+  <li>서버·FCM·로그에 위치, 근접, 도착, 알람 발생/확인 정보를 일절 기록하지 않는다. 서버에는 알람 "설정값"(목적지 좌표·주소·반경 등)만 저장된다.</li>
+  <li>대리 알람 요청자는 상대의 위치·도착 여부를 알 수 없다. 요청자에게는 권한 상태(대기/수락/거절)만 노출된다.</li>
+</ul>
+
+<h2><span class="no">5.4</span>대리 알람 권한 규칙</h2>
+<ul>
+  <li>알람 전송은 상대가 권한을 <b>수락한 경우에만</b> 가능(서버 RLS로도 강제 — §7).</li>
+  <li>권한은 요청→수락/거절 상태를 가지며 만료 없음(영구). 사운드는 앱 번들 사운드만 전파된다.</li>
+</ul>
+
+<!-- ===================== 6. 데이터 모델 ===================== -->
+<h1 class="sec brk">6. 데이터 모델</h1>
+
+<h2><span class="no">6.1</span>알람 (Alarm)</h2>
+<table>
+  <tr><th style="width:34mm">필드</th><th>의미</th></tr>
+  <tr><td class="mono">id</td><td>알람 식별자</td></tr>
+  <tr><td class="mono">ownerId / createdBy</td><td>울릴 대상 / 설정한 사람 (친구 대리 설정 시 서로 다름 — "직접 설정"/"친구가 설정" 구분 근거)</td></tr>
+  <tr><td class="mono">label</td><td>별칭 (미입력 시 주소 → "목적지 알람" 폴백)</td></tr>
+  <tr><td class="mono">targetLat / targetLng / targetAddress</td><td>목적지 좌표·주소</td></tr>
+  <tr><td class="mono">radiusKm</td><td>도착 반경 (0.1~50km)</td></tr>
+  <tr><td class="mono">isActive</td><td>활성 여부</td></tr>
+  <tr><td class="mono">soundType / soundUri</td><td>기본(번들) / 커스텀(파일·시스템 URI)</td></tr>
+  <tr><td class="mono">soundEnabled · vibrate · isFavorite · repeating</td><td><b>로컬 전용</b> — 서버 스키마에 없음, 동기화 시 보존</td></tr>
+  <tr><td class="mono">pendingSync</td><td>서버 미반영 여부(오프라인 큐 플래그, 로컬 전용)</td></tr>
+</table>
+
+<h2><span class="no">6.2</span>친구 · 권한</h2>
+<ul>
+  <li><b>Friend</b>: 관계 id, 요청자/수신자, 닉네임·이메일·아바타, 상태(대기/수락/거절/차단), 알람 권한 상태(없음/대기/수락/거절), 권한 만료일(현재 항상 영구).</li>
+  <li><b>AlarmPermission</b>: 요청자(알람을 설정해줄 친구) / 대상(권한을 부여하는 나) / 상태 / 만료일.</li>
+  <li><b>UserProfile</b>: id, 이메일, 닉네임, 아바타, 푸시 토큰.</li>
+</ul>
+
+<h2><span class="no">6.3</span>로컬 저장소</h2>
+<ul>
+  <li><b>Room DB</b> (버전 8, 마이그레이션 1→8 보존): 알람 테이블, 친구 테이블. 활성 변경 시 동기화 플래그 동반 기록, 동기화 완료분만 서버 기준 삭제(로컬 전용 항목 보존).</li>
+  <li><b>DataStore</b>: 세션(액세스/리프레시 토큰·만료), FCM 토큰, 전역 기본 사운드, 누적 깨움 횟수, 선택한 기기 알람음 목록, 미전송 친구 알람 큐, 서버 삭제 대기 알람 id 큐.</li>
+  <li><b>SharedPreferences</b>: 전체화면 권한 안내 노출 이력(설치당 1회).</li>
+</ul>
+
+<!-- ===================== 7. 서버 ===================== -->
+<h1 class="sec">7. 서버 스키마 및 보안 (Supabase)</h1>
+<table>
+  <tr><th style="width:30mm">테이블</th><th>주요 컬럼 · 규칙</th></tr>
+  <tr><td class="mono">user_profiles</td><td>id(auth FK), email(unique), nickname, avatar_url, push_token. 가입 시 트리거로 자동 생성.</td></tr>
+  <tr><td class="mono">alarms</td><td>owner_id(울릴 대상), created_by(설정자), label, target_lat/lng, target_address, radius_km(0.01~50 check), is_active, sound_type(default|custom), sound_uri. <b>설정값만 저장 — 도착·울림·확인 정보 없음.</b></td></tr>
+  <tr><td class="mono">friends</td><td>user_id/friend_id/status(pending|accepted|rejected|blocked). 쌍당 1행(unique), accepted는 양방향 관계로 해석.</td></tr>
+  <tr><td class="mono">alarm_permissions</td><td>requester_id/target_id/status/expires_at(null=영구). unique(requester,target).</td></tr>
+</table>
+<ul>
+  <li><b>전 테이블 RLS 적용.</b> 본인 알람 전체 접근 + <b>권한 accepted 상태인 친구만</b> created_by=본인으로 상대 알람 insert 가능.</li>
+  <li>친구/권한 행은 참여자만 조회·수정 가능, 요청 상태 전이는 수신자만 수행 가능.</li>
+  <li>Storage: 알람 사운드용 private 버킷(사용자별 경로) 정의 — 초기 버전은 대리 알람에 번들 사운드만 사용.</li>
+</ul>
+
+<!-- ===================== 8. 외부 연동 ===================== -->
+<h1 class="sec brk">8. 외부 연동 및 기술 스택</h1>
+<table>
+  <tr><th style="width:34mm">연동</th><th>용도</th></tr>
+  <tr><td>Supabase</td><td>인증(이메일·카카오 OAuth·비밀번호 재설정·토큰 갱신), DB(PostgREST: 프로필·알람·친구·권한)</td></tr>
+  <tr><td>Google Maps</td><td>지도 표시, 마커, 카메라 제어, 내 위치 레이어</td></tr>
+  <tr><td>Kakao Local API</td><td>키워드+주소 통합 장소 검색, 좌표→주소 역지오코딩</td></tr>
+  <tr><td>Firebase Cloud Messaging</td><td>친구 알람 등 서버 변경의 기기 동기화 신호(내용은 신호만 — 위치 정보 없음)</td></tr>
+  <tr><td>카카오톡 공유</td><td>친구 초대 메시지 공유(미설치 시 일반 공유 시트)</td></tr>
+  <tr><td>시스템 음성인식</td><td>목적지 음성 검색(한국어)</td></tr>
+</table>
+<p class="small muted">기술 스택: Kotlin · Jetpack Compose(단일 액티비티) · Navigation Compose · Hilt · Room · DataStore · WorkManager · FusedLocationProvider. 키는 local.properties로 주입(SUPABASE_URL/ANON_KEY, KAKAO 키, GOOGLE_MAPS_API_KEY, FIREBASE_PROJECT_ID). 딥링크: <code>com.wakepoint.app://auth-callback</code>.</p>
+
+<!-- ===================== 9. 권한 ===================== -->
+<h1 class="sec">9. 권한 체계</h1>
+<table>
+  <tr><th style="width:52mm">권한</th><th>용도</th><th style="width:34mm">요청 시점</th></tr>
+  <tr><td>위치(정확·대략)</td><td>도착 판정용 전경 위치</td><td>앱 최초 실행(일괄)</td></tr>
+  <tr><td>백그라운드 위치</td><td>화면 꺼짐·타 앱 사용 중 추적</td><td>전경 위치 허용 직후 2단계 요청</td></tr>
+  <tr><td>알림(13+)</td><td>도착·추적 알림</td><td>최초 실행 + 알람 생성 시</td></tr>
+  <tr><td>전체 화면 알림(14+) · 다른 앱 위에 표시</td><td>잠금화면·타 앱 위 알람 화면</td><td>로그인 후 메인 진입 시 안내 다이얼로그 <b>설치당 1회</b>("권한 설정"/"나중에" 어느 쪽이든 재안내 없음)</td></tr>
+  <tr><td>마이크</td><td>알람음 녹음</td><td>최초 실행 + 녹음 시</td></tr>
+  <tr><td>오디오 읽기(13+ / ≤32 저장소)</td><td>알람음 파일 가져오기</td><td>최초 실행 + 가져오기 시</td></tr>
+  <tr><td>부팅 완료 수신</td><td>재부팅 후 추적 재개</td><td>선언형(요청 불필요)</td></tr>
+</table>
+<p class="small muted">원칙: 최초 실행 시 일괄 요청 후, 거부분은 각 기능 사용 시점에 재요청. 특수 접근 권한은 강제하지 않고 안내만 한다.</p>
+
+<!-- ===================== 10. 비기능 ===================== -->
+<h1 class="sec">10. 비기능 요구사항</h1>
+<table>
+  <tr><th style="width:16mm">ID</th><th style="width:28mm">항목</th><th>요구사항</th></tr>
+  <tr><td class="id">NFR-01</td><td>프라이버시</td><td>위치·도착 정보는 기기 로컬에서만 처리하고 서버·푸시·로그에 기록하지 않는다 (§5.3).</td></tr>
+  <tr><td class="id">NFR-02</td><td>오프라인 내성</td><td>네트워크 없이도 알람 생성·수정·삭제·발동이 완전히 동작하고, 복구 시 자동 동기화된다.</td></tr>
+  <tr><td class="id">NFR-03</td><td>신뢰성</td><td>재부팅·앱 업데이트·프로세스 종료 후에도 활성 알람 추적이 재개된다. 고속 이동 중 반경 통과를 놓치지 않는다(선분 판정).</td></tr>
+  <tr><td class="id">NFR-04</td><td>즉시성 UI</td><td>화면 전환·목록 반영은 로컬 데이터 기준으로 즉시 수행하고, 서버 확정은 백그라운드로 따라온다. 초기 진입은 네트워크 응답을 기다리지 않는다.</td></tr>
+  <tr><td class="id">NFR-05</td><td>중복 방지</td><td>변경성 API는 재시도하지 않고, 알람 저장은 id 기준 멱등 upsert로 중복 생성을 차단한다.</td></tr>
+  <tr><td class="id">NFR-06</td><td>알람 UX 안전장치</td><td>알람 소리·진동은 최대 30초 후 자동 정지. 사운드 재생 실패 시 시스템 알람음 폴백.</td></tr>
+  <tr><td class="id">NFR-07</td><td>언어</td><td>전체 UI 한국어 단일 언어.</td></tr>
+</table>
+
+<!-- ===================== 11. 향후 ===================== -->
+<h1 class="sec">11. 미구현 · 향후 과제 (코드 근거)</h1>
+<ul>
+  <li>전화번호·생년월일 본인 인증 가입 플로우 — 문자열 리소스만 존재, UI 미노출 (MVP 범위 제외).</li>
+  <li>대리 알람의 커스텀 사운드 전파 — 서버 Storage 버킷 정의는 있으나 현재는 번들 사운드만 전송.</li>
+  <li>알람 권한 만료 기간 설정 — 데이터 모델은 만료일을 지원하나 현재 UI는 "만료 없음" 고정.</li>
+  <li>서버 미보존 로컬 설정(진동·즐겨찾기·소리·반복)의 다기기 동기화 — 현재는 기기별 로컬 정책.</li>
+  <li>iOS 포팅 — <span class="mono">ios-port/</span> 작업 디렉토리 존재(진행 중).</li>
+</ul>
+
+<p class="small muted" style="margin-top:10mm; border-top:1px solid var(--line); padding-top:2mm">
+본 문서는 2026-08-07 기준 구현 코드베이스(Dawasseo_Android)를 역분석하여 작성되었습니다.
+근거: 화면·ViewModel 소스, Room 스키마 v8, docs/SCHEMA.md, docs/DESTINATION_ALARM_PRIVACY.md, AndroidManifest, strings.xml.
+</p>
+
+</div>
+</body>
+</html>
