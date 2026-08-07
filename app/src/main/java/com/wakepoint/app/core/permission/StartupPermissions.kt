@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -77,8 +78,15 @@ fun StartupPermissionRequester() {
  * 알람을 직접 만들지 않고 친구에게서 받기만 하는 사용자도 이 권한이 필요하므로,
  * 로그인 후 메인 화면 진입 시 아직 권한이 없으면 안내 다이얼로그를 보여준다.
  *
- * "나중에"를 누르면 다시 묻지 않고, "권한 설정"으로 이동한 경우에는 아직 미허용분이
- * 남아 있으면 다음 실행 때 이어서 안내한다.
+ * 안내는 설치당 **딱 한 번**만 띄운다. "나중에"든 "권한 설정"이든 사용자가 한 번
+ * 응답했으면 영구 플래그를 저장하고 다시 묻지 않는다. (이전에는 "권한 설정"으로
+ * 이동한 뒤 미허용분이 남아 있으면 매 실행마다 다시 안내해, 오버레이 권한을 허용하지
+ * 않은 사용자에게 전체화면 권한을 무한 반복 요청하는 문제가 있었다.)
+ *
+ * 중요: 이 안내는 이번 실행(프로세스) 동안 **딱 한 번만** 평가한다. enabled 는
+ * 메인 탭↔서브화면(사운드 목록/알람 편집) 이동 시 showBottomBar 를 따라 여러 번
+ * false↔true 로 토글되는데, 그때마다 다시 묻지 않도록 세션 가드(evaluated)를 둔다.
+ * 이 가드가 없으면 "알람 설정에 들어갈 때마다 전체화면 권한을 반복 요청"하게 된다.
  *
  * @param enabled 로그인 완료 등 안내를 띄워도 되는 조건. false면 아무것도 하지 않는다.
  */
@@ -86,11 +94,18 @@ fun StartupPermissionRequester() {
 fun AlarmDisplayPermissionGate(enabled: Boolean) {
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
+    // 이번 실행 동안 1회만 평가. 화면 회전/액티비티 재생성에도 유지되도록 rememberSaveable 사용.
+    var evaluated by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(enabled) {
-        showDialog = enabled &&
-            !context.isAlarmDisplayPrompted() &&
-            context.needsAlarmDisplayPermission()
+        if (!enabled || evaluated) return@LaunchedEffect
+        evaluated = true
+        showDialog = shouldPromptAlarmDisplay(
+            enabled = true,
+            evaluatedThisSession = false,
+            dismissedPermanently = context.isAlarmDisplayPrompted(),
+            permissionMissing = context.needsAlarmDisplayPermission()
+        )
     }
 
     if (showDialog) {
@@ -101,6 +116,8 @@ fun AlarmDisplayPermissionGate(enabled: Boolean) {
             cancelText = stringResource(R.string.perm_alarm_display_later),
             onConfirm = {
                 showDialog = false
+                // 설정으로 이동한 경우에도 영구 플래그를 저장해 다음 실행에서 재안내하지 않는다.
+                context.markAlarmDisplayPrompted()
                 context.openAlarmDisplaySettings()
             },
             onDismiss = {
@@ -110,6 +127,22 @@ fun AlarmDisplayPermissionGate(enabled: Boolean) {
         )
     }
 }
+
+/**
+ * 전체화면 알람 권한 안내를 띄울지 결정하는 순수 로직(테스트 대상).
+ *
+ * @param enabled 안내 허용 조건(로그인 + 메인 화면).
+ * @param evaluatedThisSession 이번 실행에서 이미 평가했는지.
+ * @param dismissedPermanently 사용자가 "나중에"로 영구 억제했는지.
+ * @param permissionMissing 전체화면/오버레이 권한이 아직 없는지.
+ */
+internal fun shouldPromptAlarmDisplay(
+    enabled: Boolean,
+    evaluatedThisSession: Boolean,
+    dismissedPermanently: Boolean,
+    permissionMissing: Boolean
+): Boolean =
+    enabled && !evaluatedThisSession && !dismissedPermanently && permissionMissing
 
 private fun Context.needsAlarmDisplayPermission(): Boolean {
     val fullScreenMissing = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
