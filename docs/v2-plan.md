@@ -18,7 +18,7 @@
 
 ### STEP 1 — 시간 알람
 - [x] **P1** v2 토큰 확장 — `core/design/ColorV2.kt` (칩 활성테두리 #1668B8 / 임박링 #F0B429 / 비활성버튼BG #F4F4F5) `[토큰]` ✅ 빌드통과
-- [ ] **P2** 알람 타입 선택 바텀시트 (1a) — `feature/v2/timealarm/AlarmTypeSheet.kt` `[신규]`
+- [x] **P2** 알람 타입 선택 바텀시트 (1a) — `feature/v2/timealarm/AlarmTypeSheet.kt` `[신규]` ✅ 빌드통과
 - [ ] **P3** 시간 알람 생성 시트 + 요일직접/과거시각 오류 상태 (1b,1c) — `feature/v2/timealarm/TimeAlarmCreateSheet.kt` `[신규]`
 - [ ] **P4** 알람 목록 타입 배지 카드 (1d) — `feature/v2/timealarm/AlarmTypeBadgeCard.kt` `[변경→신규데모]`
 - [ ] **P5** 시간 알람 편집 확장 카드 (1e) — `feature/v2/timealarm/TimeAlarmEditCard.kt` `[변경→신규데모]`
