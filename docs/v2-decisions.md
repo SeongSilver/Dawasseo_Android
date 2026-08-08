@@ -111,3 +111,14 @@
 - **대안**: Spacing.kt 직접 편집(충돌 위험, 기각), 화면 코드에 160.dp 리터럴(강제 규칙 위반, 기각).
 - **되돌리는 법**: v1.5 머지 후 `WakepointSizeV2` 값을 `WakepointSize` 로 이전하고 SizeV2.kt 삭제.
 
+## D-008. 막차 hero 초대형 텍스트를 신규 타이포 토큰(TypeV2.kt)으로 정의
+
+- **결정**: 명세 STEP4의 카운트다운 52px·금액 34px 는 표준 6단계 role(최대 titleLarge 22,
+  displayMedium 34)로 정확히 표현 불가. 화면에 `52.sp` 리터럴을 쓰지 않기 위해 신규 파일
+  `core/design/TypeV2.kt`(`WakepointTypeV2.lastTrainCountdown`, `amountEmphasis`)에 명명
+  TextStyle 로 정의하고 화면은 토큰만 참조. 폰트는 기존 `SpoqaFontFamily` 재사용.
+- **근거**: 강제 규칙 ②(불가 시 토큰 파일에 명명 추가). 리터럴은 토큰 정의 파일에만 존재 →
+  화면 코드 하드코딩 0. Type.kt(v1.5) 미편집 → 충돌 0.
+- **대안**: displayMedium(34)로 낮춰 매핑(위계 손상, 기각) / 화면에 52.sp 직접(규칙 위반, 기각).
+- **되돌리는 법**: v1.5 머지 후 Type.kt 로 통합하거나 값 조정. TypeV2.kt 삭제로 원복.
+

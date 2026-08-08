@@ -36,7 +36,7 @@
 - [x] **P13** 알람 수신 다이얼로그 (3g) — `feature/v2/friendalarm/ReceiveAlarmDialog.kt` `[신규]` ✅ 빌드통과
 
 ### STEP 4 — 막차 알람
-- [ ] **P14** 막차 메인 3단계(여유/임박/아슬) (4a) — `feature/v2/lasttrain/LastTrainScreen.kt` `[신규]`
+- [x] **P14** 막차 메인 3단계(여유/임박/아슬) (4a) — `feature/v2/lasttrain/LastTrainScreen.kt` + `core/design/TypeV2.kt` `[신규]` ✅ 빌드통과
 - [ ] **P15** 막차 끊김/미지원/집 미등록 상태 (4b,4c,4d) — `feature/v2/lasttrain/LastTrainStates.kt` `[신규]`
 - [ ] **P16** 위치 전송 동의 시트 (4e) — `feature/v2/lasttrain/LocationConsentSheet.kt` `[신규]`
 - [ ] **P17** 친구 막차 알람 보내기/수신 + 톤 정책 (4f) — `feature/v2/lasttrain/FriendLastTrain.kt` `[신규]`
