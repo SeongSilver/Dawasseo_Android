@@ -33,7 +33,7 @@
 - [x] **P10** 친구 목록 + 권한 3상태 확장 카드 (3a) — `feature/v2/friendalarm/FriendListScreen.kt` `[신규]` ✅ 빌드통과
 - [x] **P11** 알람 보내기 시트 3탭(주소/장소/시간)+빈상태+버전가드 (3b~3e) — `feature/v2/friendalarm/SendAlarmSheet.kt` `[신규]` ✅ 빌드통과
 - [x] **P12** 보낸 알람 목록 (3f) — `feature/v2/friendalarm/SentAlarmsScreen.kt` `[신규]` ✅ 빌드통과
-- [ ] **P13** 알람 수신 다이얼로그 (3g) — `feature/v2/friendalarm/ReceiveAlarmDialog.kt` `[신규]`
+- [x] **P13** 알람 수신 다이얼로그 (3g) — `feature/v2/friendalarm/ReceiveAlarmDialog.kt` `[신규]` ✅ 빌드통과
 
 ### STEP 4 — 막차 알람
 - [ ] **P14** 막차 메인 3단계(여유/임박/아슬) (4a) — `feature/v2/lasttrain/LastTrainScreen.kt` `[신규]`
