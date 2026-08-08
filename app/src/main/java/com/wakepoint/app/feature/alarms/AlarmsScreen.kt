@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -94,14 +93,19 @@ import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
 import com.wakepoint.app.core.design.WakepointDanger
+import com.wakepoint.app.core.design.WakepointDangerButton
 import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointPrimaryTint06
+import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
+import com.wakepoint.app.core.design.WakepointShape
+import com.wakepoint.app.core.design.WakepointSize
+import com.wakepoint.app.core.design.WakepointSpacing
+import com.wakepoint.app.core.design.WakepointStar
 import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.core.design.WakepointTextDisabled
@@ -111,6 +115,9 @@ import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.AlarmSound
 import com.wakepoint.app.domain.model.SoundKind
 import com.wakepoint.app.feature.home.ALARM_RADIUS_OPTIONS
+
+/** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 스크롤 여백(구조적 오프셋). */
+private val BOTTOM_LIST_CLEARANCE = 120.dp
 
 @Composable
 fun AlarmsScreen(
@@ -189,9 +196,9 @@ fun AlarmsScreen(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = WakepointSpacing.screenHorizontal)
+                .padding(top = WakepointSpacing.sectionTitleGap, bottom = BOTTOM_LIST_CLEARANCE),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
         ) {
             if (uiState.alarms.isEmpty()) {
                 EmptyAlarmMessage(onCreateAlarm = onCreateAlarm)
@@ -293,8 +300,8 @@ private fun AlarmSelectionHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .padding(top = 12.dp, bottom = 8.dp),
+            .padding(horizontal = WakepointSpacing.md)
+            .padding(top = WakepointSpacing.md, bottom = WakepointSpacing.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onClose) {
@@ -310,7 +317,7 @@ private fun AlarmSelectionHeader(
             color = WakepointInk,
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 4.dp)
+                .padding(start = WakepointSpacing.xs)
         )
         IconButton(onClick = onToggleSelectAll) {
             Icon(
@@ -387,17 +394,17 @@ private fun SelectableAlarmCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(WakepointShape.card)
             .clickable(onClick = onToggleSelect),
-        shape = RoundedCornerShape(24.dp),
-        color = if (selected) WakepointPrimaryTint06 else WakepointCanvas,
+        shape = WakepointShape.card,
+        color = if (selected) WakepointPrimaryLight else WakepointCanvas,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             if (selected) WakepointPrimary else WakepointBorder
         )
     ) {
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(WakepointSpacing.cardPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -406,7 +413,7 @@ private fun SelectableAlarmCard(
                 tint = if (selected) WakepointPrimary else WakepointMuted,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(WakepointSpacing.md))
             AlarmCardInfo(
                 alarm = alarm,
                 soundTitle = soundTitle,
@@ -430,11 +437,11 @@ private fun AlarmCardInfo(
     }
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
         ) {
             StatusDot(active = alarm.isActive, size = 7)
             Text(
@@ -466,7 +473,7 @@ private fun FavoriteStarButton(isFavorite: Boolean, onClick: () -> Unit) {
             contentDescription = stringResource(
                 if (isFavorite) R.string.alarm_favorite_remove else R.string.alarm_favorite_add
             ),
-            tint = if (isFavorite) WakepointPrimary else WakepointMuted,
+            tint = if (isFavorite) WakepointStar else WakepointMuted,
             modifier = Modifier.size(22.dp)
         )
     }
@@ -489,18 +496,18 @@ private fun EditableAlarmCard(
     var vibrate by remember(alarm.id, alarm.vibrate) { mutableStateOf(alarm.vibrate) }
     var repeating by remember(alarm.id, alarm.repeating) { mutableStateOf(alarm.repeating) }
     WakepointCard {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)) {
+            // 헤더: "위치 별칭 :" 라벨 노출 제거 — 값만 T3(카드 제목)로 표기
             Row(
                 modifier = Modifier.clickable(onClick = onToggleExpanded),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(
-                        R.string.alarm_list_location_prefix,
-                        alarm.label
-                    ),
-                    color = WakepointPrimary,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = alarm.label,
+                    color = WakepointInk,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
                 FavoriteStarButton(isFavorite = alarm.isFavorite, onClick = onToggleFavorite)
@@ -510,83 +517,112 @@ private fun EditableAlarmCard(
                     enabled = !isUpdating
                 )
             }
-            SectionLabel(text = stringResource(R.string.alarm_location_alias))
-            WakepointTextField(
-                value = label,
-                onValueChange = { label = it },
-                placeholder = stringResource(R.string.alarm_location_alias),
-                readOnly = isUpdating
-            )
-            SectionLabel(text = stringResource(R.string.alarm_radius_setting))
-            RadiusSelector(
-                options = ALARM_RADIUS_OPTIONS,
-                selectedOption = radius,
-                onSelected = { radius = it }
-            )
-            SectionLabel(text = stringResource(R.string.alarm_sound_setting))
-            SoundOptionRow(
-                title = soundTitle,
-                icon = Icons.Rounded.Notifications,
-                trailing = {
-                    Icon(
-                        imageVector = Icons.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = WakepointMuted
-                    )
-                },
-                onClick = onOpenSoundList
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    SectionLabel(text = stringResource(R.string.alarm_vibrate_setting))
-                    Text(
-                        text = stringResource(R.string.alarm_vibrate_hint),
-                        color = WakepointTextSecondary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                WakepointSwitch(
-                    checked = vibrate,
-                    onCheckedChange = { vibrate = it },
-                    enabled = !isUpdating
+            EditSection(label = stringResource(R.string.alarm_location_alias)) {
+                WakepointTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    placeholder = stringResource(R.string.alarm_location_alias),
+                    readOnly = isUpdating
                 )
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    SectionLabel(text = stringResource(R.string.alarm_repeating_setting))
-                    Text(
-                        text = stringResource(R.string.alarm_repeating_hint),
-                        color = WakepointTextSecondary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                WakepointSwitch(
-                    checked = repeating,
-                    onCheckedChange = { repeating = it },
-                    enabled = !isUpdating
+            EditSection(label = stringResource(R.string.alarm_radius_setting)) {
+                RadiusSelector(
+                    options = ALARM_RADIUS_OPTIONS,
+                    selectedOption = radius,
+                    onSelected = { radius = it }
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            EditSection(label = stringResource(R.string.alarm_sound_setting)) {
+                SoundOptionRow(
+                    title = soundTitle,
+                    icon = Icons.Rounded.Notifications,
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.Rounded.ChevronRight,
+                            contentDescription = null,
+                            tint = WakepointMuted
+                        )
+                    },
+                    onClick = onOpenSoundList
+                )
+            }
+            EditToggleRow(
+                title = stringResource(R.string.alarm_vibrate_setting),
+                hint = stringResource(R.string.alarm_vibrate_hint),
+                checked = vibrate,
+                onCheckedChange = { vibrate = it },
+                enabled = !isUpdating
+            )
+            EditToggleRow(
+                title = stringResource(R.string.alarm_repeating_setting),
+                hint = stringResource(R.string.alarm_repeating_hint),
+                checked = repeating,
+                onCheckedChange = { repeating = it },
+                enabled = !isUpdating
+            )
+            // 2분할 1:1 · 삭제(Danger Tonal) 왼쪽 · 긍정 액션(저장) 오른쪽
+            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                WakepointDangerButton(
+                    text = stringResource(R.string.alarm_delete),
+                    enabled = !isUpdating,
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f)
+                )
                 WakepointButton(
                     text = stringResource(R.string.alarm_save),
                     enabled = !isUpdating,
                     onClick = { onSave(alarm, label, radius, vibrate, repeating) },
                     modifier = Modifier.weight(1f)
                 )
-                WakepointSecondaryButton(
-                    text = stringResource(R.string.alarm_delete),
-                    enabled = !isUpdating,
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
+    }
+}
+
+/** 편집 카드 섹션: 섹션 타이틀(T2) + 콘텐츠, 라벨↔콘텐츠 8. */
+@Composable
+private fun EditSection(
+    label: String,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+        SectionLabel(text = label)
+        content()
+    }
+}
+
+/** 편집 카드 토글 행: 제목(15/SemiBold) + 보조설명(T5) + 스위치, 높이 56. */
+@Composable
+private fun EditToggleRow(
+    title: String,
+    hint: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(WakepointSize.rowHeight),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = WakepointInk,
+                style = MaterialTheme.typography.labelLarge
+            )
+            Text(
+                text = hint,
+                color = WakepointTextTertiary,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        WakepointSwitch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled
+        )
     }
 }
 
@@ -625,15 +661,15 @@ private fun CompactAlarmCard(
 
 @Composable
 private fun EmptyAlarmMessage(onCreateAlarm: () -> Unit) {
-    WakepointCard(contentPadding = 32) {
+    WakepointCard(contentPadding = 24) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
         ) {
             Surface(
                 modifier = Modifier.size(72.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = WakepointShape.card,
                 color = WakepointParchment
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -671,8 +707,8 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleSmall,
-        color = WakepointTextSecondary,
-        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+        color = WakepointInk,
+        modifier = Modifier.padding(top = WakepointSpacing.sm)
     )
 }
 
@@ -777,7 +813,7 @@ fun SoundListScreen(
                 .fillMaxWidth()
                 .height(64.dp)
                 .background(WakepointCanvas)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = WakepointSpacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = {
@@ -788,7 +824,7 @@ fun SoundListScreen(
             }
             Text(
                 text = stringResource(R.string.alarm_sound_setting),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = WakepointInk
             )
         }
@@ -796,8 +832,8 @@ fun SoundListScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
         ) {
             uiState.errorMessage?.let { message ->
                 Text(
@@ -813,7 +849,7 @@ fun SoundListScreen(
                     text = stringResource(R.string.sound_bundled_empty),
                     color = WakepointTextSecondary,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = WakepointSpacing.xs)
                 )
             } else {
                 uiState.bundledSounds.forEach { sound ->
@@ -828,14 +864,14 @@ fun SoundListScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(WakepointSpacing.sm))
             SectionTitle(text = stringResource(R.string.sound_section_custom))
             if (uiState.customSounds.isEmpty()) {
                 Text(
                     text = stringResource(R.string.sound_custom_empty),
                     color = WakepointTextSecondary,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = WakepointSpacing.xs)
                 )
             } else {
                 uiState.customSounds.forEach { sound ->
@@ -855,8 +891,8 @@ fun SoundListScreen(
                 .fillMaxWidth()
                 .background(WakepointCanvas)
                 .navigationBarsPadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(WakepointSpacing.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
         ) {
             WakepointSecondaryButton(
                 text = stringResource(R.string.sound_system),
@@ -864,7 +900,7 @@ fun SoundListScreen(
                 onClick = { openSystemSoundPicker() },
                 modifier = Modifier.fillMaxWidth()
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
                 WakepointSecondaryButton(
                     text = stringResource(R.string.sound_import),
                     icon = Icons.Rounded.FileDownload,
@@ -885,7 +921,7 @@ fun SoundListScreen(
         ModalBottomSheet(
             onDismissRequest = { viewModel.closeRecordSheet() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
             containerColor = WakepointCanvas
         ) {
             RecordingSheet(
@@ -931,7 +967,7 @@ private fun SelectableSoundRow(
         trailing = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
             ) {
                 if (selected) {
                     Icon(
@@ -975,9 +1011,9 @@ private fun RecordingSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp),
+            .padding(WakepointSpacing.screenHorizontal),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
     ) {
         Text(
             text = stringResource(R.string.record_title),
@@ -1027,7 +1063,7 @@ private fun RecordingSheet(
         }
 
         HorizontalDivider(color = WakepointParchment)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
             WakepointSecondaryButton(
                 text = stringResource(
                     if (phase == RecordingPhase.Recorded) R.string.record_retry else R.string.alarm_cancel

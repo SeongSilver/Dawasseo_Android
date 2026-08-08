@@ -72,3 +72,4 @@ val WakepointPositiveLight = Color(0xFFE6F6EE)            // 긍정 배지 배�
 val WakepointWarning = Color(0xFFB25E00)                  // 권한 대기 배지 텍스트
 val WakepointWarningLight = Color(0xFFFFF4E5)             // 권한 대기 배지 배경
 val WakepointChipBorder = Color(0xFFDEE0E4)               // 칩·읽기전용 테두리(1.5px)
+val WakepointStar = Color(0xFFFFB020)                     // 즐겨찾기 별(앰버). 나머지 별은 회색
