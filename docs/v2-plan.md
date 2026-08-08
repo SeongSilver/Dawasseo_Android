@@ -39,7 +39,7 @@
 - [x] **P14** 막차 메인 3단계(여유/임박/아슬) (4a) — `feature/v2/lasttrain/LastTrainScreen.kt` + `core/design/TypeV2.kt` `[신규]` ✅ 빌드통과
 - [x] **P15** 막차 끊김/미지원/집 미등록 상태 (4b,4c,4d) — `feature/v2/lasttrain/LastTrainStates.kt` `[신규]` ✅ 빌드통과
 - [x] **P16** 위치 전송 동의 시트 (4e) — `feature/v2/lasttrain/LocationConsentSheet.kt` `[신규]` ✅ 빌드통과
-- [ ] **P17** 친구 막차 알람 보내기/수신 + 톤 정책 (4f) — `feature/v2/lasttrain/FriendLastTrain.kt` `[신규]`
+- [x] **P17** 친구 막차 알람 보내기/수신 + 톤 정책 (4f) — `feature/v2/lasttrain/FriendLastTrain.kt` `[신규]` ✅ 빌드통과
 
 ## 데이터 변경 (UI 모델만, 영속성 제외)
 - [ ] 각 STEP 구현 시 `feature/v2/model/*.kt` 에 UI 데이터 클래스 정의(Place, V2Alarm, FriendPermission,
