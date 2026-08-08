@@ -100,3 +100,14 @@
 - **적용 방법**: 구현 완료 후 `docs/v2-report.md` 에 "다음 세션 TDD 인수인계" 섹션을 작성
   (테스트 대상 화면/로직, 기대 동작, 실행 명령 `./gradlew test` / `connectedAndroidTest`).
 
+## D-007. v2 구조적 치수 토큰을 신규 파일(SizeV2.kt)에 정의
+
+- **결정**: 장소 편집 지도 프리뷰 높이 등 v2에서 필요한 구조적 높이를 기존 `Spacing.kt`
+  (WakepointSize, v1.5 소유)에 추가하지 않고 신규 파일 `core/design/SizeV2.kt`
+  (`WakepointSizeV2`)에 명명해 정의한다. (mapPreviewHeight=160dp, lastTrainHeroMinHeight=120dp)
+- **근거**: ①기존 토큰에 지도/히어로 높이 없음 → 대체 불가. ②Spacing.kt 편집은 v1.5 세션과
+  머지 충돌 위험. 신규 파일이면 충돌 0. ③구조적 높이는 하드코딩 금지 예외이나, 임의 리터럴
+  대신 명명 토큰으로 SSOT 유지.
+- **대안**: Spacing.kt 직접 편집(충돌 위험, 기각), 화면 코드에 160.dp 리터럴(강제 규칙 위반, 기각).
+- **되돌리는 법**: v1.5 머지 후 `WakepointSizeV2` 값을 `WakepointSize` 로 이전하고 SizeV2.kt 삭제.
+
