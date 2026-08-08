@@ -22,3 +22,36 @@ data class V2AlarmItem(
     val setByFriendName: String? = null,
     val past: Boolean = false,
 )
+
+/**
+ * 내 장소(STEP2). 이름 이원화: 내가 보는 이름(비공개) ↔ 친구가 보는 이름(공개 시 필수).
+ * 주소는 어떤 경우에도 친구에게 비공개.
+ */
+data class V2Place(
+    val myName: String,
+    val isPublic: Boolean = false,
+    /** 친구가 보는 이름(예: "장소 2"). 공개 시 필수. */
+    val sharedName: String? = null,
+    /** "집"은 고정 슬롯. */
+    val isFixed: Boolean = false,
+)
+
+/** 친구 대리설정 권한 상태(STEP3). */
+enum class FriendPermission(val label: String) {
+    ALLOWED("대리 설정 가능"),
+    PENDING("권한 대기"),
+    DENIED("거절됨"),
+}
+
+/** 보낸 알람 상태(STEP3) — 발신자에게는 2단계까지만 보인다. */
+enum class SentAlarmStatus(val label: String) {
+    SENT("전송됨"),
+    REGISTERED("기기 등록됨"),
+}
+
+/** 막차 3단계(STEP4). */
+enum class LastTrainLevel {
+    RELAXED, // 여유 (파랑)
+    IMMINENT, // 임박 (Warning)
+    CRITICAL, // 아슬 (Danger 반전)
+}

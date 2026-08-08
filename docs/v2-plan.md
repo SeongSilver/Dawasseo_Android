@@ -25,7 +25,7 @@
 - [x] **P6** 정확 알람 권한 다이얼로그 + 정확도 제한 배지 (1f) — `feature/v2/timealarm/ExactAlarmPermission.kt` `[신규]` ✅ 빌드통과
 
 ### STEP 2 — 내 장소
-- [ ] **P7** 내 장소 목록 + 마이 진입점 행 (2a) — `feature/v2/place/MyPlacesScreen.kt` `[신규]`
+- [x] **P7** 내 장소 목록 + 마이 진입점 행 (2a) — `feature/v2/place/MyPlacesScreen.kt` `[신규]` ✅ 빌드통과
 - [ ] **P8** 장소 등록/편집 (공개 토글 ON/OFF 전개 + 친구 미리보기) (2b,2c) — `feature/v2/place/PlaceEditScreen.kt` `[신규]`
 - [ ] **P9** 장소 삭제 확인 다이얼로그 (2d) — `feature/v2/place/PlaceDeleteDialog.kt` `[신규]`
 
