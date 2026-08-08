@@ -21,7 +21,7 @@
 - [x] **P2** 알람 타입 선택 바텀시트 (1a) — `feature/v2/timealarm/AlarmTypeSheet.kt` `[신규]` ✅ 빌드통과
 - [x] **P3** 시간 알람 생성 시트 + 요일직접/과거시각 오류 상태 (1b,1c) — `feature/v2/timealarm/TimeAlarmCreateSheet.kt` + `TimeAlarmLogic.kt` `[신규]` ✅ 빌드통과
 - [x] **P4** 알람 목록 타입 배지 카드 (1d) — `feature/v2/timealarm/AlarmTypeBadgeCard.kt` + `model/V2Models.kt` `[변경→신규데모]` ✅ 빌드통과
-- [ ] **P5** 시간 알람 편집 확장 카드 (1e) — `feature/v2/timealarm/TimeAlarmEditCard.kt` `[변경→신규데모]`
+- [x] **P5** 시간 알람 편집 확장 카드 (1e) — `feature/v2/timealarm/TimeAlarmEditCard.kt` `[변경→신규데모]` ✅ 빌드통과
 - [ ] **P6** 정확 알람 권한 다이얼로그 + 정확도 제한 배지 (1f) — `feature/v2/timealarm/ExactAlarmPermission.kt` `[신규]`
 
 ### STEP 2 — 내 장소
