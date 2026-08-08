@@ -29,6 +29,7 @@ fun WakepointTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = WakepointLightScheme,
         typography = WakepointTypography,
+        shapes = WakepointShapes,
         content = content
     )
 }
