@@ -49,9 +49,13 @@
 - [ ] 없음(신규만). 진입 분기·유효성·상태머신은 각 신규 화면의 UI-로컬 상태로 표현. 실제 연동은 후속.
 
 ## Stage 5 — 테스트 (사용자 지시: 완료 후 /compact → /clear → TDD)
-- [ ] **P18** 순수 로직/상태 단위 테스트 — 반복→요일비트, 과거시각 유효성, 막차 3단계 판정,
-      권한 상태머신 등 순수함수를 `feature/v2/**` 에 분리하고 `test/` 에 JVM 단위테스트. (후속 세션)
+- [ ] **P18** 순수 로직/상태 단위 테스트 — `TimeAlarmLogic` 등 순수함수 JVM 단위테스트.
+      **이 세션에서 실행하지 않음** — 사용자 지시대로 /compact → /clear 후 새 세션에서 진행.
+      인수인계 상세: `docs/v2-report.md` §7.
 
 ---
 ## 진행 로그
 - 0단계 통과, 베이스라인 `./gradlew :app:assembleDebug` = BUILD SUCCESSFUL(exit 0).
+- **P1~P17 전부 완료** (각 항목 assembleDebug 통과 후 커밋, 커밋 전 브랜치 가드).
+- Stage4 최종: 클린 빌드 BUILD SUCCESSFUL(exit 0), 하드코딩 .sp 0건, 최종 보고서 작성.
+- P18(TDD)만 사용자 지시에 따라 clear 이후 세션으로 이월.
