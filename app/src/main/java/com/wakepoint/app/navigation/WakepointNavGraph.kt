@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Map
@@ -58,7 +57,9 @@ import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointIconInactive
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryTint10
+import com.wakepoint.app.core.design.WakepointPrimaryLight
+import com.wakepoint.app.core.design.WakepointShape
+import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
@@ -280,14 +281,14 @@ private fun WakepointTabBar(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.md),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(68.dp),
-            shape = RoundedCornerShape(34.dp),
+            shape = WakepointShape.full,
             color = WakepointCanvas,
             shadowElevation = 12.dp,
             border = androidx.compose.foundation.BorderStroke(1.dp, WakepointBorder)
@@ -295,7 +296,7 @@ private fun WakepointTabBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = WakepointSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -323,18 +324,18 @@ private fun WakepointTabItem(
     val tint = if (selected) WakepointPrimary else WakepointIconInactive
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(WakepointShape.full)
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = WakepointSpacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
         Box(
             modifier = Modifier
                 .width(56.dp)
                 .height(30.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(if (selected) WakepointPrimaryTint10 else androidx.compose.ui.graphics.Color.Transparent),
+                .clip(WakepointShape.full)
+                .background(if (selected) WakepointPrimaryLight else androidx.compose.ui.graphics.Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Icon(
