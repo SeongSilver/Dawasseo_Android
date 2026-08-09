@@ -338,34 +338,53 @@ fun FriendsScreen(
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
             containerColor = WakepointCanvas
         ) {
-            AlarmSetupSheet(
-                title = friend?.let { "${it.nickname}님에게 알람 보내기" }
-                    ?: stringResource(R.string.alarm_send_title),
-                primaryButton = stringResource(R.string.alarm_send),
-                targetAddress = uiState.selectedTargetAddress,
-                label = uiState.sendAlarmLabel,
-                radius = uiState.sendAlarmRadius,
-                soundEnabled = uiState.sendAlarmSoundEnabled,
-                vibrate = uiState.sendAlarmVibrate,
-                isSaving = uiState.isSendingAlarm,
-                errorMessage = uiState.sendAlarmErrorMessage,
-                showAddressSearch = true,
-                addressQuery = uiState.addressQuery,
-                addressResults = uiState.addressResults,
-                isSearchingAddress = uiState.isSearchingAddress,
-                addressMessage = uiState.addressMessage,
-                onAddressQueryChange = viewModel::updateAddressQuery,
-                onAddressSearch = viewModel::searchAddress,
-                onSelectAddress = viewModel::selectAddress,
-                onLabelChange = viewModel::updateSendAlarmLabel,
-                onRadiusChange = viewModel::updateSendAlarmRadius,
-                onSoundEnabledChange = viewModel::updateSendAlarmSoundEnabled,
-                onVibrateChange = viewModel::updateSendAlarmVibrate,
-                onPrimaryClick = {
-                    viewModel.sendAlarm(context.getString(R.string.alarm_default_label))
-                },
-                onDismiss = { viewModel.dismissSendAlarm() }
-            )
+            // v2 통합: 친구 알람 보내기는 주소/장소/시간 3탭 형태. 주소 탭만 실기능(백엔드 존재)이고
+            // 장소·시간 탭은 도메인/영속성 미구현이라 "준비 중"으로 안내한다.
+            var sendTab by remember { mutableStateOf(SendAlarmTab.Address) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = WakepointSpacing.screenHorizontal)
+                    .padding(top = WakepointSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
+            ) {
+                SendAlarmSegmentedTabs(selected = sendTab, onSelect = { sendTab = it })
+                SendAlarmPrivacyNote()
+            }
+            when (sendTab) {
+                SendAlarmTab.Address -> AlarmSetupSheet(
+                    title = friend?.let { "${it.nickname}님에게 알람 보내기" }
+                        ?: stringResource(R.string.alarm_send_title),
+                    primaryButton = stringResource(R.string.alarm_send),
+                    targetAddress = uiState.selectedTargetAddress,
+                    label = uiState.sendAlarmLabel,
+                    radius = uiState.sendAlarmRadius,
+                    soundEnabled = uiState.sendAlarmSoundEnabled,
+                    vibrate = uiState.sendAlarmVibrate,
+                    isSaving = uiState.isSendingAlarm,
+                    errorMessage = uiState.sendAlarmErrorMessage,
+                    showAddressSearch = true,
+                    addressQuery = uiState.addressQuery,
+                    addressResults = uiState.addressResults,
+                    isSearchingAddress = uiState.isSearchingAddress,
+                    addressMessage = uiState.addressMessage,
+                    onAddressQueryChange = viewModel::updateAddressQuery,
+                    onAddressSearch = viewModel::searchAddress,
+                    onSelectAddress = viewModel::selectAddress,
+                    onLabelChange = viewModel::updateSendAlarmLabel,
+                    onRadiusChange = viewModel::updateSendAlarmRadius,
+                    onSoundEnabledChange = viewModel::updateSendAlarmSoundEnabled,
+                    onVibrateChange = viewModel::updateSendAlarmVibrate,
+                    onPrimaryClick = {
+                        viewModel.sendAlarm(context.getString(R.string.alarm_default_label))
+                    },
+                    onDismiss = { viewModel.dismissSendAlarm() }
+                )
+                SendAlarmTab.Place, SendAlarmTab.Time -> SendAlarmComingSoon(
+                    tab = sendTab,
+                    onDismiss = { viewModel.dismissSendAlarm() }
+                )
+            }
         }
     }
 
@@ -641,6 +660,114 @@ private fun FriendCard(
                 )
             }
         }
+    }
+}
+
+/** v2 통합: 친구 알람 보내기 방식 3탭. 주소만 실기능, 장소/시간은 백엔드 준비 후. */
+private enum class SendAlarmTab(val label: String) {
+    Address("주소"),
+    Place("장소"),
+    Time("시간")
+}
+
+@Composable
+private fun SendAlarmSegmentedTabs(
+    selected: SendAlarmTab,
+    onSelect: (SendAlarmTab) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(WakepointShape.control)
+            .background(WakepointField)
+            .padding(WakepointSpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
+    ) {
+        SendAlarmTab.entries.forEach { tab ->
+            val isSelected = tab == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(WakepointSize.chipHeight)
+                    .clip(WakepointShape.control)
+                    .background(if (isSelected) WakepointCanvas else Color.Transparent)
+                    .clickable { onSelect(tab) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = tab.label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) WakepointPrimary else WakepointMuted
+                )
+            }
+        }
+    }
+}
+
+/** v2 정책 안내: 알람을 보내도 상대의 위치/도착 여부는 볼 수 없음. */
+@Composable
+private fun SendAlarmPrivacyNote() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Lock,
+            contentDescription = null,
+            tint = WakepointTextTertiary,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = "위치나 도착 여부는 볼 수 없어요.",
+            style = MaterialTheme.typography.bodySmall,
+            color = WakepointTextTertiary
+        )
+    }
+}
+
+@Composable
+private fun SendAlarmComingSoon(
+    tab: SendAlarmTab,
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = WakepointSpacing.screenHorizontal)
+            .padding(top = WakepointSpacing.lg, bottom = WakepointSpacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
+    ) {
+        BottomSheetTitle(title = "${tab.label} 알람")
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(WakepointShape.control),
+            shape = WakepointShape.control,
+            color = WakepointWarningLight
+        ) {
+            Row(
+                modifier = Modifier.padding(WakepointSpacing.cardPadding),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Lock,
+                    contentDescription = null,
+                    tint = WakepointWarning,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "${tab.label} 기반 알람은 준비 중이에요.\n지금은 주소 알람만 보낼 수 있어요.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WakepointInk
+                )
+            }
+        }
+        WakepointSecondaryButton(
+            text = stringResource(R.string.alarm_cancel),
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
