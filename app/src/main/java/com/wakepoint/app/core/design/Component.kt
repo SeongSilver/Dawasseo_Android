@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.PriorityHigh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -200,10 +201,11 @@ fun WakepointConfirmDialog(
                         .background(WakepointPrimaryTint10, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "!",
-                        color = WakepointPrimary,
-                        style = MaterialTheme.typography.headlineMedium
+                    Icon(
+                        imageVector = Icons.Rounded.PriorityHigh,
+                        contentDescription = null,
+                        tint = WakepointPrimary,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Text(

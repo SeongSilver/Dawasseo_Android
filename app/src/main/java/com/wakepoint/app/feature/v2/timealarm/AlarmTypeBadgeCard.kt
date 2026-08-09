@@ -45,7 +45,7 @@ import com.wakepoint.app.feature.v2.model.V2AlarmItem
 /**
  * v2 STEP1 (1d) — 알람 목록 아이템 카드(타입 구분 배지).
  * 기존 목록 섹션(즐겨찾기/활성/지난)은 유지, 메타줄에 타입 아이콘+라벨(위치/시간) 노출.
- * 활성=Primary, 비활성=Disabled. 친구 설정 알람엔 "👤 지수님이 설정" 배지.
+ * 활성=Primary, 비활성=Disabled. 친구 설정 알람엔 person 아이콘 + "지수님이 설정" 배지.
  *
  * v1.5 세션이 편집 중인 AlarmsScreen.kt 를 건드리지 않도록 신규 데모 카드로 구현한다.
  */

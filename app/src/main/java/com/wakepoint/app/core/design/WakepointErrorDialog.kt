@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.PriorityHigh
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,10 +56,11 @@ fun WakepointMessageDialog(
                         .background(accent.copy(alpha = 0.1f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (isError) "!" else "✓",
-                        color = accent,
-                        style = MaterialTheme.typography.headlineMedium
+                    Icon(
+                        imageVector = if (isError) Icons.Rounded.PriorityHigh else Icons.Rounded.Check,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Text(

@@ -122,3 +122,19 @@
 - **대안**: displayMedium(34)로 낮춰 매핑(위계 손상, 기각) / 화면에 52.sp 직접(규칙 위반, 기각).
 - **되돌리는 법**: v1.5 머지 후 Type.kt 로 통합하거나 값 조정. TypeV2.kt 삭제로 원복.
 
+## D-009. 다이얼로그의 글리프(✓/!)를 Material 아이콘으로 교체 (사용자 지시)
+
+- **결정**: 사용자 지시로 "아이콘 자리에 텍스트 글리프를 쓴 곳"을 Google Material 아이콘으로 교체.
+  대상 2곳: `Component.kt`의 `WakepointConfirmDialog`(`"!"` → `Icons.Rounded.PriorityHigh`,
+  v2 P6에서 사용), `WakepointErrorDialog.kt`(`"!"`/`"✓"` →
+  `Icons.Rounded.PriorityHigh`/`Icons.Rounded.Check`). v2 자체 다이얼로그는 이미 아이콘 사용.
+- **레이아웃 불변 보장**: 두 곳 모두 글리프가 **고정 64dp 원(Box) 중앙정렬** 안에 있었음.
+  `Text`→`Icon(Modifier.size(28.dp))` 로만 교체, 컨테이너 Box(64dp)·패딩·정렬 미변경 →
+  width/height/padding/margin 불변. 아이콘 tint는 기존 accent 색 유지.
+- **근거**: 사용자 명시 지시. Material 아이콘은 벡터라 해상도 독립적이고 톤 일관성↑.
+- **격리 예외**: 이 두 파일은 v1.5 공용 컴포넌트라 그동안 미편집 원칙을 지켰으나(D-005),
+  **사용자의 직접 지시**가 우선. 변경은 글리프→아이콘 스왑 2곳으로 최소화. v1.5 세션이 동일
+  라인을 편집하면 머지 충돌 가능하나 사소·자명하게 해소 가능.
+- **대안**: v1.5 파일 미편집 유지(사용자 지시 불이행이라 기각).
+- **되돌리는 법**: 두 파일의 해당 `Icon(...)` 을 원래 `Text("!"/"✓", ... headlineMedium)` 로 복원.
+
