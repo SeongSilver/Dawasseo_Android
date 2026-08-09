@@ -24,11 +24,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GpsFixed
@@ -462,6 +465,11 @@ fun AlarmSetupSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            // 시트 콘텐츠가 화면보다 길거나(주소검색 결과 등) 키보드가 올라오면
+            // 하단 [취소/보내기] 버튼이 잘려 도달 못 하던 문제 수정: 스크롤 + IME/내비바 인셋.
+            .imePadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = WakepointSpacing.screenHorizontal)
             .padding(bottom = WakepointSpacing.xl),
         verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
