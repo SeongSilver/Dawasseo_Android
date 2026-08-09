@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+body{margin:0;background:#E9EBEF;font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;color:#171719}
+a{color:#0066CC;text-decoration:none} a:hover{color:#0054A8}
+</style>
+</helmet>
+
+<section style="padding:48px 56px 0">
+  <div style="max-width:2500px;margin:0 auto;background:#fff;border-radius:20px;padding:28px 32px;border:1px solid rgba(112,115,124,0.16)">
+    <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;letter-spacing:-0.02em">다왔어 v2 — 통합 화면 명세 (개발 핸드오프)</h1>
+    <p style="margin:0;font-size:14px;color:#5B5E66;line-height:1.7">아래 4개 STEP의 전 화면 시안입니다. 디자인 토큰·컴포넌트 규격: 타이포 6단계(T1 28/Bold · T2 18/SemiBold · T3 16/SemiBold · T4 15/Regular · T5 13/Regular · T6 11/Medium), 간격 4/8/12/16/24/32, 라운드 8/12/20/full, 버튼·필드 높이 52 · 칩 44 · 행 56, Primary #0066CC · Primary Light #E9F1FB · BG #F5F5F7 · Field #EFEFF1 · 텍스트 #171719/#5B5E66/#9CA0A8 · Danger #EF4444(+#FDECEC) · Positive #0B8A4B(+#E6F6EE) · Warning #B25E00(+#FFF4E5) · Inactive #E3E4E8. 폰트 Pretendard.</p>
+    <p style="margin:8px 0 0;font-size:13px;color:#8B8E98;line-height:1.7">STEP 1 시간 알람 · STEP 2 내 장소(공유용 이름) · STEP 3 친구 알람 3종 · STEP 4 막차 알람. 각 화면 캡션에 적용 규칙이 명시되어 있습니다. 목업 폭 375px = Android 390dp 기준, 수치는 dp로 1:1 해석.</p>
+  </div>
+</section>
+<section style="padding:48px 56px 96px">
+  <div style="max-width:2200px;margin:0 auto">
+    <div style="margin-bottom:36px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <span style="background:#171719;color:#fff;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">STEP 1</span>
+        <span style="font-size:13px;color:#5B5E66;font-weight:600">v2 시간 알람 — 현행(AS-IS) 디자인 시스템 그대로 적용 · 6개 산출물</span>
+      </div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-0.02em">시간 알람 화면 설계</h1>
+    </div>
+    <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- ── 1a. 알람 타입 선택 바텀시트 ── -->
+      <div id="1a" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">1a</span><span style="font-size:13px;font-weight:700;color:#5B5E66">1-1 알람 타입 선택 바텀시트 (신규)</span></div>
+        <div style="height:740px;border-radius:28px;overflow:hidden;position:relative;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14)" data-screen-label="1-1 알람 타입 선택">
+          <div style="padding:24px 20px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:30px;font-weight:800">알람</div>
+              <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;color:#171719;box-shadow:0 1px 4px rgba(0,0,0,0.08)">+</div>
+            </div>
+            <div style="font-size:15px;color:#5B5E66;margin-top:6px">모든 알람이 꺼져 있어요</div>
+            <div style="font-size:15px;font-weight:700;color:#5B5E66;margin-top:22px">지난 알람</div>
+            <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px;opacity:0.55">
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#C7CAD1"></span><span style="font-size:12px;color:#C7CAD1">선릉버스</span></div>
+              <div style="font-size:19px;font-weight:700;color:#C7CAD1;margin-top:2px">서울 강남구 대치동 1011</div>
+            </div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(23,23,25,0.5)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:28px 28px 0 0;padding:12px 20px 28px">
+            <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 18px"></div>
+            <div style="font-size:23px;font-weight:800;letter-spacing:-0.01em">어떤 알람을 만들까요?</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+              <div style="display:flex;align-items:center;gap:14px;background:#F5F5F7;border-radius:20px;padding:18px 16px">
+                <div style="width:48px;height:48px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div style="flex:1"><div style="font-size:17px;font-weight:700">위치 알람</div><div style="font-size:14px;color:#9CA0A8;margin-top:2px">목적지에 도착하면 울려요</div></div>
+                <span style="color:#C7CAD1;font-size:18px">›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;background:#F5F5F7;border-radius:20px;padding:18px 16px">
+                <div style="width:48px;height:48px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                </div>
+                <div style="flex:1"><div style="font-size:17px;font-weight:700">시간 알람</div><div style="font-size:14px;color:#9CA0A8;margin-top:2px">정한 시각에 울려요</div></div>
+                <span style="color:#C7CAD1;font-size:18px">›</span>
+              </div>
+            </div>
+            <div style="background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:16px">취소</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">지도 탭 "알람 만들기"는 기존대로 위치 알람 직행 — 이 시트는 알람 탭 + 버튼에서만 열립니다.</div>
+      </div>
+
+      <!-- ── 1b. 시간 알람 생성 바텀시트 ── -->
+      <div id="1b" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">1b</span><span style="font-size:13px;font-weight:700;color:#5B5E66">1-2 시간 알람 생성 (기본)</span></div>
+        <div style="border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:12px 20px 24px" data-screen-label="1-2 시간 알람 생성">
+          <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 16px"></div>
+          <div style="font-size:24px;font-weight:800">시간 알람 설정</div>
+          <div style="font-size:17px;font-weight:700;margin-top:22px">알람 이름</div>
+          <div style="background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;padding:0 18px;font-size:16px;color:#9CA0A8;margin-top:10px">시간 알람</div>
+          <div style="font-size:17px;font-weight:700;margin-top:22px">날짜와 시각</div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <div style="flex:1.2;background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px"><span style="font-size:16px;font-weight:500">8월 9일 (토)</span><span style="color:#9CA0A8">▾</span></div>
+            <div style="flex:1;background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px"><span style="font-size:16px;font-weight:500">오후 3:00</span><span style="color:#9CA0A8">▾</span></div>
+          </div>
+          <div style="font-size:13px;color:#9CA0A8;margin-top:8px">기본값은 다음 정시예요</div>
+          <div style="font-size:17px;font-weight:700;margin-top:22px">반복</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span style="background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:700">안 함</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">매일</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">평일</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">주말</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">요일 직접</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:24px">
+            <div><div style="font-size:17px;font-weight:700">소리</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">알람이 울릴 때 소리 재생</div></div>
+            <div style="width:52px;height:32px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+          </div>
+          <div style="border:1.5px solid #DEE0E4;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-top:14px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+            <div><div style="font-size:16px;font-weight:700">기본 벨소리</div><div style="font-size:13px;color:#9CA0A8;margin-top:1px">마이 › 알람 사운드 관리에서 변경</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px">
+            <div><div style="font-size:17px;font-weight:700">진동</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">알람이 울릴 때 진동</div></div>
+            <div style="width:52px;height:32px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <div style="flex:1;background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">취소</div>
+            <div style="flex:1.4;background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">알람 추가</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 1c. 요일 직접 + 오류 상태 ── -->
+      <div id="1c" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">1c</span><span style="font-size:13px;font-weight:700;color:#5B5E66">1-2 변형 — 요일 직접 · 과거 시각 오류</span></div>
+        <div style="border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:12px 20px 24px" data-screen-label="1-2 요일직접+오류">
+          <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 16px"></div>
+          <div style="font-size:24px;font-weight:800">시간 알람 설정</div>
+          <div style="font-size:17px;font-weight:700;margin-top:22px">날짜와 시각</div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <div style="flex:1.2;background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:inset 0 0 0 1.5px #EF4444"><span style="font-size:16px;font-weight:500">8월 7일 (금)</span><span style="color:#9CA0A8">▾</span></div>
+            <div style="flex:1;background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:inset 0 0 0 1.5px #EF4444"><span style="font-size:16px;font-weight:500">오전 9:00</span><span style="color:#9CA0A8">▾</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.5" r="0.5" fill="#EF4444"></circle></svg>
+            <span style="font-size:13px;font-weight:500;color:#EF4444">이미 지난 시각이에요. 다시 골라 주세요</span>
+          </div>
+          <div style="font-size:17px;font-weight:700;margin-top:22px">반복</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">안 함</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">매일</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">평일</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:500">주말</span>
+            <span style="background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;border-radius:14px;padding:12px 16px;font-size:15px;font-weight:700">요일 직접</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:12px">
+            <span style="width:40px;height:40px;border-radius:50%;background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;box-sizing:border-box">월</span>
+            <span style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DEE0E4;color:#5B5E66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;box-sizing:border-box">화</span>
+            <span style="width:40px;height:40px;border-radius:50%;background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;box-sizing:border-box">수</span>
+            <span style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DEE0E4;color:#5B5E66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;box-sizing:border-box">목</span>
+            <span style="width:40px;height:40px;border-radius:50%;background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;box-sizing:border-box">금</span>
+            <span style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DEE0E4;color:#5B5E66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;box-sizing:border-box">토</span>
+            <span style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DEE0E4;color:#5B5E66;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;box-sizing:border-box">일</span>
+          </div>
+          <div style="font-size:13px;color:#9CA0A8;margin-top:8px">반복을 고르면 날짜 선택은 잠기고 시각만 적용돼요</div>
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <div style="flex:1;background:#EFEFF1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">취소</div>
+            <div style="flex:1.4;background:#F4F4F5;color:#C7CAD1;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">알람 추가</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">과거 시각: 필드 1.5px Danger 인셋 링 + 인라인 안내 + 추가 버튼 비활성(#F4F4F5/#C7CAD1).</div>
+      </div>
+
+      <!-- ── 1d. 알람 목록 — 타입 구분 ── -->
+      <div id="1d" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">1d</span><span style="font-size:13px;font-weight:700;color:#5B5E66">1-3 알람 목록 — 타입 구분 카드</span></div>
+        <div style="border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="1-3 알람 목록">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:30px;font-weight:800">알람</div>
+            <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 1px 4px rgba(0,0,0,0.08)">+</div>
+          </div>
+          <div style="font-size:15px;color:#5B5E66;margin-top:6px">활성 알람 2개가 지켜보고 있어요</div>
+          <div style="font-size:15px;font-weight:700;color:#5B5E66;margin-top:22px">활성 알람</div>
+          <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span style="font-size:13px;font-weight:600;color:#0066CC">위치</span><span style="font-size:13px;color:#9CA0A8">· 선릉버스</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:19px;font-weight:700">서울 강남구 대치동 1011</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><span style="color:#FFB020;font-size:20px">★</span>
+                <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:4px">반경 500m · 기본 벨소리</div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span style="font-size:13px;font-weight:600;color:#0066CC">시간</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:19px;font-weight:700">기상 알람</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><span style="color:#C7CAD1;font-size:20px">☆</span>
+                <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:4px">매일 오전 8:00 · 기본 벨소리</div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span style="font-size:13px;font-weight:600;color:#0066CC">시간</span>
+              <span style="background:#E9F1FB;color:#0066CC;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">👤 지수님이 설정</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:19px;font-weight:700">병원 예약</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><span style="color:#C7CAD1;font-size:20px">☆</span>
+                <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:4px">8월 9일 오전 8:00 · 기본 벨소리</div>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#5B5E66;margin-top:22px">지난 알람</div>
+          <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C7CAD1" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span style="font-size:13px;font-weight:600;color:#C7CAD1">시간</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:19px;font-weight:700;color:#C7CAD1">회의 리마인더</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><span style="color:#C7CAD1;font-size:20px">☆</span>
+                <div style="width:46px;height:28px;border-radius:999px;background:#E3E4E8;position:relative"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:#C7CAD1;margin-top:4px">8월 6일 오후 2:00 · 기본 벨소리</div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C7CAD1" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span style="font-size:13px;font-weight:600;color:#C7CAD1">위치</span><span style="font-size:13px;color:#C7CAD1">· 연세우리병원</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:19px;font-weight:700;color:#C7CAD1">연세우리병원</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><span style="color:#C7CAD1;font-size:20px">☆</span>
+                <div style="width:46px;height:28px;border-radius:999px;background:#E3E4E8;position:relative"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:#C7CAD1;margin-top:4px">반경 500m · 기본 벨소리</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">타입 표기는 기존 dot+별칭 메타줄 자리를 재사용: 아이콘 13px + 타입 라벨(활성 Primary / 비활성 Disabled). 섹션 구조(즐겨찾기/활성/지난)는 유지.</div>
+      </div>
+
+      <!-- ── 1e. 시간 알람 편집 확장 카드 ── -->
+      <div id="1e" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">1e</span><span style="font-size:13px;font-weight:700;color:#5B5E66">1-4 시간 알람 편집 확장 카드</span></div>
+        <div style="border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="1-4 시간 알람 편집">
+          <div style="font-size:15px;font-weight:700;color:#5B5E66">활성 알람</div>
+          <div style="background:#fff;border-radius:22px;padding:18px;margin-top:12px;box-shadow:0 2px 10px rgba(0,0,0,0.06)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                <span style="font-size:14px;font-weight:700;color:#0066CC">시간 · 기상 알람</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><span style="color:#C7CAD1;font-size:20px">☆</span>
+                <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              </div>
+            </div>
+            <div style="font-size:15px;font-weight:700;margin-top:16px">알람 이름</div>
+            <div style="background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;padding:0 16px;font-size:16px;margin-top:8px">기상 알람</div>
+            <div style="font-size:15px;font-weight:700;margin-top:16px">시각</div>
+            <div style="background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-top:8px"><span style="font-size:16px;font-weight:500">오전 8:00</span><span style="color:#9CA0A8">▾</span></div>
+            <div style="font-size:15px;font-weight:700;margin-top:16px">반복</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+              <span style="background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:700">매일</span>
+              <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">안 함</span>
+              <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">평일</span>
+              <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">주말</span>
+              <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">요일 직접</span>
+            </div>
+            <div style="font-size:15px;font-weight:700;margin-top:16px">알람 사운드 설정</div>
+            <div style="border:1.5px solid #DEE0E4;border-radius:16px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-top:8px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+              <span style="flex:1;font-size:15px;font-weight:700">기본 벨소리</span><span style="color:#9CA0A8">›</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+              <div><div style="font-size:15px;font-weight:700">진동</div><div style="font-size:13px;color:#9CA0A8;margin-top:1px">알람이 울릴 때 진동</div></div>
+              <div style="width:52px;height:32px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <div style="flex:1.4;background:#0066CC;color:#fff;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">저장</div>
+              <div style="flex:1;background:#EFEFF1;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">삭제</div>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px;opacity:0.6">
+            <div style="font-size:19px;font-weight:700;color:#C7CAD1">회의 리마인더</div>
+            <div style="font-size:13px;color:#C7CAD1;margin-top:4px">8월 6일 오후 2:00 · 기본 벨소리</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">v1 확장 카드(4~5번)와 동일 골격 — 반경 칩 자리에 시각 필드 + 반복 칩. 저장/삭제 순서는 v1 그대로 유지.</div>
+      </div>
+
+      <!-- ── 1f. 권한 다이얼로그 + 정확도 배지 ── -->
+      <div id="1f" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">1f</span><span style="font-size:13px;font-weight:700;color:#5B5E66">1-5 정확 알람 권한 다이얼로그 · 1-6 정확도 제한 배지</span></div>
+        <div style="border-radius:28px;overflow:hidden;position:relative;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);height:420px" data-screen-label="1-5 권한 다이얼로그">
+          <div style="padding:24px 20px"><div style="font-size:30px;font-weight:800">알람</div><div style="font-size:15px;color:#5B5E66;margin-top:6px">활성 알람 2개가 지켜보고 있어요</div></div>
+          <div style="position:absolute;inset:0;background:rgba(23,23,25,0.5)"></div>
+          <div style="position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%);background:#fff;border-radius:24px;padding:26px 22px">
+            <div style="width:52px;height:52px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M5 3 2 6"></path><path d="m22 6-3-3"></path></svg>
+            </div>
+            <div style="font-size:19px;font-weight:800;letter-spacing:-0.01em">정한 시각에 정확히 깨워드릴까요?</div>
+            <div style="font-size:14px;color:#5B5E66;line-height:1.6;margin-top:8px">권한을 허용하지 않아도 알람은 울리지만, 몇 분 늦게 울릴 수 있어요.</div>
+            <div style="background:#0066CC;color:#fff;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:20px">설정으로 이동</div>
+            <div style="height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#5B5E66;margin-top:4px">나중에</div>
+          </div>
+        </div>
+        <div style="border-radius:24px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:20px;margin-top:24px" data-screen-label="1-6 정확도 제한 배지">
+          <div style="font-size:13px;font-weight:800;color:#5B5E66;margin-bottom:12px">1-6 "정확도 제한" 배지 — 컴포넌트</div>
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#FFF4E5;color:#B25E00;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B25E00" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.5" r="0.6" fill="#B25E00"></circle></svg>정확도 제한
+          </span>
+          <div style="background:#F5F5F7;border-radius:18px;padding:14px 16px;margin-top:14px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span style="font-size:13px;font-weight:600;color:#0066CC">시간</span>
+              <span style="display:inline-flex;align-items:center;gap:4px;background:#FFF4E5;color:#B25E00;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">정확도 제한</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:18px;font-weight:700;white-space:nowrap">기상 알람</div>
+              <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative;flex-shrink:0"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:4px">매일 오전 8:00 · 기본 벨소리</div>
+          </div>
+          <div style="background:#F5F5F7;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:13px;color:#5B5E66;line-height:1.6"><b>배지 탭 시 안내(토스트/시트):</b> "정확한 알람 권한이 꺼져 있어 몇 분 늦게 울릴 수 있어요. 설정에서 켤 수 있어요." + [설정으로 이동]</div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">권한 안내는 설치당 1회·비강제(v1 패턴). 배지는 Warning 계열(#FFF4E5/#B25E00) — Danger와 구분해 '동작은 함'을 전달.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section style="padding:48px 56px 96px">
+  <div style="max-width:2200px;margin:0 auto">
+    <div style="margin-bottom:36px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <span style="background:#171719;color:#fff;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">STEP 2</span>
+        <span style="font-size:13px;color:#5B5E66;font-weight:600">v2 내 장소 — 이름 이원화(내가 보는 이름 / 친구가 보는 이름) · 주소 비공개 원칙</span>
+      </div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-0.02em">내 장소 화면 설계</h1>
+    </div>
+    <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- ── 2a. 마이 > 내 장소 ── -->
+      <div id="2a" style="width:780px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">2a</span><span style="font-size:13px;font-weight:700;color:#5B5E66">2-1 마이 진입점 + 내 장소 목록 (신규)</span></div>
+        <div style="display:flex;gap:28px">
+          <div style="width:375px;border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="2-1 마이(진입점)">
+            <div style="font-size:30px;font-weight:800">마이</div>
+            <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:18px;display:flex;align-items:center;gap:14px">
+              <div style="width:52px;height:52px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#0066CC">사</div>
+              <div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:700">사장님나빠여</div><div style="font-size:13px;color:#9CA0A8">ddvuutk@gmail.com</div></div>
+              <span style="color:#C7CAD1">›</span>
+            </div>
+            <div style="background:#fff;border-radius:22px;padding:6px 18px;margin-top:14px">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(112,115,124,0.12)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+                <span style="flex:1;font-size:16px;font-weight:500">알림 설정</span><span style="color:#C7CAD1">›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(112,115,124,0.12);background:#E9F1FB;margin:0 -18px;padding-left:18px;padding-right:18px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
+                <span style="flex:1;font-size:16px;font-weight:700;color:#0066CC">내 장소</span>
+                <span style="font-size:13px;color:#0066CC;font-weight:600;white-space:nowrap">2 / 4</span><span style="color:#0066CC">›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(112,115,124,0.12)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span style="flex:1;font-size:16px;font-weight:500">위치 권한 관리</span><span style="color:#C7CAD1">›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M11 5 6 9H3v6h3l5 4V5Z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7"></path></svg>
+                <span style="flex:1;font-size:16px;font-weight:500">알람 사운드 관리</span><span style="color:#C7CAD1">›</span>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#8B8E98;margin-top:14px;text-align:center">"내 장소" 행 신규 — 슬롯 사용량(2/4) 노출</div>
+          </div>
+          <div style="width:375px;border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="2-1 내 장소 목록">
+            <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">내 장소</span></div>
+            <div style="font-size:14px;color:#5B5E66;margin-top:6px;line-height:1.55">자주 가는 곳을 등록해 두면 알람을 빠르게 만들 수 있어요.<br>주소는 나만 볼 수 있어요.</div>
+            <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:18px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:14px;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:700">집</span><span style="font-size:11px;font-weight:700;color:#5B5E66;background:#EFEFF1;border-radius:999px;padding:2px 8px;white-space:nowrap">고정 슬롯</span></div>
+                  <div style="font-size:13px;color:#9CA0A8;margin-top:2px">서울 강남구 삼성동 144-30</div>
+                </div>
+                <span style="color:#C7CAD1">›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;background:#F5F5F7;border-radius:12px;padding:8px 12px;margin-top:12px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+                <span style="font-size:13px;color:#5B5E66;font-weight:500;white-space:nowrap">비공개 — 나만 볼 수 있어요</span>
+              </div>
+            </div>
+            <div style="background:#fff;border-radius:22px;padding:16px 18px;margin-top:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:14px;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:17px;font-weight:700">여자친구집</div>
+                  <div style="font-size:13px;color:#9CA0A8;margin-top:2px">서울 송파구 잠실동 31</div>
+                </div>
+                <span style="color:#C7CAD1">›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;background:#E9F1FB;border-radius:12px;padding:8px 12px;margin-top:12px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+                <span style="font-size:13px;color:#0066CC;font-weight:600;white-space:nowrap">공개 중 — 친구에겐</span>
+                <span style="font-size:13px;font-weight:800;color:#0066CC;background:#fff;border-radius:8px;padding:1px 8px;white-space:nowrap">장소 2</span>
+                <span style="font-size:13px;color:#0066CC;font-weight:600;white-space:nowrap">로 보여요</span>
+              </div>
+            </div>
+            <div style="border:2px dashed #DEE0E4;border-radius:22px;padding:20px;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;color:#9CA0A8;font-size:15px;font-weight:600">+ 장소 추가</div>
+            <div style="border:2px dashed #DEE0E4;border-radius:22px;padding:20px;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;color:#9CA0A8;font-size:15px;font-weight:600">+ 장소 추가</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">공개 여부는 자물쇠(비공개)/눈(공개) 아이콘 — 즐겨찾기 별(★)과 아이콘·명칭 모두 분리. 공개 중 슬롯은 친구에게 보이는 공유용 이름을 그대로 표기.</div>
+      </div>
+
+      <!-- ── 2b. 장소 등록·편집 (공개 ON 전개) ── -->
+      <div id="2b" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">2b</span><span style="font-size:13px;font-weight:700;color:#5B5E66">2-2 장소 등록 · 편집 (공개 ON 전개)</span></div>
+        <div style="border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14)" data-screen-label="2-2 장소 등록·편집">
+          <div style="height:190px;background:#E8EDE9;position:relative;overflow:hidden">
+            <div style="position:absolute;left:-20px;top:30px;width:200px;height:8px;background:#fff;transform:rotate(12deg)"></div>
+            <div style="position:absolute;left:60px;top:-10px;width:8px;height:160px;background:#fff;transform:rotate(20deg)"></div>
+            <div style="position:absolute;right:-30px;top:70px;width:240px;height:10px;background:#F6E7B2;transform:rotate(-8deg)"></div>
+            <div style="position:absolute;right:90px;top:0;width:6px;height:200px;background:#fff;transform:rotate(-15deg)"></div>
+            <div style="position:absolute;left:40%;top:35%;width:90px;height:60px;background:#D8E6D0;border-radius:8px"></div>
+            <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-90%)">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="#0066CC"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3.2" fill="#fff"></circle></svg>
+            </div>
+            <div style="position:absolute;left:16px;top:16px;width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.1)">←</div>
+          </div>
+          <div style="padding:20px 20px 24px">
+            <div style="font-size:22px;font-weight:800">장소 편집</div>
+            <div style="font-size:15px;font-weight:700;margin-top:18px">내가 보는 이름</div>
+            <div style="background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;padding:0 16px;font-size:16px;margin-top:8px">여자친구집</div>
+            <div style="font-size:15px;font-weight:700;margin-top:16px">주소</div>
+            <div style="background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;gap:8px;padding:0 16px;font-size:15px;color:#5B5E66;margin-top:8px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>서울 송파구 잠실동 31
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px">
+              <div><div style="font-size:16px;font-weight:700">친구에게 공개</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">친구가 이 장소로 알람을 보낼 수 있어요</div></div>
+              <div style="width:52px;height:32px;border-radius:999px;background:#0066CC;position:relative;flex-shrink:0"><div style="position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="background:#F5F8FC;border-radius:18px;padding:16px;margin-top:14px">
+              <div style="font-size:14px;font-weight:700">친구가 보는 이름 <span style="color:#EF4444">*</span></div>
+              <div style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;height:48px;display:flex;align-items:center;padding:0 14px;font-size:15px;margin-top:8px">장소 2</div>
+              <div style="display:flex;align-items:flex-start;gap:6px;margin-top:10px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M12 22s8-3.5 8-10V6l-8-3.5L4 6v6c0 6.5 8 10 8 10Z"></path><path d="m9 11.5 2 2 4-4"></path></svg>
+                <span style="font-size:13px;color:#0066CC;font-weight:500;line-height:1.5">친구는 이 이름만 볼 수 있어요. 주소는 공개되지 않아요.</span>
+              </div>
+              <div style="border-top:1px dashed #D5DEE9;margin:14px 0 12px"></div>
+              <div style="font-size:12px;font-weight:700;color:#9CA0A8;letter-spacing:0.04em">친구 화면에는 이렇게 보여요</div>
+              <div style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:8px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,0.05)">
+                <div style="width:36px;height:36px;border-radius:12px;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">장소 2</div><div style="font-size:12px;color:#9CA0A8">사장님나빠여님의 장소</div></div>
+                <span style="font-size:12px;font-weight:700;color:#0066CC;white-space:nowrap">알람 보내기</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <div style="flex:1.4;background:#0066CC;color:#fff;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">저장</div>
+              <div style="flex:1;background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">삭제</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">프라이버시 안내는 Danger가 아닌 Primary 톤(방패 아이콘 + 연파랑 패널) — 안심 메시지. 미리보기 카드로 "친구에게 실제로 보이는 것"을 그대로 재현.</div>
+      </div>
+
+      <!-- ── 2c. OFF/ON 대비 ── -->
+      <div id="2c" style="width:700px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">2c</span><span style="font-size:13px;font-weight:700;color:#5B5E66">2-3 공개 OFF / ON 상태 대비</span></div>
+        <div style="display:flex;gap:24px">
+          <div style="flex:1;border-radius:24px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:20px" data-screen-label="2-3 공개 OFF">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#EFEFF1;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;color:#5B5E66;margin-bottom:16px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>공개 OFF (기본)
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-size:16px;font-weight:700">친구에게 공개</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">친구가 이 장소로 알람을 보낼 수 있어요</div></div>
+              <div style="width:52px;height:32px;border-radius:999px;background:#E3E4E8;position:relative;flex-shrink:0"><div style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;background:#F5F5F7;border-radius:12px;padding:10px 12px;margin-top:14px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+              <span style="font-size:13px;color:#5B5E66">이 장소는 나만 볼 수 있어요</span>
+            </div>
+            <div style="margin-top:16px;font-size:13px;color:#9CA0A8;line-height:1.7">
+              · 친구 장소 목록에 나타나지 않음<br>
+              · 공유용 이름 입력란 숨김<br>
+              · 미리보기 없음
+            </div>
+          </div>
+          <div style="flex:1;border-radius:24px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:20px" data-screen-label="2-3 공개 ON">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#E9F1FB;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;color:#0066CC;margin-bottom:16px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2.2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>공개 ON
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-size:16px;font-weight:700">친구에게 공개</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">친구가 이 장소로 알람을 보낼 수 있어요</div></div>
+              <div style="width:52px;height:32px;border-radius:999px;background:#0066CC;position:relative;flex-shrink:0"><div style="position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="background:#F5F8FC;border-radius:16px;padding:14px;margin-top:14px">
+              <div style="font-size:13px;font-weight:700">친구가 보는 이름 <span style="color:#EF4444">*</span></div>
+              <div style="background:#fff;border:1.5px solid #DEE0E4;border-radius:12px;height:42px;display:flex;align-items:center;padding:0 12px;font-size:14px;margin-top:6px">장소 2</div>
+              <div style="display:flex;align-items:flex-start;gap:6px;margin-top:8px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M12 22s8-3.5 8-10V6l-8-3.5L4 6v6c0 6.5 8 10 8 10Z"></path><path d="m9 11.5 2 2 4-4"></path></svg>
+                <span style="font-size:12px;color:#0066CC;font-weight:500;line-height:1.5">친구는 이 이름만 볼 수 있어요. 주소는 공개되지 않아요.</span>
+              </div>
+            </div>
+            <div style="margin-top:16px;font-size:13px;color:#9CA0A8;line-height:1.7">
+              · 친구 장소 목록에 "장소 2"로 노출<br>
+              · 주소·내가 보는 이름("여자친구집")은 <b style="color:#5B5E66">계속 비공개</b><br>
+              · 공개 해제는 언제든 가능
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">토글 ON에서 달라지는 것은 연파랑 패널 전개뿐 — 주소 필드는 두 상태 모두 동일하게 잠금 아이콘 유지, "공개해도 주소는 안 보인다"를 시각적으로 고정.</div>
+
+        <!-- ── 2d. 삭제 다이얼로그 ── -->
+        <div style="margin-top:36px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">2d</span><span style="font-size:13px;font-weight:700;color:#5B5E66">2-4 장소 삭제 확인 다이얼로그</span></div>
+          <div style="width:375px;height:360px;border-radius:28px;overflow:hidden;position:relative;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14)" data-screen-label="2-4 삭제 다이얼로그">
+            <div style="padding:24px 20px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">←</span><span style="font-size:22px;font-weight:800">장소 편집</span></div></div>
+            <div style="position:absolute;inset:0;background:rgba(23,23,25,0.5)"></div>
+            <div style="position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%);background:#fff;border-radius:24px;padding:26px 22px">
+              <div style="font-size:19px;font-weight:800;letter-spacing:-0.01em">'여자친구집'을 삭제할까요?</div>
+              <div style="font-size:14px;color:#5B5E66;line-height:1.6;margin-top:8px">이 장소로 받은 알람도 함께 사라져요. 친구에게 공개했던 '장소 2'도 목록에서 없어져요.</div>
+              <div style="display:flex;gap:10px;margin-top:20px">
+                <div style="flex:1;background:#EFEFF1;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">취소</div>
+                <div style="flex:1;background:#EF4444;color:#fff;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">삭제</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">결과 명시형 카피 — 사라지는 두 가지(받은 알람, 친구 목록 노출)를 한 문장씩. 파괴 동작만 Danger 버튼.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<section style="padding:48px 56px 96px">
+  <div style="max-width:2400px;margin:0 auto">
+    <div style="margin-bottom:36px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <span style="background:#171719;color:#fff;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">STEP 3</span>
+        <span style="font-size:13px;color:#5B5E66;font-weight:600">v2 친구 알람 — 보내기 3종(주소/장소/시간) · 발신자는 장소의 위치를 모른다</span>
+      </div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-0.02em">친구 알람 화면 설계</h1>
+    </div>
+    <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- ── 3a. 친구 목록 ── -->
+      <div id="3a" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3a</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-1 친구 목록 (내용 있는 상태)</span></div>
+        <div style="border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="3-1 친구 목록">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:30px;font-weight:800">친구</div>
+            <div style="display:flex;gap:8px">
+              <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.08)">⟳</div>
+              <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.08)">+👤</div>
+            </div>
+          </div>
+          <div style="font-size:15px;color:#5B5E66;margin-top:6px">서로의 도착을 지켜봐 주는 사이예요</div>
+
+          <div style="font-size:14px;font-weight:700;color:#5B5E66;margin-top:20px">받은 친구 요청 <span style="background:#EF4444;color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800;margin-left:4px">1</span></div>
+          <div style="background:#fff;border-radius:20px;padding:14px 16px;margin-top:10px;display:flex;align-items:center;gap:12px">
+            <div style="width:42px;height:42px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0066CC;flex-shrink:0">윤</div>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;white-space:nowrap">윤아</div><div style="font-size:12px;color:#9CA0A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">yoona@gmail.com</div></div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <span style="background:#0066CC;color:#fff;border-radius:12px;padding:9px 14px;font-size:13px;font-weight:700;white-space:nowrap">수락</span>
+              <span style="background:#EFEFF1;color:#5B5E66;border-radius:12px;padding:9px 14px;font-size:13px;font-weight:700;white-space:nowrap">거절</span>
+            </div>
+          </div>
+
+          <div style="font-size:14px;font-weight:700;color:#5B5E66;margin-top:20px">받은 권한 요청 <span style="background:#EF4444;color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800;margin-left:4px">1</span></div>
+          <div style="background:#fff;border-radius:20px;padding:14px 16px;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:42px;height:42px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0066CC;flex-shrink:0">지</div>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;white-space:nowrap">지훈</div><div style="font-size:13px;color:#5B5E66;line-height:1.45">지훈님이 내 알람을 대신 설정하고 싶어 해요</div></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="flex:1;background:#0066CC;color:#fff;border-radius:12px;height:42px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">허용</div>
+              <div style="flex:1;background:#EFEFF1;border-radius:12px;height:42px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">거절</div>
+            </div>
+          </div>
+
+          <div style="font-size:14px;font-weight:700;color:#5B5E66;margin-top:20px">내 친구 3</div>
+          <div style="background:#fff;border-radius:20px;padding:16px;margin-top:10px;box-shadow:0 2px 10px rgba(0,0,0,0.07)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:46px;height:46px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#0066CC;flex-shrink:0">민</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px;font-weight:700;white-space:nowrap">민수</span><span style="background:#E6F6EE;color:#0B8A4B;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">대리 설정 가능</span></div>
+                <div style="font-size:12px;color:#9CA0A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">minsu@gmail.com</div>
+              </div>
+              <span style="color:#C7CAD1;transform:rotate(90deg)">›</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+              <span style="background:#0066CC;color:#fff;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;white-space:nowrap">알람 보내기</span>
+              <span style="background:#EFEFF1;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;white-space:nowrap">권한 요청</span>
+              <span style="background:#EFEFF1;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;white-space:nowrap">차단</span>
+              <span style="background:#FDECEC;color:#EF4444;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;white-space:nowrap">삭제</span>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:16px;margin-top:10px;display:flex;align-items:center;gap:12px">
+            <div style="width:46px;height:46px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#0066CC;flex-shrink:0">수</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px;font-weight:700;white-space:nowrap">수진</span><span style="background:#FFF4E5;color:#B25E00;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">권한 대기</span></div>
+              <div style="font-size:12px;color:#9CA0A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">sujin@naver.com</div>
+            </div>
+            <span style="color:#C7CAD1">›</span>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:16px;margin-top:10px;display:flex;align-items:center;gap:12px">
+            <div style="width:46px;height:46px;border-radius:50%;background:#EFEFF1;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#9CA0A8;flex-shrink:0">태</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px;font-weight:700;white-space:nowrap">태오</span><span style="background:#EFEFF1;color:#9CA0A8;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">거절됨</span></div>
+              <div style="font-size:12px;color:#9CA0A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">taeo@gmail.com</div>
+            </div>
+            <span style="color:#C7CAD1">›</span>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">권한 배지 3상태: 가능(Green)/대기(Warning)/거절(Gray). 민수 카드는 확장 상태 — 액션 4종 노출, 삭제만 Danger 톤.</div>
+      </div>
+
+      <!-- ── 3b. 보내기 시트 [주소] 탭 ── -->
+      <div id="3b" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3b</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-2 알람 보내기 시트 — [주소] 탭</span></div>
+        <div style="border-radius:28px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:12px 20px 24px" data-screen-label="3-2 보내기(주소)">
+          <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 16px"></div>
+          <div style="font-size:24px;font-weight:800">민수님에게 알람 보내기</div>
+          <div style="display:flex;background:#EFEFF1;border-radius:16px;padding:4px;margin-top:16px">
+            <div style="flex:1;background:#fff;border-radius:12px;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.08)">주소</div>
+            <div style="flex:1;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#5B5E66">장소</div>
+            <div style="flex:1;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#5B5E66">시간</div>
+          </div>
+          <div style="background:#EFEFF1;border-radius:16px;height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;margin-top:16px"><span style="color:#9CA0A8">🔍</span><span style="font-size:16px;color:#9CA0A8">주소나 장소 이름으로 검색</span></div>
+          <div style="background:#F5F5F7;border-radius:16px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:10px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">잠실광역환승센터</div><div style="font-size:12px;color:#9CA0A8">서울 송파구 올림픽로 지하 265</div></div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-top:18px">알람 이름</div>
+          <div style="background:#EFEFF1;border-radius:16px;height:50px;display:flex;align-items:center;padding:0 16px;font-size:15px;color:#9CA0A8;margin-top:8px">잠실환승센터 도착</div>
+          <div style="font-size:15px;font-weight:700;margin-top:16px">알람 반경</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">100m</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">300m</span>
+            <span style="background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:700">500m</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500">1km</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px">
+            <div style="font-size:15px;font-weight:700">소리 · 진동</div>
+            <div style="display:flex;gap:8px">
+              <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+              <div style="width:46px;height:28px;border-radius:999px;background:#0066CC;position:relative"><div style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+            </div>
+          </div>
+          <div style="background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:20px">보내기</div>
+          <div style="display:flex;align-items:flex-start;gap:6px;margin-top:12px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M12 22s8-3.5 8-10V6l-8-3.5L4 6v6c0 6.5 8 10 8 10Z"></path></svg>
+            <span style="font-size:12px;color:#9CA0A8;line-height:1.55">상대방에게 알람만 전달돼요. 위치나 도착 여부는 볼 수 없어요.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3c. [장소] 탭 + 빈 상태 ── -->
+      <div id="3c" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3c</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-3 [장소] 탭 — 상대의 공유 장소</span></div>
+        <div style="border-radius:28px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:12px 20px 24px" data-screen-label="3-3 보내기(장소)">
+          <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 16px"></div>
+          <div style="font-size:24px;font-weight:800">민수님에게 알람 보내기</div>
+          <div style="display:flex;background:#EFEFF1;border-radius:16px;padding:4px;margin-top:16px">
+            <div style="flex:1;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#5B5E66">주소</div>
+            <div style="flex:1;background:#fff;border-radius:12px;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.08)">장소</div>
+            <div style="flex:1;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#5B5E66">시간</div>
+          </div>
+          <div style="font-size:14px;color:#5B5E66;margin-top:16px;line-height:1.55">민수님이 공개한 장소예요. <b>위치는 민수님만 알고 있어요</b> — 이름을 고르면 알람이 그곳에서 울려요.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+            <div style="display:flex;align-items:center;gap:12px;background:#F5F5F7;border-radius:18px;padding:16px">
+              <div style="width:44px;height:44px;border-radius:14px;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
+              </div>
+              <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">집</div><div style="font-size:12px;color:#9CA0A8">민수님의 장소</div></div>
+              <span style="color:#C7CAD1">›</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#E9F1FB;border-radius:18px;padding:16px;box-shadow:inset 0 0 0 2px #1668B8">
+              <div style="width:44px;height:44px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><rect x="4" y="7" width="16" height="14" rx="2"></rect><path d="M9 7V5a3 3 0 0 1 6 0v2"></path></svg>
+              </div>
+              <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:#0066CC">회사</div><div style="font-size:12px;color:#5B8DC8">민수님의 장소 · 선택됨</div></div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2.4"><path d="m5 12 5 5 9-10"></path></svg>
+            </div>
+          </div>
+          <div style="background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:20px">보내기</div>
+        </div>
+        <div style="border-radius:24px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:20px;margin-top:20px" data-screen-label="3-3 장소 탭 빈 상태">
+          <div style="font-size:12px;font-weight:800;color:#5B5E66;margin-bottom:12px">빈 상태</div>
+          <div style="background:#F5F5F7;border-radius:18px;padding:24px 20px;text-align:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;margin:0 auto">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
+            <div style="font-size:16px;font-weight:700;margin-top:12px">민수님이 아직 공개한 장소가 없어요</div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:6px;line-height:1.5">장소를 공개해 달라고 부탁해 보세요</div>
+            <div style="background:#0066CC;color:#fff;border-radius:14px;height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;margin-top:16px">등록 요청 보내기</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">주소·지도를 의도적으로 배제 — "위치는 민수님만 알고 있어요"로 결핍이 아닌 설계임을 선언. 장소형은 반경 필드도 없음(상대 설정 따름).</div>
+      </div>
+
+      <!-- ── 3d. [시간] 탭 + 3e 버전 가드 ── -->
+      <div id="3d" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3d</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-4 [시간] 탭 — 프리셋</span></div>
+        <div style="border-radius:28px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:12px 20px 24px" data-screen-label="3-4 보내기(시간)">
+          <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 16px"></div>
+          <div style="font-size:24px;font-weight:800">민수님에게 알람 보내기</div>
+          <div style="display:flex;background:#EFEFF1;border-radius:16px;padding:4px;margin-top:16px">
+            <div style="flex:1;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#5B5E66">주소</div>
+            <div style="flex:1;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#5B5E66">장소</div>
+            <div style="flex:1;background:#fff;border-radius:12px;height:42px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.08)">시간</div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-top:18px">언제 울릴까요?</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span style="background:#E9F1FB;border:2px solid #1668B8;color:#0066CC;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:700;white-space:nowrap">1시간 뒤</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:500;white-space:nowrap">오늘 밤 11시</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:500;white-space:nowrap">내일 오전 8시</span>
+            <span style="background:#fff;border:1.5px solid #DEE0E4;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:500;white-space:nowrap">직접 선택</span>
+          </div>
+          <div style="background:#F5F5F7;border-radius:14px;padding:11px 14px;margin-top:12px;display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.5" r="0.5" fill="#9CA0A8"></circle></svg>
+            <span style="font-size:13px;color:#5B5E66">보내는 알람은 한 번만 울려요. 반복은 민수님이 직접 설정할 수 있어요.</span>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-top:16px">알람 이름</div>
+          <div style="background:#EFEFF1;border-radius:16px;height:50px;display:flex;align-items:center;padding:0 16px;font-size:15px;margin-top:8px">약 먹을 시간</div>
+          <div style="background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:20px">보내기</div>
+          <div style="display:flex;align-items:flex-start;gap:6px;margin-top:12px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M12 22s8-3.5 8-10V6l-8-3.5L4 6v6c0 6.5 8 10 8 10Z"></path></svg>
+            <span style="font-size:12px;color:#9CA0A8;line-height:1.55">상대방에게 알람만 전달돼요. 위치나 도착 여부는 볼 수 없어요.</span>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin:24px 0 10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3e</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-5 버전 가드 안내</span></div>
+        <div style="border-radius:24px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:20px" data-screen-label="3-5 버전 가드">
+          <div style="display:flex;background:#EFEFF1;border-radius:14px;padding:4px">
+            <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#5B5E66">주소</div>
+            <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#C7CAD1">장소</div>
+            <div style="flex:1;background:#fff;border-radius:10px;height:38px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#C7CAD1;box-shadow:0 1px 4px rgba(0,0,0,0.06)">시간</div>
+          </div>
+          <div style="background:#FFF4E5;border-radius:14px;padding:12px 14px;margin-top:14px;display:flex;align-items:flex-start;gap:8px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B25E00" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M12 3 2 20h20L12 3Z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r="0.5" fill="#B25E00"></circle></svg>
+            <span style="font-size:13px;color:#B25E00;font-weight:500;line-height:1.55">민수님의 앱 업데이트가 필요해요. 시간·장소 알람은 최신 버전에서만 받을 수 있어요.</span>
+          </div>
+          <div style="background:#F4F4F5;color:#C7CAD1;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:14px">보내기</div>
+          <div style="font-size:12px;color:#8B8E98;margin-top:10px">주소 탭은 구버전도 지원 — 탭 자체는 열리되 장소/시간만 비활성 + 안내.</div>
+        </div>
+      </div>
+
+      <!-- ── 3f. 보낸 알람 목록 + 3g 수신 ── -->
+      <div id="3f" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3f</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-6 보낸 알람 목록</span></div>
+        <div style="border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="3-6 보낸 알람">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">보낸 알람</span></div>
+          <div style="font-size:13px;color:#9CA0A8;margin-top:8px;line-height:1.55">기기 등록까지만 보여드려요. 이후는 친구의 알람이에요 — 껐는지, 도착했는지는 서로 볼 수 없어요.</div>
+          <div style="background:#fff;border-radius:20px;padding:16px;margin-top:16px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span style="font-size:13px;font-weight:600;color:#0066CC">위치 · 민수님에게</span>
+              <span style="background:#E6F6EE;color:#0B8A4B;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap">✓ 기기 등록됨</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:17px;font-weight:700;white-space:nowrap">회사 도착 알람</div>
+              <span style="font-size:13px;font-weight:700;color:#EF4444;white-space:nowrap">취소</span>
+            </div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:3px">'회사' · 8월 7일 보냄</div>
+          </div>
+          <div style="background:#fff;border-radius:20px;padding:16px;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              <span style="font-size:13px;font-weight:600;color:#0066CC">시간 · 윤아님에게</span>
+              <span style="background:#EFEFF1;color:#5B5E66;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap">전송됨</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+              <div style="font-size:17px;font-weight:700;white-space:nowrap">약 먹을 시간</div>
+              <span style="font-size:13px;font-weight:700;color:#EF4444;white-space:nowrap">취소</span>
+            </div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:3px">내일 오전 8:00 · 방금 보냄</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding:0 4px">
+            <span style="background:#EFEFF1;color:#5B5E66;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap">전송됨</span>
+            <span style="color:#C7CAD1">→</span>
+            <span style="background:#E6F6EE;color:#0B8A4B;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap">✓ 기기 등록됨</span>
+            <span style="font-size:12px;color:#9CA0A8">2단계로 끝</span>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin:24px 0 10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">3g</span><span style="font-size:13px;font-weight:700;color:#5B5E66">3-7 알람 수신 알림 + 수락</span></div>
+        <div style="border-radius:28px;overflow:hidden;position:relative;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);height:480px" data-screen-label="3-7 알람 수신">
+          <div style="padding:24px 20px"><div style="font-size:30px;font-weight:800">알람</div><div style="font-size:15px;color:#5B5E66;margin-top:6px">활성 알람 2개가 지켜보고 있어요</div></div>
+          <div style="position:absolute;inset:0;background:rgba(23,23,25,0.5)"></div>
+          <div style="position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%);background:#fff;border-radius:24px;padding:26px 22px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:48px;height:48px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#0066CC;flex-shrink:0">지</div>
+              <div style="min-width:0"><div style="font-size:18px;font-weight:800">지훈님이 알람을 보냈어요</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">받은 알람 자동 활성이 꺼져 있어요</div></div>
+            </div>
+            <div style="background:#F5F5F7;border-radius:16px;padding:14px 16px;margin-top:16px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                <span style="font-size:13px;font-weight:600;color:#0066CC">시간 알람</span>
+              </div>
+              <div style="font-size:17px;font-weight:700;margin-top:3px">약 먹을 시간</div>
+              <div style="font-size:13px;color:#9CA0A8;margin-top:2px">내일 오전 8:00 · 기본 벨소리 · 진동</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:18px">
+              <div style="flex:1.4;background:#0066CC;color:#fff;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">활성화</div>
+              <div style="flex:1;background:#EFEFF1;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">거절</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">수신 카드에 알람 전체 스펙(타입·이름·일시·소리·진동)을 보여준 뒤 결정 — 활성화가 기본 강조.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<section style="padding:48px 56px 96px">
+  <div style="max-width:2400px;margin:0 auto">
+    <div style="margin-bottom:36px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <span style="background:#171719;color:#fff;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">STEP 4</span>
+        <span style="font-size:13px;color:#5B5E66;font-weight:600">v2 막차 알람 — "지금 일어나야 하나?"에 3초 안에 답한다 · 시각과 금액이 제일 크게</span>
+      </div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-0.02em">막차 알람 화면 설계</h1>
+    </div>
+
+    <!-- ── 4a. 시간대별 3단계 ── -->
+    <div id="4a" style="margin-bottom:44px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">4a</span><span style="font-size:13px;font-weight:700;color:#5B5E66">4-1 막차 알람 메인 — 여유 / 임박 / 아슬</span></div>
+      <div style="display:flex;gap:28px;flex-wrap:wrap">
+
+        <!-- 여유 -->
+        <div style="width:375px;border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="4-1 여유">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">막차</span><span style="font-size:13px;color:#9CA0A8;white-space:nowrap">집까지 · 잠실동</span></div>
+          <div style="background:#fff;border-radius:24px;padding:24px 20px;margin-top:16px">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#E9F1FB;color:#0066CC;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;white-space:nowrap">아직 여유 있어요</div>
+            <div style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-top:14px">38분 <span style="font-size:22px;font-weight:700;color:#5B5E66">남음</span></div>
+            <div style="font-size:19px;font-weight:700;margin-top:6px">선릉역 <span style="color:#0066CC">23:02</span>까지 타면 돼요</div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:8px">상봉역 경춘선 막차 23:45 기준</div>
+            <div style="border-top:1px solid rgba(112,115,124,0.12);margin:16px 0"></div>
+            <div style="display:flex;gap:12px">
+              <div style="flex:1"><div style="font-size:12px;color:#9CA0A8">빠듯하게 가면</div><div style="font-size:16px;font-weight:700;margin-top:2px">23:14 출발</div></div>
+              <div style="flex:1;border-left:1px solid rgba(112,115,124,0.12);padding-left:12px"><div style="font-size:12px;color:#9CA0A8">놓치면 택시로</div><div style="font-size:16px;font-weight:700;color:#C7CAD1;margin-top:2px;filter:blur(0px)">탭해서 조회</div></div>
+            </div>
+          </div>
+          <div style="background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:14px">23:02에 알람 걸기</div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <div style="flex:1;background:#fff;border-radius:16px;height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">친구에게 보내기</div>
+            <div style="flex:1;background:#fff;border-radius:16px;height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">경로 보기</div>
+          </div>
+        </div>
+
+        <!-- 임박 -->
+        <div style="width:375px;border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="4-1 임박">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">막차</span><span style="font-size:13px;color:#9CA0A8;white-space:nowrap">집까지 · 잠실동</span></div>
+          <div style="background:#fff;border-radius:24px;padding:24px 20px;margin-top:16px;box-shadow:inset 0 0 0 1.5px #F0B429">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#FFF4E5;color:#B25E00;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;white-space:nowrap">슬슬 일어나세요</div>
+            <div style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-top:14px;color:#B25E00">15분 <span style="font-size:22px;font-weight:700;color:#5B5E66">남음</span></div>
+            <div style="font-size:19px;font-weight:700;margin-top:6px">선릉역 <span style="color:#B25E00">23:02</span>까지 타야 해요</div>
+            <div style="font-size:13px;color:#9CA0A8;margin-top:8px">상봉역 경춘선 막차 23:45 기준</div>
+            <div style="border-top:1px solid rgba(112,115,124,0.12);margin:16px 0"></div>
+            <div style="display:flex;gap:12px">
+              <div style="flex:1"><div style="font-size:12px;color:#9CA0A8">빠듯하게 가면</div><div style="font-size:16px;font-weight:700;margin-top:2px">23:14 출발</div></div>
+              <div style="flex:1;border-left:1px solid rgba(112,115,124,0.12);padding-left:12px"><div style="font-size:12px;color:#9CA0A8">놓치면 택시로</div><div style="font-size:16px;font-weight:700;margin-top:2px">약 28,000원</div></div>
+            </div>
+          </div>
+          <div style="background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:14px">지금 알람 걸기</div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <div style="flex:1;background:#fff;border-radius:16px;height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">친구에게 보내기</div>
+            <div style="flex:1;background:#fff;border-radius:16px;height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">경로 보기</div>
+          </div>
+        </div>
+
+        <!-- 아슬 -->
+        <div style="width:375px;border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="4-1 아슬">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">막차</span><span style="font-size:13px;color:#9CA0A8;white-space:nowrap">집까지 · 잠실동</span></div>
+          <div style="background:#EF4444;border-radius:24px;padding:24px 20px;margin-top:16px;color:#fff">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);color:#fff;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;white-space:nowrap">지금 나가야 해요</div>
+            <div style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-top:14px">5분 <span style="font-size:22px;font-weight:700;opacity:0.85">남음</span></div>
+            <div style="font-size:19px;font-weight:700;margin-top:6px">선릉역 23:02 — 뛰면 닿아요</div>
+            <div style="font-size:13px;opacity:0.75;margin-top:8px">상봉역 경춘선 막차 23:45 기준</div>
+            <div style="border-top:1px solid rgba(255,255,255,0.25);margin:16px 0"></div>
+            <div style="display:flex;gap:12px">
+              <div style="flex:1"><div style="font-size:12px;opacity:0.75">역까지</div><div style="font-size:16px;font-weight:700;margin-top:2px">도보 7분 · 뛰면 4분</div></div>
+              <div style="flex:1;border-left:1px solid rgba(255,255,255,0.25);padding-left:12px"><div style="font-size:12px;opacity:0.75">놓치면 택시로</div><div style="font-size:16px;font-weight:700;margin-top:2px">약 28,000원</div></div>
+            </div>
+          </div>
+          <div style="background:#171719;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;margin-top:14px">경로 보기</div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <div style="flex:1;background:#fff;border-radius:16px;height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#9CA0A8">알람은 이미 늦었어요</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:12px">위계: 남은 시간(52px) › 데드라인(19px) › 병목 근거(13px). 택시비는 여유 단계에선 "탭해서 조회" 플레이스홀더 — 조회 시에만 위치가 외부로 나가는 정책(<a href="#4e">4e</a>)과 연결. 아슬 단계는 카드 전체를 Danger 반전 + 주 액션을 알람이 아닌 "경로 보기"로 교체(알람 걸 시간이 없음).</div>
+    </div>
+
+    <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- ── 4b. 끊김 ── -->
+      <div id="4b" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">4b</span><span style="font-size:13px;font-weight:700;color:#5B5E66">4-2 막차 끊김</span></div>
+        <div style="border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="4-2 끊김">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">막차</span><span style="font-size:13px;color:#9CA0A8;white-space:nowrap">집까지 · 잠실동</span></div>
+          <div style="background:#fff;border-radius:24px;padding:26px 20px;margin-top:16px;text-align:center">
+            <div style="width:56px;height:56px;border-radius:50%;background:#EFEFF1;display:flex;align-items:center;justify-content:center;margin:0 auto">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M4 16V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"></path><path d="M2 16h20v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2Z"></path><circle cx="7.5" cy="19" r="0.5"></circle><circle cx="16.5" cy="19" r="0.5"></circle><path d="M9 9h6"></path></svg>
+            </div>
+            <div style="font-size:20px;font-weight:800;margin-top:14px">오늘은 대중교통이 끊겼어요</div>
+            <div style="font-size:14px;color:#5B5E66;margin-top:6px;line-height:1.55">첫차는 오전 5:34에 다녀요.<br>지금 가려면 택시가 가장 빨라요.</div>
+            <div style="background:#F5F5F7;border-radius:18px;padding:16px;margin-top:18px">
+              <div style="font-size:13px;color:#9CA0A8">집까지 택시로</div>
+              <div style="font-size:34px;font-weight:800;letter-spacing:-0.02em;margin-top:2px">약 28,000원</div>
+              <div style="font-size:12px;color:#9CA0A8;margin-top:2px">심야 할증 포함 · 25분</div>
+            </div>
+            <div style="background:#0066CC;color:#fff;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:14px">카카오맵에서 보기</div>
+            <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#5B5E66">첫차 5:34에 알람 걸기</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">비난 없음 — 사실(첫차 시각) + 대안(택시·첫차 알람)만. 금액이 화면에서 두 번째로 큰 요소.</div>
+      </div>
+
+      <!-- ── 4c. 집 미등록 + 4d 미지원 ── -->
+      <div id="4c" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">4c</span><span style="font-size:13px;font-weight:700;color:#5B5E66">4-3 집 미등록 유도</span></div>
+        <div style="border-radius:28px;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:24px 20px 28px" data-screen-label="4-3 집 미등록">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;flex-shrink:0">←</span><span style="font-size:22px;font-weight:800;flex:1;white-space:nowrap">막차</span></div>
+          <div style="background:#fff;border-radius:24px;padding:28px 20px;margin-top:16px;text-align:center">
+            <div style="width:56px;height:56px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;margin:0 auto">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
+            </div>
+            <div style="font-size:19px;font-weight:800;margin-top:14px">집을 등록하면<br>막차를 챙겨드릴게요</div>
+            <div style="font-size:14px;color:#5B5E66;margin-top:8px;line-height:1.55">언제까지 타야 하는지, 놓치면 얼마인지<br>매일 밤 계산해 드려요. 주소는 나만 볼 수 있어요.</div>
+            <div style="background:#0066CC;color:#fff;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:20px">집 등록하기</div>
+            <div style="font-size:12px;color:#9CA0A8;margin-top:10px">마이 › 내 장소에서 언제든 바꿀 수 있어요</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin:24px 0 10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">4d</span><span style="font-size:13px;font-weight:700;color:#5B5E66">4-4 미지원 구간</span></div>
+        <div style="border-radius:24px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:24px 20px;text-align:center" data-screen-label="4-4 미지원 구간">
+          <div style="width:52px;height:52px;border-radius:50%;background:#EFEFF1;display:flex;align-items:center;justify-content:center;margin:0 auto">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.8"><path d="M9 6.5 4 8v12l5-1.5 6 1.5 5-1.5V6l-5 1.5L9 6.5Z"></path><path d="M9 6.5V18"></path><path d="M15 8v12"></path></svg>
+          </div>
+          <div style="font-size:17px;font-weight:800;margin-top:12px">이 구간은 막차 계산을<br>지원하지 않아요</div>
+          <div style="font-size:13px;color:#5B5E66;margin-top:6px;line-height:1.55">버스만 다니는 경로는 시간표가 정확하지 않아<br>잘못 알려드릴 수 있어요.</div>
+          <div style="background:#0066CC;color:#fff;border-radius:14px;height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;margin-top:16px">카카오맵에서 보기</div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">미지원 사유를 한 줄로 설명(신뢰 유지) — "지원 안 함"만 던지지 않음.</div>
+      </div>
+
+      <!-- ── 4e. 위치 전송 동의 ── -->
+      <div id="4e" style="width:375px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">4e</span><span style="font-size:13px;font-weight:700;color:#5B5E66">4-5 위치 전송 동의 (최초 1회)</span></div>
+        <div style="border-radius:28px;overflow:hidden;position:relative;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14);height:560px" data-screen-label="4-5 위치 전송 동의">
+          <div style="padding:24px 20px"><div style="font-size:22px;font-weight:800">막차</div></div>
+          <div style="position:absolute;inset:0;background:rgba(23,23,25,0.5)"></div>
+          <div style="position:absolute;left:20px;right:20px;top:50%;transform:translateY(-50%);background:#fff;border-radius:24px;padding:26px 22px">
+            <div style="font-size:19px;font-weight:800;letter-spacing:-0.01em">막차와 택시비를 조회할까요?</div>
+            <div style="font-size:14px;color:#5B5E66;line-height:1.6;margin-top:8px">경로와 요금을 계산하는 동안에만 현재 위치가 카카오맵으로 전달돼요.</div>
+            <div style="background:#F5F8FC;border-radius:16px;padding:14px 16px;margin-top:16px">
+              <div style="display:flex;align-items:flex-start;gap:8px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M12 22s8-3.5 8-10V6l-8-3.5L4 6v6c0 6.5 8 10 8 10Z"></path><path d="m9 11.5 2 2 4-4"></path></svg>
+                <span style="font-size:13px;color:#0066CC;font-weight:500;line-height:1.55">도착 알람의 위치 판정은 지금처럼 계속 휴대폰 안에서만 이뤄져요. 서버에 저장되지 않아요.</span>
+              </div>
+            </div>
+            <div style="margin-top:14px;font-size:13px;color:#9CA0A8;line-height:1.7">
+              · 전달되는 것: 현재 위치, 집 주소(경로 계산용)<br>
+              · 전달 시점: 조회 버튼을 누를 때만<br>
+              · 저장: 다왔어 서버에는 남지 않아요
+            </div>
+            <div style="background:#0066CC;color:#fff;border-radius:16px;height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:18px">동의하고 조회</div>
+            <div style="height:46px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#5B5E66">다음에 할게요</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">핵심 차별점(로컬 판정)을 함께 재확인 — "이 기능만 예외"임을 명시해 신뢰 유지. 전달 항목·시점·저장 여부 3줄 명세.</div>
+      </div>
+
+      <!-- ── 4f. 친구에게 막차 알람 ── -->
+      <div id="4f" style="width:780px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#0066CC;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800">4f</span><span style="font-size:13px;font-weight:700;color:#5B5E66">4-6 친구에게 막차 알람 — 보내기 / 수신</span></div>
+        <div style="display:flex;gap:28px">
+          <div style="width:375px;border-radius:28px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:12px 20px 24px" data-screen-label="4-6 막차 알람 보내기">
+            <div style="width:40px;height:4px;border-radius:999px;background:#DEE0E4;margin:0 auto 16px"></div>
+            <div style="font-size:22px;font-weight:800">민수님에게 막차 알람 보내기</div>
+            <div style="font-size:14px;color:#5B5E66;margin-top:10px;line-height:1.6">민수님의 집과 위치를 기준으로 <b>민수님 휴대폰에서</b> 막차가 계산돼요. 나에게는 아무것도 보이지 않아요.</div>
+            <div style="background:#F5F5F7;border-radius:18px;padding:16px;margin-top:16px;display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:14px;background:#E9F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066CC" stroke-width="1.8"><path d="M4 16V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"></path><path d="M2 16h20v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2Z"></path><path d="M9 9h6"></path></svg>
+              </div>
+              <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">오늘 막차 챙겨주기</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">민수님 기준으로 계산 · 오늘 밤만</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:6px;margin-top:14px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA0A8" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M12 22s8-3.5 8-10V6l-8-3.5L4 6v6c0 6.5 8 10 8 10Z"></path></svg>
+              <span style="font-size:12px;color:#9CA0A8;line-height:1.55;word-break:keep-all">민수님의 집 주소, 현재 위치, 막차 시각은 나에게 전달되지 않아요.</span>
+            </div>
+            <div style="background:#0066CC;color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-top:18px">보내기</div>
+          </div>
+          <div style="width:375px;border-radius:28px;overflow:hidden;position:relative;background:#F5F5F7;box-shadow:0 8px 28px rgba(0,0,0,0.14)" data-screen-label="4-6 막차 알람 수신">
+            <div style="padding:24px 20px"><div style="font-size:30px;font-weight:800">알람</div><div style="font-size:15px;color:#5B5E66;margin-top:6px">활성 알람 2개가 지켜보고 있어요</div><div style="height:340px"></div></div>
+            <div style="position:absolute;inset:0;background:rgba(23,23,25,0.5)"></div>
+            <div style="position:absolute;left:20px;right:20px;top:50%;transform:translateY(-50%);background:#fff;border-radius:24px;padding:24px 20px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:50%;background:#E9F1FB;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0066CC;flex-shrink:0">지</div>
+                <div style="min-width:0;flex:1"><div style="font-size:16px;font-weight:800;white-space:nowrap">지훈님이 막차 알람을 보냈어요</div><div style="font-size:13px;color:#9CA0A8;margin-top:2px">내 위치 기준으로 계산했어요</div></div>
+              </div>
+              <div style="background:#F5F5F7;border-radius:18px;padding:16px;margin-top:14px">
+                <div style="font-size:13px;color:#9CA0A8">선릉역까지</div>
+                <div style="font-size:30px;font-weight:800;letter-spacing:-0.02em;margin-top:2px">23:02 <span style="font-size:15px;font-weight:700;color:#5B5E66">까지 타면 돼요</span></div>
+                <div style="font-size:12px;color:#9CA0A8;margin-top:4px">상봉역 경춘선 막차 23:45 기준 · 32분 남음</div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:14px">
+                <div style="flex:1.4;background:#0066CC;color:#fff;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">23:02에 알람 걸기</div>
+                <div style="flex:1;background:#EFEFF1;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">닫기</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8B8E98;line-height:1.6;margin-top:10px">보내는 것은 "막차 알람" 트리거뿐 — 계산은 수신자 기기에서. 발신 화면에 "전달되지 않는 것" 3종 명시, 수신 화면은 4a와 동일한 위계 재사용.</div>
+
+        <div style="background:#fff;border-radius:20px;padding:18px 20px;margin-top:24px;border:1px solid rgba(112,115,124,0.16)">
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px">톤 정책 — 재미 요소는 옵션</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1;background:#F5F5F7;border-radius:14px;padding:12px 14px"><div style="font-size:13px;color:#9CA0A8">기본 표기</div><div style="font-size:15px;font-weight:700;margin-top:2px">약 28,000원</div></div>
+            <div style="flex:1;background:#F5F5F7;border-radius:14px;padding:12px 14px"><div style="font-size:13px;color:#9CA0A8">재미 모드 ON</div><div style="font-size:15px;font-weight:700;margin-top:2px">약 28,000원 <span style="font-size:12px;color:#B25E00;font-weight:600">≈ 치킨 1.5마리</span></div></div>
+            <div style="width:120px;font-size:12px;color:#8B8E98;line-height:1.5">마이 › 알림 설정에서 끄기 가능. 3회차 사용자를 위한 기본값 논의 필요.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>
