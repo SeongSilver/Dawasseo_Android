@@ -2,6 +2,8 @@ package com.wakepoint.app.core.di
 
 import android.content.Context
 import androidx.room.Room
+import com.wakepoint.app.core.alarm.AndroidTimeAlarmScheduler
+import com.wakepoint.app.core.alarm.TimeAlarmScheduler
 import com.wakepoint.app.core.data.local.WakepointDatabase
 import com.wakepoint.app.core.notification.AlarmNotificationManager
 import com.wakepoint.app.core.supabase.SupabaseConfig
@@ -75,6 +77,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideTimeAlarmRepository(repository: DefaultTimeAlarmRepository): TimeAlarmRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideTimeAlarmScheduler(scheduler: AndroidTimeAlarmScheduler): TimeAlarmScheduler = scheduler
 
     @Provides
     @Singleton

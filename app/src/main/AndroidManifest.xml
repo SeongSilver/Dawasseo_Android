@@ -19,6 +19,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- 재부팅/앱 업데이트 후 활성 알람의 위치 추적을 재개하기 위함 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 시간 알람 정확 발화(정시)를 위한 AlarmManager 정확 알람. USE_EXACT_ALARM(API33+)은 자동 허용,
+         SCHEDULE_EXACT_ALARM(API31/32)은 사용자 허용 대상. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <queries>
         <!-- 카카오톡으로 초대 링크를 공유하기 위한 패키지 가시성 (Android 11+). -->
@@ -75,6 +79,10 @@
 
         <receiver
             android:name=".core.notification.AlarmStopReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".core.alarm.TimeAlarmReceiver"
             android:exported="false" />
 
         <receiver

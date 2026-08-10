@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 interface TimeAlarmRepository {
     fun observeTimeAlarms(): Flow<List<TimeAlarm>>
     suspend fun getTimeAlarm(id: String): TimeAlarm?
+    /** 활성 상태인 시간 알람 목록(부팅 후 재예약용). */
+    suspend fun getEnabledTimeAlarms(): List<TimeAlarm>
     suspend fun saveTimeAlarm(alarm: TimeAlarm)
     suspend fun setEnabled(id: String, enabled: Boolean)
     suspend fun deleteTimeAlarm(id: String)
