@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -256,7 +255,12 @@ fun WakepointApp() {
                 currentRoute = currentRoute,
                 onSelect = { item ->
                     navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
+                        // 탭 백스택 앵커는 실제로 백스택에 남아있는 Home 으로 고정한다.
+                        // (NavHost 의 startDestination 인 Splash 는 로그인 리다이렉트에서
+                        //  popUpTo(graph, inclusive) 로 제거되므로 findStartDestination() 을
+                        //  앵커로 쓰면 pop 대상이 없어 saveState/restoreState 가 동작하지 않는다.
+                        //  그 결과 탭 재방문마다 새 ViewModel 이 생성되어 빈 목록 UI 가 깜빡였다.)
+                        popUpTo(MainRoute.Home.route) {
                             saveState = true
                         }
                         launchSingleTop = true
