@@ -13,8 +13,8 @@
 
 ## 빌드 검증
 
-- 코드 변경 후 `.\gradlew assembleDebug`를 실행했다.
-- 로직 변경 후 `.\gradlew test`를 실행했다.
+- 코드 변경 후 `./gradlew assembleDebug`(macOS/Linux) 또는 `.\gradlew assembleDebug`(Windows)를 실행했다.
+- 로직 변경 후 `./gradlew test`(macOS/Linux) 또는 `.\gradlew test`(Windows)를 실행했다.
 - 네트워크 제한으로 실패한 Gradle 명령은 escalated 권한으로 재시도했다.
 - docs-only 변경은 빌드를 생략할 수 있지만, 최종 응답에 생략 사유를 남긴다.
 

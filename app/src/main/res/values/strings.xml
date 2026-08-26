@@ -19,16 +19,14 @@
     <string name="auth_terms">로그인 시 다왔어의 이용약관 및\n개인정보 처리방침에 동의하게 됩니다.</string>
     <string name="auth_copyright">© 2026 Da-wasseo. All rights reserved.</string>
 
+    <string name="common_back">뒤로</string>
+    <string name="friends_search_placeholder">이메일 또는 닉네임</string>
+
     <string name="signup_title">회원가입</string>
-    <string name="signup_id_hint">아이디를 입력해주세요</string>
     <string name="signup_password_hint">비밀번호를 입력해주세요</string>
     <string name="signup_password_confirm_hint">비밀번호를 한번 더 입력해주세요</string>
     <string name="signup_name_hint">이름을 입력해주세요</string>
-    <string name="signup_birth_hint">YYYY.MM.DD</string>
     <string name="signup_email_hint">email@example.com</string>
-    <string name="signup_phone_hint">전화번호를 입력해주세요</string>
-    <string name="signup_code_hint">6자리 인증번호</string>
-    <string name="signup_verify">인증</string>
     <string name="signup_confirm">확인</string>
     <string name="field_id">아이디</string>
     <string name="field_password">비밀번호</string>

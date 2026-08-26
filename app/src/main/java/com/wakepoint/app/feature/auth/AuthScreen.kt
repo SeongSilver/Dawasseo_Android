@@ -308,7 +308,7 @@ private fun AuthTopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
-            Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+            Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.common_back))
         }
         if (title != null) {
             Text(
