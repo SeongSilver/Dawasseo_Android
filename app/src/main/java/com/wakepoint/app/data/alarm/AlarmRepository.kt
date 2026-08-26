@@ -11,6 +11,15 @@ interface AlarmRepository {
     suspend fun refreshAlarms()
     suspend fun saveAlarm(alarm: Alarm)
     suspend fun sendAlarmToFriend(alarm: Alarm)
+
+    /** v2 STEP3 (3-6): 내가 친구에게 보낸 알람(원격 소유자=친구) 목록. */
+    suspend fun fetchSentAlarms(): List<Alarm>
+
+    /** v2 STEP3 (3-6): 아직 서버에 못 올라간 친구 알람 대기분(오프라인 등 — 재전송 예정). */
+    suspend fun pendingSentAlarms(): List<Alarm>
+
+    /** v2 STEP3 (3-6): 보낸 알람 취소 — 원격에서 삭제한다(멱등). */
+    suspend fun cancelSentAlarm(alarmId: String)
     suspend fun updateAlarm(alarm: Alarm)
     suspend fun setAlarmActive(alarmId: String, isActive: Boolean)
     suspend fun setFavorite(alarmId: String, isFavorite: Boolean)

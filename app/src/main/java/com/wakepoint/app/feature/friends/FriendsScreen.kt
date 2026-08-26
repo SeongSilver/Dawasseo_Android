@@ -117,6 +117,7 @@ private data class FriendConfirmTarget(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
+    onOpenSentAlarms: () -> Unit = {},
     viewModel: FriendsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -151,6 +152,12 @@ fun FriendsScreen(
                 subtitle = stringResource(R.string.friends_subtitle),
                 action = {
                     Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                        // v2 STEP3 (3-6): 보낸 알람 목록 진입점
+                        WakepointCircleIconButton(
+                            icon = Icons.AutoMirrored.Rounded.Send,
+                            contentDescription = "보낸 알람",
+                            onClick = onOpenSentAlarms
+                        )
                         WakepointCircleIconButton(
                             icon = Icons.Rounded.Refresh,
                             contentDescription = stringResource(R.string.friends_refresh),

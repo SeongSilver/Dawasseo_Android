@@ -241,6 +241,12 @@ private class FakeAlarmRepository : AlarmRepository {
         sentAlarms += alarm
     }
 
+    override suspend fun fetchSentAlarms(): List<Alarm> = sentAlarms.toList()
+    override suspend fun pendingSentAlarms(): List<Alarm> = emptyList()
+    override suspend fun cancelSentAlarm(alarmId: String) {
+        sentAlarms.removeAll { it.id == alarmId }
+    }
+
     override suspend fun updateAlarm(alarm: Alarm) = Unit
     override suspend fun setAlarmActive(alarmId: String, isActive: Boolean) = Unit
     override suspend fun setFavorite(alarmId: String, isFavorite: Boolean) = Unit

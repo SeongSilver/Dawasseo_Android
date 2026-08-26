@@ -9,6 +9,7 @@ import com.wakepoint.app.data.alarm.local.AlarmEntity
 import com.wakepoint.app.data.alarm.local.toDomain
 import com.wakepoint.app.data.alarm.local.toEntity
 import com.wakepoint.app.data.alarm.remote.alarmDtoFromJson
+import com.wakepoint.app.data.alarm.remote.toDomain
 import com.wakepoint.app.data.alarm.remote.toDto
 import com.wakepoint.app.data.alarm.remote.toJson
 import com.wakepoint.app.data.auth.AuthRepository
@@ -120,6 +121,53 @@ class DefaultAlarmRepository @Inject constructor(
             userPreferences.addPendingFriendAlarm(dtoJson)
         }
     }
+
+    override suspend fun fetchSentAlarms(): List<Alarm> {
+        if (!config.isConfigured) return emptyList()
+        val session = authRepository.requireValidSession()
+        return fetchRemoteSentAlarms(session.userId, session.accessToken).map { it.toDomain() }
+    }
+
+    override suspend fun pendingSentAlarms(): List<Alarm> =
+        userPreferences.pendingFriendAlarms().mapNotNull { dtoJson ->
+            runCatching { alarmDtoFromJson(JSONObject(dtoJson)).toDomain() }.getOrNull()
+        }
+
+    override suspend fun cancelSentAlarm(alarmId: String) {
+        // 원격 행 삭제(멱등). 아직 전송 대기 중인 항목이었다면 대기 큐에서도 제거해 재전송을 막는다.
+        userPreferences.pendingFriendAlarms().forEach { dtoJson ->
+            val pendingId = runCatching { JSONObject(dtoJson).optString("id") }.getOrNull()
+            if (pendingId == alarmId) userPreferences.removePendingFriendAlarm(dtoJson)
+        }
+        val session = authRepository.requireValidSession()
+        deleteRemoteAlarm(alarmId, session.accessToken)
+    }
+
+    /** 내가 만든(created_by=나) + 소유자가 내가 아닌(owner_id≠나) 원격 알람 = 친구에게 보낸 알람. */
+    private suspend fun fetchRemoteSentAlarms(
+        userId: String,
+        accessToken: String
+    ): List<com.wakepoint.app.data.alarm.remote.AlarmDto> = retryingNetwork { withContext(Dispatchers.IO) {
+        val url = URL(
+            "${config.url.trimEnd('/')}/rest/v1/alarms?created_by=eq.$userId&owner_id=neq.$userId&select=*"
+        )
+        val connection = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer $accessToken")
+            setRequestProperty("Accept", "application/json")
+        }
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException(parseErrorMessage(responseText))
+        }
+        val array = JSONArray(responseText.ifBlank { "[]" })
+        (0 until array.length()).map { index ->
+            alarmDtoFromJson(array.getJSONObject(index))
+        }
+    } }
 
     override suspend fun updateAlarm(alarm: Alarm) {
         // 로컬 먼저 갱신 후 원격은 멱등 upsert 로 반영(실패 시 pending 으로 남아 재전송).
