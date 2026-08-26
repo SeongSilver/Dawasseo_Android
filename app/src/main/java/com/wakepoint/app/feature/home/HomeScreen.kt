@@ -24,11 +24,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GpsFixed
@@ -93,7 +96,10 @@ import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointTextSecondary
+import com.wakepoint.app.core.design.WakepointTextTertiary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
+import com.wakepoint.app.core.design.WakepointSize
+import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.location.PlaceSearchResult
@@ -225,7 +231,7 @@ fun HomeScreen(
         )
         Box(
             modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.lg)
                 .fillMaxWidth()
         ) {
             HomeSearchBar(
@@ -258,8 +264,12 @@ fun HomeScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-                .padding(end = 20.dp, bottom = 100.dp + BOTTOM_TAB_CLEARANCE)
-                .size(54.dp)
+                // FAB 는 CTA 바로 위 16 간격 (CTA bottom + 버튼높이 + 16)
+                .padding(
+                    end = WakepointSpacing.screenHorizontal,
+                    bottom = BOTTOM_TAB_CLEARANCE + WakepointSpacing.lg + WakepointSize.buttonHeight + WakepointSpacing.lg
+                )
+                .size(WakepointSize.fab)
         ) {
             Icon(imageVector = Icons.Rounded.GpsFixed, contentDescription = null)
         }
@@ -275,7 +285,12 @@ fun HomeScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 18.dp + BOTTOM_TAB_CLEARANCE)
+                .padding(
+                    start = WakepointSpacing.screenHorizontal,
+                    end = WakepointSpacing.screenHorizontal,
+                    top = WakepointSpacing.lg,
+                    bottom = WakepointSpacing.lg + BOTTOM_TAB_CLEARANCE
+                )
                 .fillMaxWidth()
         )
     }
@@ -284,7 +299,7 @@ fun HomeScreen(
         ModalBottomSheet(
             onDismissRequest = { showAlarmSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
             containerColor = WakepointCanvas
         ) {
             AlarmSetupSheet(
@@ -324,7 +339,7 @@ fun HomeScreen(
         ModalBottomSheet(
             onDismissRequest = { showSearchSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
             containerColor = WakepointCanvas
         ) {
             PlaceSearchSheet(
@@ -450,115 +465,111 @@ fun AlarmSetupSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+            // 시트 콘텐츠가 화면보다 길거나(주소검색 결과 등) 키보드가 올라오면
+            // 하단 [취소/보내기] 버튼이 잘려 도달 못 하던 문제 수정: 스크롤 + IME/내비바 인셋.
+            .imePadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = WakepointSpacing.screenHorizontal)
+            .padding(bottom = WakepointSpacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
     ) {
         BottomSheetTitle(title = title)
 
         if (showAddressSearch) {
-            SheetSectionLabel(text = stringResource(R.string.alarm_address_search))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WakepointTextField(
-                    value = addressQuery,
-                    onValueChange = onAddressQueryChange,
-                    placeholder = stringResource(R.string.alarm_address_hint),
-                    leadingIcon = Icons.Rounded.Search,
-                    modifier = Modifier.weight(1f)
-                )
-                WakepointButton(
-                    text = if (isSearchingAddress) {
-                        stringResource(R.string.place_searching)
-                    } else {
-                        stringResource(R.string.place_search)
-                    },
-                    enabled = !isSearchingAddress && addressQuery.isNotBlank(),
-                    onClick = onAddressSearch,
-                    modifier = Modifier.size(width = 86.dp, height = 56.dp)
-                )
-            }
-            if (addressMessage != null) {
-                Text(
-                    text = addressMessage,
-                    color = WakepointMuted,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            addressResults.forEach { place ->
-                PlaceResultRow(place = place, onClick = { onSelectAddress(place) })
+            SheetSection(label = stringResource(R.string.alarm_address_search)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                    WakepointTextField(
+                        value = addressQuery,
+                        onValueChange = onAddressQueryChange,
+                        placeholder = stringResource(R.string.alarm_address_hint),
+                        leadingIcon = Icons.Rounded.Search,
+                        modifier = Modifier.weight(1f)
+                    )
+                    WakepointButton(
+                        text = if (isSearchingAddress) {
+                            stringResource(R.string.place_searching)
+                        } else {
+                            stringResource(R.string.place_search)
+                        },
+                        enabled = !isSearchingAddress && addressQuery.isNotBlank(),
+                        onClick = onAddressSearch,
+                        modifier = Modifier.width(86.dp).height(WakepointSize.fieldHeight)
+                    )
+                }
+                if (addressMessage != null) {
+                    Text(
+                        text = addressMessage,
+                        color = WakepointMuted,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                addressResults.forEach { place ->
+                    PlaceResultRow(place = place, onClick = { onSelectAddress(place) })
+                }
             }
         }
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_location_alias))
-        WakepointTextField(
-            value = label,
-            onValueChange = onLabelChange,
-            placeholder = stringResource(R.string.alarm_default_label)
-        )
+        SheetSection(label = stringResource(R.string.alarm_location_alias)) {
+            WakepointTextField(
+                value = label,
+                onValueChange = onLabelChange,
+                placeholder = stringResource(R.string.alarm_default_label)
+            )
+        }
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_selected_target))
-        WakepointTextField(
-            value = targetAddress.ifBlank {
-                stringResource(R.string.alarm_selected_target_unknown)
-            },
-            onValueChange = {},
-            placeholder = stringResource(R.string.alarm_selected_target),
-            readOnly = true
-        )
+        SheetSection(label = stringResource(R.string.alarm_selected_target)) {
+            WakepointTextField(
+                value = targetAddress.ifBlank {
+                    stringResource(R.string.alarm_selected_target_unknown)
+                },
+                onValueChange = {},
+                placeholder = stringResource(R.string.alarm_selected_target),
+                readOnly = true
+            )
+        }
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_radius_setting))
-        RadiusSelector(
-            options = ALARM_RADIUS_OPTIONS,
-            selectedOption = radius,
-            onSelected = onRadiusChange
-        )
+        SheetSection(label = stringResource(R.string.alarm_radius_setting)) {
+            RadiusSelector(
+                options = ALARM_RADIUS_OPTIONS,
+                selectedOption = radius,
+                onSelected = onRadiusChange
+            )
+        }
 
         if (soundEnabled != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    SheetSectionLabel(text = stringResource(R.string.alarm_sound_toggle))
-                    Text(
-                        text = stringResource(R.string.alarm_sound_toggle_hint),
-                        color = WakepointTextSecondary,
-                        style = MaterialTheme.typography.bodySmall
+            Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+                SheetToggleRow(
+                    title = stringResource(R.string.alarm_sound_toggle),
+                    hint = stringResource(R.string.alarm_sound_toggle_hint),
+                    checked = soundEnabled,
+                    onCheckedChange = onSoundEnabledChange
+                )
+                if (soundEnabled) {
+                    SoundOptionRow(
+                        title = soundTitle,
+                        subtitle = stringResource(R.string.alarm_sound_hint),
+                        icon = Icons.Rounded.Notifications
                     )
                 }
-                WakepointSwitch(checked = soundEnabled, onCheckedChange = onSoundEnabledChange)
             }
-            if (soundEnabled) {
+        } else {
+            SheetSection(label = stringResource(R.string.alarm_sound_setting)) {
                 SoundOptionRow(
                     title = soundTitle,
                     subtitle = stringResource(R.string.alarm_sound_hint),
                     icon = Icons.Rounded.Notifications
                 )
             }
-        } else {
-            SheetSectionLabel(text = stringResource(R.string.alarm_sound_setting))
-            SoundOptionRow(
-                title = soundTitle,
-                subtitle = stringResource(R.string.alarm_sound_hint),
-                icon = Icons.Rounded.Notifications
-            )
         }
 
         if (vibrate != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    SheetSectionLabel(text = stringResource(R.string.alarm_vibrate_setting))
-                    Text(
-                        text = stringResource(R.string.alarm_vibrate_hint),
-                        color = WakepointTextSecondary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                WakepointSwitch(checked = vibrate, onCheckedChange = onVibrateChange)
-            }
+            SheetToggleRow(
+                title = stringResource(R.string.alarm_vibrate_setting),
+                hint = stringResource(R.string.alarm_vibrate_hint),
+                checked = vibrate,
+                onCheckedChange = onVibrateChange
+            )
         }
 
         if (noticeMessage != null) {
@@ -571,7 +582,7 @@ fun AlarmSetupSheet(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
         ) {
             WakepointSecondaryButton(
                 text = stringResource(R.string.alarm_cancel),
@@ -598,6 +609,48 @@ fun AlarmSetupSheet(
     }
 }
 
+/** 시트 섹션: 섹션 타이틀(T2) + 콘텐츠를 라벨↔콘텐츠 8 간격으로 묶는다. */
+@Composable
+private fun SheetSection(
+    label: String,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+        SheetSectionLabel(text = label)
+        content()
+    }
+}
+
+/** 토글 행: 제목(15/SemiBold) + 보조설명(T5) + 스위치, 높이 56. */
+@Composable
+private fun SheetToggleRow(
+    title: String,
+    hint: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(WakepointSize.rowHeight),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = WakepointInk,
+                style = MaterialTheme.typography.labelLarge
+            )
+            Text(
+                text = hint,
+                color = WakepointTextTertiary,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        WakepointSwitch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
 @Composable
 private fun PlaceSearchSheet(
     query: String,
@@ -612,9 +665,9 @@ private fun PlaceSearchSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(horizontal = WakepointSpacing.screenHorizontal)
+            .padding(bottom = WakepointSpacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
     ) {
         BottomSheetTitle(title = stringResource(R.string.place_search_title))
         WakepointTextField(
@@ -660,9 +713,9 @@ private fun PlaceResultRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .padding(vertical = WakepointSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
     ) {
         Icon(
             imageVector = Icons.Rounded.LocationOn,
@@ -694,8 +747,8 @@ private fun HomeSearchBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(54.dp),
-        shape = RoundedCornerShape(27.dp),
+            .height(WakepointSize.fieldHeight),
+        shape = CircleShape,
         color = Color.White,
         tonalElevation = 0.dp,
         shadowElevation = 8.dp,
@@ -705,9 +758,9 @@ private fun HomeSearchBar(
             modifier = Modifier
                 .fillMaxSize()
                 .clickable(onClick = onClick)
-                .padding(start = 18.dp, end = 6.dp),
+                .padding(start = WakepointSpacing.screenHorizontal, end = WakepointSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
         ) {
             Icon(
                 imageVector = Icons.Rounded.Search,
@@ -736,8 +789,7 @@ private fun SheetSectionLabel(text: String) {
     Text(
         text = text,
         color = WakepointInk,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(top = 4.dp)
+        style = MaterialTheme.typography.titleSmall
     )
 }
 

@@ -2,5 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../개인작업/workspace/Dawasseo_Android" vcs="Git" />
   </component>
 </project>

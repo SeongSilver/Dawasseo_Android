@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
@@ -61,9 +60,15 @@ import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointSecondaryButton
+import com.wakepoint.app.core.design.WakepointShape
+import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointTextDisabled
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.core.design.WakepointTextSecondary
+import com.wakepoint.app.core.design.WakepointTextTertiary
+
+/** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 구조적 스크롤 여백. */
+private val BOTTOM_LIST_CLEARANCE = 120.dp
 
 @Composable
 fun ProfileScreen(
@@ -90,9 +95,9 @@ fun ProfileScreen(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = WakepointSpacing.screenHorizontal)
+                .padding(top = WakepointSpacing.sectionTitleGap, bottom = BOTTOM_LIST_CLEARANCE),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
         ) {
             ProfileCard(
                 name = profileName,
@@ -126,7 +131,7 @@ fun ProfileScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp)
+                    .padding(top = WakepointSpacing.sm)
             )
         }
     }
@@ -169,12 +174,12 @@ private fun EditNicknameDialog(
     Dialog(onDismissRequest = { if (!isSaving) onDismiss() }) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = WakepointShape.card,
             color = WakepointCanvas
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(WakepointSpacing.xl),
+                verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
             ) {
                 Text(
                     text = stringResource(R.string.profile_edit_nickname_title),
@@ -196,7 +201,7 @@ private fun EditNicknameDialog(
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
                 ) {
                     WakepointSecondaryButton(
                         text = stringResource(R.string.alarm_cancel),
@@ -222,9 +227,9 @@ private fun ProfileCard(name: String, email: String, onClick: () -> Unit) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
         ) {
-            WakepointAvatar(name = name, size = 58)
+            WakepointAvatar(name = name, size = 48)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = name,
@@ -234,7 +239,7 @@ private fun ProfileCard(name: String, email: String, onClick: () -> Unit) {
                 Text(
                     text = email,
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextSecondary
+                    color = WakepointTextTertiary
                 )
             }
             Icon(
@@ -283,17 +288,18 @@ private fun StatColumn(value: String, label: String, modifier: Modifier = Modifi
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
         Text(
+            // 통계 숫자는 22(titleLarge) — 화면 타이틀 28과 충돌 방지
             text = value,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = WakepointInk
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = WakepointTextSecondary,
+            color = WakepointTextTertiary,
             textAlign = TextAlign.Center
         )
     }
@@ -322,19 +328,19 @@ private fun SettingsGroupCard(
             title = stringResource(R.string.profile_notification),
             onClick = onOpenNotificationSettings
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = 54.dp))
+        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.Rounded.LocationOn,
             title = stringResource(R.string.profile_location),
             onClick = onOpenLocationSettings
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = 54.dp))
+        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.AutoMirrored.Rounded.VolumeUp,
             title = stringResource(R.string.profile_sound),
             onClick = onOpenSoundList
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = 54.dp))
+        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.AutoMirrored.Rounded.HelpOutline,
             title = stringResource(R.string.profile_support),

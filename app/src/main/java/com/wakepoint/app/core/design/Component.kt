@@ -18,10 +18,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.PriorityHigh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +33,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,8 +54,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.wakepoint.app.R
+import kotlinx.coroutines.delay
 
-/** Full-width primary CTA — blue, 56dp tall, 16dp radius. */
+/** Full-width primary CTA — blue, 높이 52 · 라운드 12 · 텍스트 15/SemiBold. */
 @Composable
 fun WakepointButton(
     text: String,
@@ -60,9 +68,9 @@ fun WakepointButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(16.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
+        modifier = modifier.height(WakepointSize.buttonHeight),
+        shape = WakepointShape.control,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = WakepointSpacing.cardPadding),
         colors = ButtonDefaults.buttonColors(
             containerColor = WakepointPrimary,
             contentColor = Color.White,
@@ -76,13 +84,13 @@ fun WakepointButton(
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(modifier = Modifier.size(WakepointSpacing.iconTextGap))
         }
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
-/** Neutral / ghost button — soft grey fill, ink text, 16dp radius. */
+/** Neutral / secondary button — Field 회색 채움, ink 텍스트, 높이 52 · 라운드 12. */
 @Composable
 fun WakepointSecondaryButton(
     text: String,
@@ -94,14 +102,14 @@ fun WakepointSecondaryButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(16.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
+        modifier = modifier.height(WakepointSize.buttonHeight),
+        shape = WakepointShape.control,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = WakepointSpacing.cardPadding),
         colors = ButtonDefaults.buttonColors(
-            containerColor = WakepointFill,
+            containerColor = WakepointField,
             contentColor = WakepointInk,
-            disabledContainerColor = WakepointFill.copy(alpha = 0.5f),
-            disabledContentColor = WakepointTextTertiary
+            disabledContainerColor = WakepointField.copy(alpha = 0.5f),
+            disabledContentColor = WakepointDisabledText
         )
     ) {
         if (icon != null) {
@@ -110,13 +118,43 @@ fun WakepointSecondaryButton(
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(modifier = Modifier.size(WakepointSpacing.iconTextGap))
         }
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
-/** Tinted-blue secondary action (e.g. map "알람 수정하기"). */
+/** Destructive tonal action — Danger Light 채움 + Danger 텍스트, 높이 52 · 라운드 12. */
+@Composable
+fun WakepointDangerButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit = {}
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.height(WakepointSize.buttonHeight),
+        shape = WakepointShape.control,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = WakepointSpacing.cardPadding),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = WakepointDangerLight,
+            contentColor = WakepointDanger,
+            disabledContainerColor = WakepointField.copy(alpha = 0.5f),
+            disabledContentColor = WakepointDisabledText
+        )
+    ) {
+        if (icon != null) {
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.size(WakepointSpacing.iconTextGap))
+        }
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** Tinted-blue secondary action (e.g. map "알람 수정하기"). 높이 52 · 라운드 12. */
 @Composable
 fun WakepointTintButton(
     text: String,
@@ -128,18 +166,18 @@ fun WakepointTintButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(52.dp),
-        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.height(WakepointSize.buttonHeight),
+        shape = WakepointShape.control,
         colors = ButtonDefaults.buttonColors(
-            containerColor = WakepointPrimaryTint06,
+            containerColor = WakepointPrimaryLight,
             contentColor = WakepointPrimary
         )
     ) {
         if (icon != null) {
             Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(modifier = Modifier.size(WakepointSpacing.iconTextGap))
         }
-        Text(text = text, style = MaterialTheme.typography.labelMedium)
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -156,13 +194,13 @@ fun WakepointConfirmDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = WakepointShape.card,
             color = WakepointCanvas
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(WakepointSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
             ) {
                 Box(
                     modifier = Modifier
@@ -170,10 +208,11 @@ fun WakepointConfirmDialog(
                         .background(WakepointPrimaryTint10, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "!",
-                        color = WakepointPrimary,
-                        style = MaterialTheme.typography.headlineMedium
+                    Icon(
+                        imageVector = Icons.Rounded.PriorityHigh,
+                        contentDescription = null,
+                        tint = WakepointPrimary,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Text(
@@ -190,7 +229,7 @@ fun WakepointConfirmDialog(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
                 ) {
                     WakepointSecondaryButton(
                         text = cancelText,
@@ -208,16 +247,16 @@ fun WakepointConfirmDialog(
     }
 }
 
-/** White card — 24dp radius, hairline border, 20dp inner padding. */
+/** White card — 라운드 20, hairline border, 기본 내부 패딩 16(통일). */
 @Composable
 fun WakepointCard(
     modifier: Modifier = Modifier,
-    contentPadding: Int = 20,
+    contentPadding: Int = 16,
     content: @Composable () -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = WakepointShape.card,
         border = BorderStroke(1.dp, WakepointBorder),
         colors = CardDefaults.cardColors(containerColor = WakepointCanvas),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -228,22 +267,24 @@ fun WakepointCard(
     }
 }
 
+/** Status badge — 라운드 8 · T6(11/Medium). 배경/글자색을 역할 토큰으로 지정. */
 @Composable
 fun StatusPill(
     text: String,
     color: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    background: Color = color.copy(alpha = 0.12f)
 ) {
     Surface(
         modifier = modifier,
-        color = color.copy(alpha = 0.12f),
-        shape = CircleShape
+        color = background,
+        shape = WakepointShape.badge
     ) {
         Text(
             text = text,
             color = color,
             style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            modifier = Modifier.padding(horizontal = WakepointSpacing.sm, vertical = WakepointSpacing.xs)
         )
     }
 }
@@ -279,7 +320,7 @@ fun WakepointSwitch(
             checkedTrackColor = WakepointPrimary,
             checkedBorderColor = Color.Transparent,
             uncheckedThumbColor = Color.White,
-            uncheckedTrackColor = WakepointBorder,
+            uncheckedTrackColor = WakepointInactiveTrack,
             uncheckedBorderColor = Color.Transparent
         )
     )
@@ -360,7 +401,7 @@ fun WakepointHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.lg),
         verticalAlignment = Alignment.CenterVertically
     ) {
         WakepointLogo()
@@ -377,9 +418,9 @@ fun WakepointPageHeader(
     subtitle: String? = null,
     action: @Composable (() -> Unit)? = null
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = WakepointSpacing.screenHorizontal)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = if (subtitle == null) 8.dp else 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = WakepointSpacing.md, bottom = if (subtitle == null) WakepointSpacing.sm else WakepointSpacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -395,7 +436,7 @@ fun WakepointPageHeader(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = WakepointTextSecondary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = WakepointSpacing.sm)
             )
         }
     }
@@ -413,9 +454,9 @@ fun WakepointCircleIconButton(
 ) {
     Box(
         modifier = modifier
-            .size(40.dp)
+            .size(WakepointSize.circleButton)
             .clip(CircleShape)
-            .background(if (filled) WakepointFill else WakepointCanvas)
+            .background(if (filled) WakepointField else WakepointCanvas)
             .then(
                 if (filled) Modifier else Modifier.border(1.dp, WakepointBorderStrong, CircleShape)
             )
@@ -455,7 +496,7 @@ fun WakepointTextField(
         keyboardOptions = keyboardOptions,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(WakepointSize.fieldHeight),
         placeholder = {
             Text(
                 text = placeholder,
@@ -486,7 +527,7 @@ fun WakepointTextField(
                 )
             }
         },
-        shape = RoundedCornerShape(16.dp),
+        shape = WakepointShape.control,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = WakepointPrimary,
             unfocusedBorderColor = Color.Transparent,
@@ -515,17 +556,17 @@ fun SoundOptionRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) WakepointPrimaryTint04 else WakepointCanvas)
+            .clip(WakepointShape.control)
+            .background(if (selected) WakepointPrimaryLight else WakepointCanvas)
             .border(
-                width = if (selected) 1.5.dp else 1.dp,
-                color = if (selected) WakepointPrimary else WakepointBorderStrong,
-                shape = RoundedCornerShape(16.dp)
+                width = 1.5.dp,
+                color = if (selected) WakepointPrimary else WakepointChipBorder,
+                shape = WakepointShape.control
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = WakepointSpacing.cardPadding, vertical = WakepointSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
     ) {
         Icon(
             imageVector = icon,
@@ -536,8 +577,8 @@ fun SoundOptionRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = WakepointInk
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (selected) WakepointPrimary else WakepointInk
             )
             if (subtitle != null) {
                 Text(
@@ -565,10 +606,11 @@ fun SettingsRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .height(WakepointSize.rowHeight)
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .padding(horizontal = WakepointSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
     ) {
         Icon(
             imageVector = icon,
@@ -578,7 +620,7 @@ fun SettingsRow(
         )
         Text(
             text = title,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = color,
             modifier = Modifier.weight(1f),
             maxLines = 1,
@@ -603,9 +645,9 @@ fun BottomSheetHandle(modifier: Modifier = Modifier) {
     ) {
         Box(
             modifier = Modifier
-                .size(width = 42.dp, height = 5.dp)
+                .size(width = 40.dp, height = 4.dp)
                 .clip(CircleShape)
-                .background(WakepointBorderStrong)
+                .background(WakepointChipBorder)
         )
     }
 }
@@ -624,13 +666,13 @@ fun BottomSheetTitle(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .padding(top = WakepointSpacing.xs, bottom = WakepointSpacing.xs),
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
     ) {
         Text(
             text = title,
             color = WakepointInk,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.headlineLarge
         )
         if (!subtitle.isNullOrBlank()) {
             Text(
@@ -661,3 +703,36 @@ fun MapMarkerPreview(modifier: Modifier = Modifier) {
         )
     }
 }
+
+/**
+ * 목록 첫 로딩 플레이스홀더.
+ *
+ * 데이터가 아직 도착하지 않은 동안 "비어있음" UI가 먼저 그려졌다 목록으로 바뀌는 깜빡임을 막는다.
+ * 로컬 DB 로딩은 수십 ms 안에 끝나므로 그 동안은 아무것도 그리지 않고,
+ * 지연 임계값을 넘긴 느린 로딩에서만 스피너를 노출해 스피너 자체의 깜빡임도 피한다.
+ */
+@Composable
+fun WakepointLoadingPlaceholder(modifier: Modifier = Modifier) {
+    var showSpinner by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(LOADING_SPINNER_DELAY_MS)
+        showSpinner = true
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = WakepointSpacing.xxl),
+        contentAlignment = Alignment.Center
+    ) {
+        if (showSpinner) {
+            CircularProgressIndicator(
+                color = WakepointPrimary,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
+
+/** 이 시간 안에 로딩이 끝나면 스피너를 아예 보여주지 않는다. */
+private const val LOADING_SPINNER_DELAY_MS = 350L

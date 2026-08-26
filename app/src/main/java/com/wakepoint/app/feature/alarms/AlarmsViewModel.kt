@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class AlarmsUiState(
+    /** 저장소 첫 방출 전 = true. "로딩 중"과 "정말 알람이 없음"을 구분해 빈 화면 깜빡임을 막는다. */
+    val isLoading: Boolean = true,
     val alarms: List<Alarm> = emptyList(),
     val isUpdating: Boolean = false,
     val updatingAlarmIds: Set<String> = emptySet(),
@@ -47,6 +49,7 @@ class AlarmsViewModel @Inject constructor(
         transientState
     ) { alarms, sounds, state ->
         state.copy(
+            isLoading = false,
             alarms = alarms,
             soundTitles = sounds.associate { it.uri to it.title }
         )

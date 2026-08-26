@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.PriorityHigh
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,7 +24,7 @@ import androidx.compose.ui.window.Dialog
 
 /**
  * 오류/알림 팝업. 입력창 아래 인라인 대신 별도 다이얼로그로 표시하며,
- * 기존 [WakepointConfirmDialog] 와 동일한 디자인 언어(24dp 카드·아이콘·풀폭 버튼)를 따른다.
+ * 기존 [WakepointConfirmDialog] 와 동일한 디자인 언어(라운드 20 카드·아이콘·풀폭 버튼)를 따른다.
  *
  * @param isError true면 위험(빨강) 톤, false면 안내(파랑) 톤
  */
@@ -39,13 +42,13 @@ fun WakepointMessageDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = WakepointShape.card,
             color = WakepointCanvas
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(WakepointSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
             ) {
                 Box(
                     modifier = Modifier
@@ -53,10 +56,11 @@ fun WakepointMessageDialog(
                         .background(accent.copy(alpha = 0.1f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (isError) "!" else "✓",
-                        color = accent,
-                        style = MaterialTheme.typography.headlineMedium
+                    Icon(
+                        imageVector = if (isError) Icons.Rounded.PriorityHigh else Icons.Rounded.Check,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Text(

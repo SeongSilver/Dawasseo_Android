@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Map
@@ -44,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -58,7 +57,9 @@ import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointIconInactive
 import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryTint10
+import com.wakepoint.app.core.design.WakepointPrimaryLight
+import com.wakepoint.app.core.design.WakepointShape
+import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
@@ -81,6 +82,23 @@ private object AppRoute {
     /** 특정 알람의 사운드를 편집할 때는 alarmId 를 전달, 전역 기본 사운드는 생략. */
     fun soundList(alarmId: String? = null): String =
         if (alarmId.isNullOrBlank()) SoundList else "$SoundList?alarmId=$alarmId"
+}
+
+/**
+ * 하단 탭 간 이동. 홈을 백스택 루트로 유지하고, 벗어나는 탭의 상태(스크롤·ViewModel)를
+ * 저장했다가 재방문 시 복원한다.
+ *
+ * 이전에는 popUpTo 대상이 그래프 시작점(스플래시)이었는데, 로그인 리다이렉트가 스플래시를
+ * 스택에서 제거한 뒤라 popUpTo가 아무것도 하지 않았다. 그래서 저장/복원이 전혀 동작하지 않아
+ * 탭을 누를 때마다 새 엔트리·새 ViewModel이 만들어졌고, 빈 초기 상태가 먼저 그려졌다가
+ * 데이터가 늦게 도착하는 깜빡임과 백스택 무한 증가가 발생했다.
+ */
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(MainRoute.Home.route) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
 }
 
 private enum class MainRoute(
@@ -222,11 +240,7 @@ fun WakepointApp() {
             }
             composable(MainRoute.Home.route) {
                 HomeScreen(
-                    onAlarmCreated = {
-                        navController.navigate(MainRoute.Alarms.route) {
-                            launchSingleTop = true
-                        }
-                    }
+                    onAlarmCreated = { navController.navigateToTab(MainRoute.Alarms.route) }
                 )
             }
             composable(MainRoute.Alarms.route) {
@@ -234,11 +248,7 @@ fun WakepointApp() {
                     onOpenSoundList = { alarmId ->
                         navController.navigate(AppRoute.soundList(alarmId))
                     },
-                    onCreateAlarm = {
-                        navController.navigate(MainRoute.Home.route) {
-                            launchSingleTop = true
-                        }
-                    }
+                    onCreateAlarm = { navController.navigateToTab(MainRoute.Home.route) }
                 )
             }
             composable(MainRoute.Friends.route) { FriendsScreen() }
@@ -254,15 +264,7 @@ fun WakepointApp() {
             WakepointTabBar(
                 items = mainRoutes,
                 currentRoute = currentRoute,
-                onSelect = { item ->
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                onSelect = { item -> navController.navigateToTab(item.route) },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
@@ -280,14 +282,14 @@ private fun WakepointTabBar(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.md),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(68.dp),
-            shape = RoundedCornerShape(34.dp),
+            shape = WakepointShape.full,
             color = WakepointCanvas,
             shadowElevation = 12.dp,
             border = androidx.compose.foundation.BorderStroke(1.dp, WakepointBorder)
@@ -295,7 +297,7 @@ private fun WakepointTabBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = WakepointSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -323,18 +325,18 @@ private fun WakepointTabItem(
     val tint = if (selected) WakepointPrimary else WakepointIconInactive
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(WakepointShape.full)
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = WakepointSpacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
         Box(
             modifier = Modifier
                 .width(56.dp)
                 .height(30.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(if (selected) WakepointPrimaryTint10 else androidx.compose.ui.graphics.Color.Transparent),
+                .clip(WakepointShape.full)
+                .background(if (selected) WakepointPrimaryLight else androidx.compose.ui.graphics.Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Icon(

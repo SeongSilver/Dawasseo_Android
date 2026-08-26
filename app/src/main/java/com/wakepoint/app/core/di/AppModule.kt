@@ -2,6 +2,8 @@ package com.wakepoint.app.core.di
 
 import android.content.Context
 import androidx.room.Room
+import com.wakepoint.app.core.alarm.AndroidTimeAlarmScheduler
+import com.wakepoint.app.core.alarm.TimeAlarmScheduler
 import com.wakepoint.app.core.data.local.WakepointDatabase
 import com.wakepoint.app.core.notification.AlarmNotificationManager
 import com.wakepoint.app.core.supabase.SupabaseConfig
@@ -15,6 +17,9 @@ import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.local.FriendDao
 import com.wakepoint.app.data.sound.DefaultSoundRepository
 import com.wakepoint.app.data.sound.SoundRepository
+import com.wakepoint.app.data.timealarm.DefaultTimeAlarmRepository
+import com.wakepoint.app.data.timealarm.TimeAlarmRepository
+import com.wakepoint.app.data.timealarm.local.TimeAlarmDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,6 +46,7 @@ object AppModule {
         .addMigrations(WakepointDatabase.MIGRATION_5_6)
         .addMigrations(WakepointDatabase.MIGRATION_6_7)
         .addMigrations(WakepointDatabase.MIGRATION_7_8)
+        .addMigrations(WakepointDatabase.MIGRATION_8_9)
         .build()
 
     @Provides
@@ -48,6 +54,9 @@ object AppModule {
 
     @Provides
     fun provideFriendDao(database: WakepointDatabase): FriendDao = database.friendDao()
+
+    @Provides
+    fun provideTimeAlarmDao(database: WakepointDatabase): TimeAlarmDao = database.timeAlarmDao()
 
     @Provides
     @Singleton
@@ -64,6 +73,14 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSoundRepository(repository: DefaultSoundRepository): SoundRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideTimeAlarmRepository(repository: DefaultTimeAlarmRepository): TimeAlarmRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideTimeAlarmScheduler(scheduler: AndroidTimeAlarmScheduler): TimeAlarmScheduler = scheduler
 
     @Provides
     @Singleton

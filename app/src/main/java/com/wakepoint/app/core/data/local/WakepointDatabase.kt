@@ -8,15 +8,18 @@ import com.wakepoint.app.data.alarm.local.AlarmDao
 import com.wakepoint.app.data.alarm.local.AlarmEntity
 import com.wakepoint.app.data.friend.local.FriendDao
 import com.wakepoint.app.data.friend.local.FriendEntity
+import com.wakepoint.app.data.timealarm.local.TimeAlarmDao
+import com.wakepoint.app.data.timealarm.local.TimeAlarmEntity
 
 @Database(
-    entities = [AlarmEntity::class, FriendEntity::class],
-    version = 8,
+    entities = [AlarmEntity::class, FriendEntity::class, TimeAlarmEntity::class],
+    version = 9,
     exportSchema = true
 )
 abstract class WakepointDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun friendDao(): FriendDao
+    abstract fun timeAlarmDao(): TimeAlarmDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -121,6 +124,30 @@ abstract class WakepointDatabase : RoomDatabase() {
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE alarms ADD COLUMN repeating INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        // v9: 시간 알람 독립 테이블 신규 생성(기존 alarms/friends 무변경).
+        // CREATE 문은 Room 이 엔티티로부터 생성하는 정규 형태와 일치시켜 스키마 검증 불일치를 방지한다.
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `time_alarms` (
+                        `id` TEXT NOT NULL,
+                        `label` TEXT NOT NULL,
+                        `hour` INTEGER NOT NULL,
+                        `minute` INTEGER NOT NULL,
+                        `repeat_mode` TEXT NOT NULL,
+                        `repeat_days` TEXT NOT NULL,
+                        `enabled` INTEGER NOT NULL DEFAULT 1,
+                        `sound_enabled` INTEGER NOT NULL DEFAULT 1,
+                        `vibrate` INTEGER NOT NULL DEFAULT 1,
+                        `sound_uri` TEXT,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
             }
         }
     }

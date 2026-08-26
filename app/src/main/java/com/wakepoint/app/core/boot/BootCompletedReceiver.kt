@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.wakepoint.app.core.alarm.TimeAlarmScheduler
 import com.wakepoint.app.data.alarm.AlarmRepository
+import com.wakepoint.app.data.timealarm.TimeAlarmRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +27,12 @@ class BootCompletedReceiver : BroadcastReceiver() {
     @Inject
     lateinit var alarmRepository: AlarmRepository
 
+    @Inject
+    lateinit var timeAlarmRepository: TimeAlarmRepository
+
+    @Inject
+    lateinit var timeAlarmScheduler: TimeAlarmScheduler
+
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action != Intent.ACTION_BOOT_COMPLETED &&
@@ -39,6 +47,10 @@ class BootCompletedReceiver : BroadcastReceiver() {
         scope.launch {
             runCatching { alarmRepository.syncLocationTracking() }
                 .onFailure { Log.w(TAG, "부팅 후 위치 추적 재개 실패", it) }
+            // OS 재부팅 시 AlarmManager 예약이 모두 사라지므로 활성 시간 알람을 다시 예약한다.
+            runCatching {
+                timeAlarmRepository.getEnabledTimeAlarms().forEach { timeAlarmScheduler.schedule(it) }
+            }.onFailure { Log.w(TAG, "부팅 후 시간 알람 재예약 실패", it) }
             pendingResult.finish()
         }
     }
