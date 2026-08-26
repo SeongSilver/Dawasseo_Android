@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.Train
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -75,6 +76,7 @@ private val BOTTOM_LIST_CLEARANCE = 120.dp
 fun ProfileScreen(
     onOpenSoundList: () -> Unit,
     onOpenMyPlaces: () -> Unit,
+    onOpenLastTrain: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -114,6 +116,7 @@ fun ProfileScreen(
             SettingsGroupCard(
                 onOpenSoundList = onOpenSoundList,
                 onOpenMyPlaces = onOpenMyPlaces,
+                onOpenLastTrain = onOpenLastTrain,
                 onOpenNotificationSettings = { context.openAppNotificationSettings() },
                 onOpenLocationSettings = { context.openAppDetailsSettings() },
                 onOpenSupport = { context.openSupportEmail(supportEmail, supportSubject, supportUnavailable) }
@@ -322,6 +325,7 @@ private fun StatDivider() {
 private fun SettingsGroupCard(
     onOpenSoundList: () -> Unit,
     onOpenMyPlaces: () -> Unit,
+    onOpenLastTrain: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onOpenSupport: () -> Unit
@@ -332,6 +336,13 @@ private fun SettingsGroupCard(
             icon = Icons.Rounded.Map,
             title = "내 장소",
             onClick = onOpenMyPlaces
+        )
+        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        // v2 STEP4 마이 진입점: 막차 알람(모의 데이터 미리보기)
+        SettingsRow(
+            icon = Icons.Rounded.Train,
+            title = "막차 알람",
+            onClick = onOpenLastTrain
         )
         HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(

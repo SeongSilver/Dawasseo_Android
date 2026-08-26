@@ -72,6 +72,7 @@ import com.wakepoint.app.feature.auth.SplashScreen
 import com.wakepoint.app.feature.friends.FriendsScreen
 import com.wakepoint.app.feature.home.HomeScreen
 import com.wakepoint.app.feature.friends.SentAlarmsScreen
+import com.wakepoint.app.feature.lasttrain.LastTrainScreen
 import com.wakepoint.app.feature.place.MyPlacesScreen
 import com.wakepoint.app.feature.place.PlaceEditScreen
 import com.wakepoint.app.feature.profile.ProfileScreen
@@ -88,6 +89,7 @@ private object AppRoute {
 
     const val MyPlaces = "my-places"
     const val SentAlarms = "sent-alarms"
+    const val LastTrain = "last-train"
 
     /** 장소 등록·편집. 신규는 placeId 생략, 집 슬롯 등록은 home=true. */
     fun placeEdit(placeId: String? = null, home: Boolean = false): String =
@@ -273,7 +275,14 @@ fun WakepointApp() {
                 ProfileScreen(
                     onOpenSoundList = { navController.navigate(AppRoute.soundList()) },
                     onOpenMyPlaces = { navController.navigate(AppRoute.MyPlaces) },
+                    onOpenLastTrain = { navController.navigate(AppRoute.LastTrain) },
                     onLogout = authViewModel::signOut
+                )
+            }
+            composable(AppRoute.LastTrain) {
+                LastTrainScreen(
+                    onBack = { navController.popBackStack() },
+                    onRegisterHome = { navController.navigate(AppRoute.placeEdit(home = true)) }
                 )
             }
             composable(AppRoute.MyPlaces) {
