@@ -116,10 +116,13 @@ import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.AlarmSound
 import com.wakepoint.app.domain.model.SoundKind
 import com.wakepoint.app.feature.home.ALARM_RADIUS_OPTIONS
+import com.wakepoint.app.feature.timealarm.AlarmTypeSheetContent
+import com.wakepoint.app.feature.timealarm.TimeAlarmCreateSheetContent
 
 /** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 스크롤 여백(구조적 오프셋). */
 private val BOTTOM_LIST_CLEARANCE = 120.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmsScreen(
     onOpenSoundList: (String?) -> Unit,
@@ -132,6 +135,9 @@ fun AlarmsScreen(
     var selectionMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showBatchDelete by remember { mutableStateOf(false) }
+    // v2 STEP1: + 버튼 → 타입 선택(1-1) → 시간 알람이면 생성 시트(1-2), 위치 알람이면 지도 직행.
+    var showTypeSheet by remember { mutableStateOf(false) }
+    var showTimeCreateSheet by remember { mutableStateOf(false) }
 
     fun exitSelection() {
         selectionMode = false
@@ -188,7 +194,7 @@ fun AlarmsScreen(
                     WakepointCircleIconButton(
                         icon = Icons.Rounded.Add,
                         contentDescription = stringResource(R.string.alarm_add),
-                        onClick = onCreateAlarm
+                        onClick = { showTypeSheet = true }
                     )
                 }
             )
@@ -204,7 +210,7 @@ fun AlarmsScreen(
             if (uiState.isLoading) {
                 WakepointLoadingPlaceholder()
             } else if (uiState.alarms.isEmpty()) {
-                EmptyAlarmMessage(onCreateAlarm = onCreateAlarm)
+                EmptyAlarmMessage(onCreateAlarm = { showTypeSheet = true })
             } else {
                 val renderAlarm: @Composable (com.wakepoint.app.domain.model.Alarm) -> Unit = { alarm ->
                     key(alarm.id) {
@@ -289,6 +295,44 @@ fun AlarmsScreen(
                 exitSelection()
             }
         )
+    }
+
+    if (showTypeSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showTypeSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
+            containerColor = WakepointCanvas
+        ) {
+            AlarmTypeSheetContent(
+                onSelectLocation = {
+                    showTypeSheet = false
+                    onCreateAlarm()
+                },
+                onSelectTime = {
+                    showTypeSheet = false
+                    showTimeCreateSheet = true
+                },
+                onCancel = { showTypeSheet = false }
+            )
+        }
+    }
+
+    if (showTimeCreateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showTimeCreateSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
+            containerColor = WakepointCanvas
+        ) {
+            TimeAlarmCreateSheetContent(
+                onCancel = { showTimeCreateSheet = false },
+                onAdd = { alarm ->
+                    viewModel.saveTimeAlarm(alarm)
+                    showTimeCreateSheet = false
+                }
+            )
+        }
     }
 }
 
