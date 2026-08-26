@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class FriendsUiState(
+    /** 저장소 첫 방출 전 = true. "로딩 중"과 "정말 친구가 없음"을 구분해 빈 화면 깜빡임을 막는다. */
+    val isLoading: Boolean = true,
     val friends: List<Friend> = emptyList(),
     val alarmPermissionRequests: List<AlarmPermissionRequest> = emptyList(),
     val currentUserId: String = "",
@@ -91,7 +93,7 @@ class FriendsViewModel @Inject constructor(
         friendRepository.observeFriends(),
         transientState
     ) { friends, state ->
-        state.copy(friends = friends)
+        state.copy(isLoading = false, friends = friends)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

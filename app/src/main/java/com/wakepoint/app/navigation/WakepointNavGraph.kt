@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -82,6 +82,23 @@ private object AppRoute {
     /** 특정 알람의 사운드를 편집할 때는 alarmId 를 전달, 전역 기본 사운드는 생략. */
     fun soundList(alarmId: String? = null): String =
         if (alarmId.isNullOrBlank()) SoundList else "$SoundList?alarmId=$alarmId"
+}
+
+/**
+ * 하단 탭 간 이동. 홈을 백스택 루트로 유지하고, 벗어나는 탭의 상태(스크롤·ViewModel)를
+ * 저장했다가 재방문 시 복원한다.
+ *
+ * 이전에는 popUpTo 대상이 그래프 시작점(스플래시)이었는데, 로그인 리다이렉트가 스플래시를
+ * 스택에서 제거한 뒤라 popUpTo가 아무것도 하지 않았다. 그래서 저장/복원이 전혀 동작하지 않아
+ * 탭을 누를 때마다 새 엔트리·새 ViewModel이 만들어졌고, 빈 초기 상태가 먼저 그려졌다가
+ * 데이터가 늦게 도착하는 깜빡임과 백스택 무한 증가가 발생했다.
+ */
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(MainRoute.Home.route) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
 }
 
 private enum class MainRoute(
@@ -223,11 +240,7 @@ fun WakepointApp() {
             }
             composable(MainRoute.Home.route) {
                 HomeScreen(
-                    onAlarmCreated = {
-                        navController.navigate(MainRoute.Alarms.route) {
-                            launchSingleTop = true
-                        }
-                    }
+                    onAlarmCreated = { navController.navigateToTab(MainRoute.Alarms.route) }
                 )
             }
             composable(MainRoute.Alarms.route) {
@@ -235,11 +248,7 @@ fun WakepointApp() {
                     onOpenSoundList = { alarmId ->
                         navController.navigate(AppRoute.soundList(alarmId))
                     },
-                    onCreateAlarm = {
-                        navController.navigate(MainRoute.Home.route) {
-                            launchSingleTop = true
-                        }
-                    }
+                    onCreateAlarm = { navController.navigateToTab(MainRoute.Home.route) }
                 )
             }
             composable(MainRoute.Friends.route) { FriendsScreen() }
@@ -255,15 +264,7 @@ fun WakepointApp() {
             WakepointTabBar(
                 items = mainRoutes,
                 currentRoute = currentRoute,
-                onSelect = { item ->
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                onSelect = { item -> navController.navigateToTab(item.route) },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }

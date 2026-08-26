@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,6 +33,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +54,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.wakepoint.app.R
+import kotlinx.coroutines.delay
 
 /** Full-width primary CTA — blue, 높이 52 · 라운드 12 · 텍스트 15/SemiBold. */
 @Composable
@@ -696,3 +703,36 @@ fun MapMarkerPreview(modifier: Modifier = Modifier) {
         )
     }
 }
+
+/**
+ * 목록 첫 로딩 플레이스홀더.
+ *
+ * 데이터가 아직 도착하지 않은 동안 "비어있음" UI가 먼저 그려졌다 목록으로 바뀌는 깜빡임을 막는다.
+ * 로컬 DB 로딩은 수십 ms 안에 끝나므로 그 동안은 아무것도 그리지 않고,
+ * 지연 임계값을 넘긴 느린 로딩에서만 스피너를 노출해 스피너 자체의 깜빡임도 피한다.
+ */
+@Composable
+fun WakepointLoadingPlaceholder(modifier: Modifier = Modifier) {
+    var showSpinner by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(LOADING_SPINNER_DELAY_MS)
+        showSpinner = true
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = WakepointSpacing.xxl),
+        contentAlignment = Alignment.Center
+    ) {
+        if (showSpinner) {
+            CircularProgressIndicator(
+                color = WakepointPrimary,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
+
+/** 이 시간 안에 로딩이 끝나면 스피너를 아예 보여주지 않는다. */
+private const val LOADING_SPINNER_DELAY_MS = 350L

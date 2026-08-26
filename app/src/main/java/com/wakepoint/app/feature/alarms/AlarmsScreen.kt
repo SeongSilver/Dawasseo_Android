@@ -96,6 +96,7 @@ import com.wakepoint.app.core.design.WakepointDanger
 import com.wakepoint.app.core.design.WakepointDangerButton
 import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointInk
+import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointPageHeader
@@ -200,7 +201,9 @@ fun AlarmsScreen(
                 .padding(top = WakepointSpacing.sectionTitleGap, bottom = BOTTOM_LIST_CLEARANCE),
             verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
         ) {
-            if (uiState.alarms.isEmpty()) {
+            if (uiState.isLoading) {
+                WakepointLoadingPlaceholder()
+            } else if (uiState.alarms.isEmpty()) {
                 EmptyAlarmMessage(onCreateAlarm = onCreateAlarm)
             } else {
                 val renderAlarm: @Composable (com.wakepoint.app.domain.model.Alarm) -> Unit = { alarm ->

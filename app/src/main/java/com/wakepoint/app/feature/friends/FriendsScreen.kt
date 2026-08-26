@@ -79,6 +79,7 @@ import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointDivider
 import com.wakepoint.app.core.design.WakepointField
 import com.wakepoint.app.core.design.WakepointInk
+import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
 import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointParchment
@@ -186,7 +187,9 @@ fun FriendsScreen(
                     uiState.receivedAlarmPermissionRequests.isNotEmpty() ||
                     uiState.sentAlarmPermissionRequests.isNotEmpty()
 
-                if (!hasFriendContent) {
+                if (uiState.isLoading) {
+                    WakepointLoadingPlaceholder()
+                } else if (!hasFriendContent) {
                     EmptyFriendsCard(onAddFriend = { showSearchSheet = true })
                 } else {
                     if (uiState.receivedFriendRequests.isNotEmpty()) {
