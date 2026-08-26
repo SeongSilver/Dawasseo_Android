@@ -72,7 +72,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.clip
@@ -116,10 +119,21 @@ import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.AlarmSound
 import com.wakepoint.app.domain.model.SoundKind
 import com.wakepoint.app.feature.home.ALARM_RADIUS_OPTIONS
+import com.wakepoint.app.domain.model.TimeAlarm
+import com.wakepoint.app.feature.timealarm.AlarmTypeLabel
+import com.wakepoint.app.feature.timealarm.AlarmTypeSheetContent
+import com.wakepoint.app.feature.timealarm.ExactAlarmPermissionDialog
+import com.wakepoint.app.feature.timealarm.TimeAlarmCard
+import com.wakepoint.app.feature.timealarm.TimeAlarmCreateSheetContent
+import com.wakepoint.app.feature.timealarm.isExactAlarmPrompted
+import com.wakepoint.app.feature.timealarm.markExactAlarmPrompted
+import com.wakepoint.app.feature.timealarm.openExactAlarmSettings
+import com.wakepoint.app.feature.timealarm.shouldPromptExactAlarm
 
 /** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 스크롤 여백(구조적 오프셋). */
 private val BOTTOM_LIST_CLEARANCE = 120.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmsScreen(
     onOpenSoundList: (String?) -> Unit,
@@ -129,9 +143,25 @@ fun AlarmsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var expandedAlarmId by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<Alarm?>(null) }
+    var deleteTimeTarget by remember { mutableStateOf<TimeAlarm?>(null) }
     var selectionMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showBatchDelete by remember { mutableStateOf(false) }
+    // v2 STEP1: + 버튼 → 타입 선택(1-1) → 시간 알람이면 생성 시트(1-2), 위치 알람이면 지도 직행.
+    var showTypeSheet by remember { mutableStateOf(false) }
+    var showTimeCreateSheet by remember { mutableStateOf(false) }
+    var showExactAlarmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // 설정 화면에서 정확 알람을 허용하고 돌아오면 배지가 바로 사라지도록 onResume 마다 재확인.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshExactAlarmState()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     fun exitSelection() {
         selectionMode = false
@@ -150,10 +180,10 @@ fun AlarmsScreen(
 
     BackHandler(enabled = selectionMode) { exitSelection() }
 
+    val activeCount = uiState.activeAlarms.size + uiState.activeTimeAlarms.size
     val summary = when {
-        uiState.alarms.isEmpty() -> null
-        uiState.activeAlarms.isNotEmpty() ->
-            stringResource(R.string.alarms_summary_active, uiState.activeAlarms.size)
+        uiState.isEmpty -> null
+        activeCount > 0 -> stringResource(R.string.alarms_summary_active, activeCount)
         else -> stringResource(R.string.alarms_summary_none)
     }
 
@@ -188,7 +218,7 @@ fun AlarmsScreen(
                     WakepointCircleIconButton(
                         icon = Icons.Rounded.Add,
                         contentDescription = stringResource(R.string.alarm_add),
-                        onClick = onCreateAlarm
+                        onClick = { showTypeSheet = true }
                     )
                 }
             )
@@ -203,8 +233,8 @@ fun AlarmsScreen(
         ) {
             if (uiState.isLoading) {
                 WakepointLoadingPlaceholder()
-            } else if (uiState.alarms.isEmpty()) {
-                EmptyAlarmMessage(onCreateAlarm = onCreateAlarm)
+            } else if (uiState.isEmpty) {
+                EmptyAlarmMessage(onCreateAlarm = { showTypeSheet = true })
             } else {
                 val renderAlarm: @Composable (com.wakepoint.app.domain.model.Alarm) -> Unit = { alarm ->
                     key(alarm.id) {
@@ -241,19 +271,41 @@ fun AlarmsScreen(
                     }
                 }
 
+                val renderTimeAlarm: @Composable (TimeAlarm) -> Unit = { alarm ->
+                    key(alarm.id) {
+                        TimeAlarmCard(
+                            alarm = alarm,
+                            expanded = !selectionMode && expandedAlarmId == alarm.id,
+                            isUpdating = alarm.id in uiState.updatingAlarmIds,
+                            exactAlarmAllowed = uiState.exactAlarmAllowed,
+                            onToggleExpanded = {
+                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                            },
+                            onEnabledChange = { enabled ->
+                                viewModel.setTimeAlarmEnabled(alarm.id, enabled)
+                            },
+                            onSave = { viewModel.saveTimeAlarm(it) },
+                            onDeleteRequest = { deleteTimeTarget = alarm },
+                            onAccuracyBadgeClick = { context.openExactAlarmSettings() }
+                        )
+                    }
+                }
+
                 if (uiState.favoriteAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_favorite))
                     uiState.favoriteAlarms.forEach { renderAlarm(it) }
                 }
 
-                if (uiState.activeAlarms.isNotEmpty()) {
+                if (uiState.activeAlarms.isNotEmpty() || uiState.activeTimeAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_active))
                     uiState.activeAlarms.forEach { renderAlarm(it) }
+                    uiState.activeTimeAlarms.forEach { renderTimeAlarm(it) }
                 }
 
-                if (uiState.inactiveAlarms.isNotEmpty()) {
+                if (uiState.inactiveAlarms.isNotEmpty() || uiState.inactiveTimeAlarms.isNotEmpty()) {
                     SectionTitle(text = stringResource(R.string.alarm_inactive))
                     uiState.inactiveAlarms.forEach { renderAlarm(it) }
+                    uiState.inactiveTimeAlarms.forEach { renderTimeAlarm(it) }
                 }
             }
         }
@@ -276,6 +328,23 @@ fun AlarmsScreen(
         )
     }
 
+    deleteTimeTarget?.let { alarm ->
+        WakepointConfirmDialog(
+            title = stringResource(R.string.alarm_delete_confirm_title),
+            message = stringResource(R.string.alarm_delete_confirm_message),
+            cancelText = stringResource(R.string.alarm_cancel),
+            confirmText = stringResource(R.string.alarm_delete),
+            onDismiss = { deleteTimeTarget = null },
+            onConfirm = {
+                viewModel.deleteTimeAlarm(alarm.id)
+                if (expandedAlarmId == alarm.id) {
+                    expandedAlarmId = null
+                }
+                deleteTimeTarget = null
+            }
+        )
+    }
+
     if (showBatchDelete) {
         WakepointConfirmDialog(
             title = stringResource(R.string.alarm_delete_confirm_title),
@@ -289,6 +358,66 @@ fun AlarmsScreen(
                 exitSelection()
             }
         )
+    }
+
+    if (showExactAlarmDialog) {
+        ExactAlarmPermissionDialog(
+            onGoToSettings = {
+                showExactAlarmDialog = false
+                context.markExactAlarmPrompted()
+                context.openExactAlarmSettings()
+            },
+            onLater = {
+                showExactAlarmDialog = false
+                context.markExactAlarmPrompted()
+            }
+        )
+    }
+
+    if (showTypeSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showTypeSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
+            containerColor = WakepointCanvas
+        ) {
+            AlarmTypeSheetContent(
+                onSelectLocation = {
+                    showTypeSheet = false
+                    onCreateAlarm()
+                },
+                onSelectTime = {
+                    showTypeSheet = false
+                    showTimeCreateSheet = true
+                },
+                onCancel = { showTypeSheet = false }
+            )
+        }
+    }
+
+    if (showTimeCreateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showTimeCreateSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
+            containerColor = WakepointCanvas
+        ) {
+            TimeAlarmCreateSheetContent(
+                onCancel = { showTimeCreateSheet = false },
+                onAdd = { alarm ->
+                    viewModel.saveTimeAlarm(alarm)
+                    showTimeCreateSheet = false
+                    // 1-5: 첫 시간 알람 생성 시 정확 알람 미허용이면 설치당 1회 안내.
+                    if (shouldPromptExactAlarm(
+                            exactAlarmAllowed = uiState.exactAlarmAllowed,
+                            alreadyPrompted = context.isExactAlarmPrompted()
+                        )
+                    ) {
+                        showExactAlarmDialog = true
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -460,11 +589,22 @@ private fun AlarmCardInfo(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Text(
-            text = stringResource(R.string.alarm_meta_line, radiusLabel, soundTitle),
-            color = WakepointTextSecondary,
-            style = MaterialTheme.typography.bodySmall
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
+        ) {
+            AlarmTypeLabel(isTimeAlarm = false, active = alarm.isActive)
+            Text(
+                text = "·",
+                style = MaterialTheme.typography.bodySmall,
+                color = WakepointTextTertiary
+            )
+            Text(
+                text = stringResource(R.string.alarm_meta_line, radiusLabel, soundTitle),
+                color = WakepointTextSecondary,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
 
