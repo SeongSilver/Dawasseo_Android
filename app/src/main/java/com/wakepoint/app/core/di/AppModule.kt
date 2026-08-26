@@ -17,6 +17,8 @@ import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.local.FriendDao
 import com.wakepoint.app.data.sound.DefaultSoundRepository
 import com.wakepoint.app.data.sound.SoundRepository
+import com.wakepoint.app.feature.lasttrain.LastTrainCalculator
+import com.wakepoint.app.feature.lasttrain.MockLastTrainCalculator
 import com.wakepoint.app.data.place.DefaultPlaceRepository
 import com.wakepoint.app.data.place.PlaceRepository
 import com.wakepoint.app.data.place.local.PlaceDao
@@ -92,6 +94,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideTimeAlarmScheduler(scheduler: AndroidTimeAlarmScheduler): TimeAlarmScheduler = scheduler
+
+    // 막차 계산기 — Kakao Mobility 확보 전까지 모의 구현(계획서 Phase 5 제약).
+    @Provides
+    @Singleton
+    fun provideLastTrainCalculator(calculator: MockLastTrainCalculator): LastTrainCalculator = calculator
 
     @Provides
     @Singleton
