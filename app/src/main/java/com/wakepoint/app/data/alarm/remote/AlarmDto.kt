@@ -4,6 +4,13 @@ import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.SoundType
 import org.json.JSONObject
 
+/**
+ * Supabase `alarms` 테이블 왕복 DTO.
+ *
+ * 정책: 도메인 [Alarm]의 soundEnabled/vibrate/isFavorite/repeating 은 **기기 로컬 전용**이라
+ * 이 DTO에 없다(원격 스키마 미변경 결정). 따라서 서버 왕복 시 이 필드들은 로컬 DB 값이
+ * 유지되고, 다른 기기에는 전파되지 않는다. 컬럼 확장 시 여기와 SCHEMA.md 를 함께 갱신할 것.
+ */
 data class AlarmDto(
     val id: String,
     val ownerId: String,

@@ -69,6 +69,12 @@ create index alarms_owner_id_idx on public.alarms(owner_id);
 create index alarms_is_active_idx on public.alarms(is_active);
 ```
 
+> **로컬 전용 필드 정책**: 앱 도메인 `Alarm`의 `soundEnabled` / `vibrate` / `isFavorite` /
+> `repeating`(재발동)은 원격 컬럼이 **없다**(스키마 미변경 결정). 서버 왕복 시 로컬 Room 값이
+> 유지되며 다른 기기로 전파되지 않는다. 컬럼을 확장하면 `AlarmDto`(주석 참조)와 이 문단을
+> 함께 갱신한다. 시간 알람(`time_alarms`)과 내 장소(`places`)는 **기기 로컬 Room 전용**
+> 테이블로 원격 스키마가 아예 없다(v2 재구축 Phase 2·3, 주소/좌표는 기기 밖으로 안 나감).
+
 | 컬럼 | 타입 | 설명 |
 |------|------|------|
 | owner_id | uuid | 알람이 울릴 대상 (소유자) |
