@@ -922,7 +922,7 @@ private fun FriendSearchSheet(
             WakepointTextField(
                 value = uiState.searchQuery,
                 onValueChange = onQueryChange,
-                placeholder = "이메일 또는 닉네임",
+                placeholder = stringResource(R.string.friends_search_placeholder),
                 leadingIcon = Icons.Rounded.Search,
                 modifier = Modifier.weight(1f)
             )

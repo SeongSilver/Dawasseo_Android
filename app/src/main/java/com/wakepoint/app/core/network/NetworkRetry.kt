@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 suspend fun <T> retryingNetwork(
     maxAttempts: Int = 3,
     initialDelayMs: Long = 400L,
+    maxDelayMs: Long = 5_000L,
     block: suspend () -> T
 ): T {
     var attempt = 0
@@ -29,7 +30,8 @@ suspend fun <T> retryingNetwork(
             attempt++
             if (attempt >= maxAttempts || !error.isTransient()) throw error
             delay(delayMs)
-            delayMs *= 2
+            // 지수 증가에 상한을 둬 시도 횟수를 늘려 써도 대기가 무한정 길어지지 않게 한다.
+            delayMs = (delayMs * 2).coerceAtMost(maxDelayMs)
         }
     }
 }

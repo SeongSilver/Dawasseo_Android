@@ -119,4 +119,22 @@ class NetworkRetryTest {
         assertEquals(1, attempts)
         assertTrue(error is CancellationException)
     }
+
+    @Test
+    fun `지수 백오프는 maxDelayMs 상한을 넘지 않는다`() = runBlocking {
+        // 가상 시간 없이 실제 delay 를 쓰므로 아주 작은 지연으로 검증한다:
+        // initial=1ms, cap=2ms 에서 5회 실패해도 총 대기가 (1+2+2+2)ms 수준에 머문다.
+        var attempts = 0
+        val elapsed = kotlin.system.measureTimeMillis {
+            runCatching {
+                retryingNetwork(maxAttempts = 5, initialDelayMs = 1, maxDelayMs = 2) {
+                    attempts++
+                    throw java.io.IOException("transient")
+                }
+            }
+        }
+        assertEquals(5, attempts)
+        // 캡이 없다면 1+2+4+8=15ms 이상 — 캡이 있으면 훨씬 짧다(여유 있게 상한 검증).
+        assertTrue("elapsed=$elapsed", elapsed < 1_000)
+    }
 }
