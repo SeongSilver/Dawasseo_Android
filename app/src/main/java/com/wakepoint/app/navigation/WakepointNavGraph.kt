@@ -71,6 +71,7 @@ import com.wakepoint.app.feature.auth.SignUpScreen
 import com.wakepoint.app.feature.auth.SplashScreen
 import com.wakepoint.app.feature.friends.FriendsScreen
 import com.wakepoint.app.feature.home.HomeScreen
+import com.wakepoint.app.feature.friends.SentAlarmsScreen
 import com.wakepoint.app.feature.place.MyPlacesScreen
 import com.wakepoint.app.feature.place.PlaceEditScreen
 import com.wakepoint.app.feature.profile.ProfileScreen
@@ -86,6 +87,7 @@ private object AppRoute {
         if (alarmId.isNullOrBlank()) SoundList else "$SoundList?alarmId=$alarmId"
 
     const val MyPlaces = "my-places"
+    const val SentAlarms = "sent-alarms"
 
     /** 장소 등록·편집. 신규는 placeId 생략, 집 슬롯 등록은 home=true. */
     fun placeEdit(placeId: String? = null, home: Boolean = false): String =
@@ -259,7 +261,14 @@ fun WakepointApp() {
                     onCreateAlarm = { navController.navigateToTab(MainRoute.Home.route) }
                 )
             }
-            composable(MainRoute.Friends.route) { FriendsScreen() }
+            composable(MainRoute.Friends.route) {
+                FriendsScreen(
+                    onOpenSentAlarms = { navController.navigate(AppRoute.SentAlarms) }
+                )
+            }
+            composable(AppRoute.SentAlarms) {
+                SentAlarmsScreen(onBack = { navController.popBackStack() })
+            }
             composable(MainRoute.Profile.route) {
                 ProfileScreen(
                     onOpenSoundList = { navController.navigate(AppRoute.soundList()) },

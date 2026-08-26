@@ -6,6 +6,8 @@ import com.wakepoint.app.core.alarm.TimeAlarmScheduler
 import com.wakepoint.app.core.error.UserFacingError
 import com.wakepoint.app.core.location.radiusOptionToKm
 import com.wakepoint.app.data.alarm.AlarmRepository
+import com.wakepoint.app.data.auth.AuthRepository
+import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.sound.SoundRepository
 import com.wakepoint.app.data.timealarm.TimeAlarmRepository
 import com.wakepoint.app.domain.model.Alarm
@@ -28,6 +30,10 @@ data class AlarmsUiState(
     val timeAlarms: List<TimeAlarm> = emptyList(),
     /** 정확 알람(SCHEDULE_EXACT_ALARM) 허용 여부. false 면 시간 알람에 "정확도 제한" 배지. */
     val exactAlarmAllowed: Boolean = true,
+    /** 수신 알람 감지용(3-7). 세션 미로딩 동안은 빈 값(감지 로직이 오탐을 막는다). */
+    val currentUserId: String = "",
+    /** 친구 userId → 닉네임(수신 다이얼로그 발신자 표기). */
+    val friendNames: Map<String, String> = emptyMap(),
     val isUpdating: Boolean = false,
     val updatingAlarmIds: Set<String> = emptySet(),
     val soundTitles: Map<String, String> = emptyMap(),
@@ -46,6 +52,8 @@ class AlarmsViewModel @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val timeAlarmRepository: TimeAlarmRepository,
     private val timeAlarmScheduler: TimeAlarmScheduler,
+    private val authRepository: AuthRepository,
+    friendRepository: FriendRepository,
     soundRepository: SoundRepository
 ) : ViewModel() {
     private val transientState = MutableStateFlow(
@@ -76,6 +84,23 @@ class AlarmsViewModel @Inject constructor(
     init {
         refreshAlarms()
         refreshExactAlarmState()
+        viewModelScope.launch {
+            val userId = runCatching { authRepository.requireValidSession().userId }.getOrNull()
+            if (!userId.isNullOrBlank()) {
+                transientState.update { it.copy(currentUserId = userId) }
+            }
+        }
+        viewModelScope.launch {
+            friendRepository.observeFriends().collect { friends ->
+                val names = buildMap {
+                    friends.forEach { friend ->
+                        put(friend.userId, friend.nickname)
+                        put(friend.friendId, friend.nickname)
+                    }
+                }
+                transientState.update { it.copy(friendNames = names) }
+            }
+        }
     }
 
     /**

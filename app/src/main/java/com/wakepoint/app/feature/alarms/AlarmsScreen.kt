@@ -118,6 +118,12 @@ import com.wakepoint.app.core.design.WakepointTextTertiary
 import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.AlarmSound
 import com.wakepoint.app.domain.model.SoundKind
+import com.wakepoint.app.feature.friends.ReceiveAlarmDialog
+import com.wakepoint.app.feature.friends.ReceivedAlarmLogic
+import com.wakepoint.app.feature.friends.acknowledgeReceivedAlarms
+import com.wakepoint.app.feature.friends.acknowledgedReceivedAlarmIds
+import com.wakepoint.app.feature.friends.isReceivedAlarmSeeded
+import com.wakepoint.app.feature.friends.markReceivedAlarmSeeded
 import com.wakepoint.app.feature.home.ALARM_RADIUS_OPTIONS
 import com.wakepoint.app.domain.model.TimeAlarm
 import com.wakepoint.app.feature.timealarm.AlarmTypeLabel
@@ -356,6 +362,46 @@ fun AlarmsScreen(
                 viewModel.deleteAlarms(selectedIds)
                 showBatchDelete = false
                 exitSelection()
+            }
+        )
+    }
+
+    // v2 STEP3 (3-7): 친구가 보낸 알람 수신 다이얼로그 — 동기화로 내려온 미확인 친구 알람을
+    // 풀 기반으로 감지한다(푸시 유실과 무관). 최초 실행 시엔 기존 수신분을 시드해 폭주를 막는다.
+    var receivedAckVersion by remember { mutableStateOf(0) }
+    LaunchedEffect(uiState.currentUserId, uiState.alarms) {
+        if (uiState.currentUserId.isNotBlank() && !context.isReceivedAlarmSeeded()) {
+            context.acknowledgeReceivedAlarms(
+                ReceivedAlarmLogic.idsToSeed(uiState.alarms, uiState.currentUserId)
+            )
+            context.markReceivedAlarmSeeded()
+            receivedAckVersion++
+        }
+    }
+    val receivedAlarm = remember(uiState.alarms, uiState.currentUserId, receivedAckVersion) {
+        if (!context.isReceivedAlarmSeeded()) {
+            null
+        } else {
+            ReceivedAlarmLogic.newReceived(
+                alarms = uiState.alarms,
+                currentUserId = uiState.currentUserId,
+                acknowledgedIds = context.acknowledgedReceivedAlarmIds()
+            ).firstOrNull()
+        }
+    }
+    receivedAlarm?.let { alarm ->
+        ReceiveAlarmDialog(
+            alarm = alarm,
+            senderName = uiState.friendNames[alarm.createdBy] ?: "친구",
+            onActivate = {
+                context.acknowledgeReceivedAlarms(setOf(alarm.id))
+                if (!alarm.isActive) viewModel.setAlarmActive(alarm.id, true)
+                receivedAckVersion++
+            },
+            onReject = {
+                context.acknowledgeReceivedAlarms(setOf(alarm.id))
+                viewModel.deleteAlarm(alarm.id)
+                receivedAckVersion++
             }
         )
     }

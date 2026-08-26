@@ -35,6 +35,24 @@ fun Alarm.toDto(): AlarmDto = AlarmDto(
     soundUri = soundUri
 )
 
+/**
+ * 원격 DTO → 도메인. 로컬 전용 필드(soundEnabled/vibrate/isFavorite/repeating)는 기본값.
+ * 로컬 캐시를 거치지 않고 읽는 화면(보낸 알람 목록 3-6)에서 사용한다.
+ */
+fun AlarmDto.toDomain(): Alarm = Alarm(
+    id = id,
+    ownerId = ownerId,
+    createdBy = createdBy,
+    label = label,
+    targetLat = targetLat,
+    targetLng = targetLng,
+    targetAddress = targetAddress,
+    radiusKm = radiusKm,
+    isActive = isActive,
+    soundType = if (soundType == "custom") SoundType.Custom else SoundType.Default,
+    soundUri = soundUri
+)
+
 fun alarmDtoFromJson(json: JSONObject): AlarmDto = AlarmDto(
     id = json.getString("id"),
     ownerId = json.optString("owner_id"),

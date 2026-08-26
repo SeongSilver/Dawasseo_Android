@@ -71,6 +71,9 @@ import com.wakepoint.app.core.design.WakepointBackground
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
+import com.wakepoint.app.core.design.WakepointChipActiveBorder
+import com.wakepoint.app.core.design.WakepointChipBorder
+import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
 import com.wakepoint.app.core.design.WakepointDanger
@@ -117,6 +120,7 @@ private data class FriendConfirmTarget(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
+    onOpenSentAlarms: () -> Unit = {},
     viewModel: FriendsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -151,6 +155,12 @@ fun FriendsScreen(
                 subtitle = stringResource(R.string.friends_subtitle),
                 action = {
                     Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                        // v2 STEP3 (3-6): 보낸 알람 목록 진입점
+                        WakepointCircleIconButton(
+                            icon = Icons.AutoMirrored.Rounded.Send,
+                            contentDescription = "보낸 알람",
+                            onClick = onOpenSentAlarms
+                        )
                         WakepointCircleIconButton(
                             icon = Icons.Rounded.Refresh,
                             contentDescription = stringResource(R.string.friends_refresh),
@@ -383,8 +393,11 @@ fun FriendsScreen(
                     },
                     onDismiss = { viewModel.dismissSendAlarm() }
                 )
-                SendAlarmTab.Place, SendAlarmTab.Time -> SendAlarmComingSoon(
-                    tab = sendTab,
+                SendAlarmTab.Place -> SendAlarmPlaceTab(
+                    friendName = friend?.nickname ?: "친구",
+                    onDismiss = { viewModel.dismissSendAlarm() }
+                )
+                SendAlarmTab.Time -> SendAlarmTimeTab(
                     onDismiss = { viewModel.dismissSendAlarm() }
                 )
             }
@@ -728,10 +741,16 @@ private fun SendAlarmPrivacyNote() {
     }
 }
 
+/**
+ * v2 STEP3 (3-3, 3c) — 장소 탭. 친구의 공개 장소 중에서 골라 보내는 탭.
+ * 공개 장소는 서버 동기화 미구현이라 현재는 항상 빈 상태(3c)가 사실이다 —
+ * 원격 스키마가 생기면 [friendPlaces] 에 목록을 연결한다.
+ */
 @Composable
-private fun SendAlarmComingSoon(
-    tab: SendAlarmTab,
-    onDismiss: () -> Unit
+private fun SendAlarmPlaceTab(
+    friendName: String,
+    onDismiss: () -> Unit,
+    friendPlaces: List<String> = emptyList()
 ) {
     Column(
         modifier = Modifier
@@ -740,16 +759,87 @@ private fun SendAlarmComingSoon(
             .padding(top = WakepointSpacing.lg, bottom = WakepointSpacing.xl),
         verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
     ) {
-        BottomSheetTitle(title = "${tab.label} 알람")
+        BottomSheetTitle(title = "장소 알람")
+        if (friendPlaces.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = WakepointSpacing.xl),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
+            ) {
+                Text(
+                    text = "${friendName}님이 아직 공개한 장소가 없어요",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = WakepointTextTertiary
+                )
+                Text(
+                    text = "친구가 마이 탭 > 내 장소에서 장소를 공개하면\n여기서 골라 보낼 수 있어요.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WakepointTextTertiary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+        WakepointSecondaryButton(
+            text = stringResource(R.string.alarm_cancel),
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+private val SEND_TIME_PRESETS = listOf("1시간 뒤", "오늘 밤 11시", "내일 오전 8시", "직접 선택")
+
+/**
+ * v2 STEP3 (3-4) — 시간 탭. 정한 시각에 친구 기기에서 울리는 일회성 알람.
+ * 전송 스키마(서버 time_alarms)가 아직 없어 스펙 UI만 배선하고 보내기는 막는다(3-5 안내).
+ */
+@Composable
+private fun SendAlarmTimeTab(
+    onDismiss: () -> Unit
+) {
+    var preset by remember { mutableStateOf(SEND_TIME_PRESETS.first()) }
+    var name by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = WakepointSpacing.screenHorizontal)
+            .padding(top = WakepointSpacing.lg, bottom = WakepointSpacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+    ) {
+        BottomSheetTitle(title = "시간 알람")
+        Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+            Text("언제 울릴까요?", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+            Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                    SEND_TIME_PRESETS.take(2).forEach { p ->
+                        SendTimeChip(p, preset == p, Modifier.weight(1f)) { preset = p }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                    SEND_TIME_PRESETS.drop(2).forEach { p ->
+                        SendTimeChip(p, preset == p, Modifier.weight(1f)) { preset = p }
+                    }
+                }
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+            Text("알람 이름", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+            WakepointTextField(
+                value = name,
+                onValueChange = { name = it },
+                placeholder = "예) 약 먹을 시간"
+            )
+        }
+        // 3-5: 수신 측 미지원 안내(서버 전송 스키마 준비 전까지 보내기 차단)
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(WakepointShape.control),
+            modifier = Modifier.fillMaxWidth(),
             shape = WakepointShape.control,
             color = WakepointWarningLight
         ) {
             Row(
-                modifier = Modifier.padding(WakepointSpacing.cardPadding),
+                modifier = Modifier.padding(WakepointSpacing.md),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
             ) {
@@ -760,16 +850,52 @@ private fun SendAlarmComingSoon(
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = "${tab.label} 기반 알람은 준비 중이에요.\n지금은 주소 알람만 보낼 수 있어요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = WakepointInk
+                    text = "시간 알람 전송은 서버 업데이트 후 열려요.\n지금은 주소 알람만 보낼 수 있어요.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WakepointWarning
                 )
             }
         }
-        WakepointSecondaryButton(
-            text = stringResource(R.string.alarm_cancel),
-            onClick = onDismiss,
-            modifier = Modifier.fillMaxWidth()
+        Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+            WakepointSecondaryButton(
+                text = stringResource(R.string.alarm_cancel),
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f)
+            )
+            WakepointButton(
+                text = "보내기",
+                enabled = false,
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SendTimeChip(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .height(WakepointSize.chipHeight)
+            .clip(WakepointShape.control)
+            .background(if (selected) WakepointPrimaryLight else WakepointCanvas)
+            .border(
+                width = if (selected) 2.dp else 1.5.dp,
+                color = if (selected) WakepointChipActiveBorder else WakepointChipBorder,
+                shape = WakepointShape.control
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (selected) WakepointPrimary else WakepointTextSecondary
         )
     }
 }
