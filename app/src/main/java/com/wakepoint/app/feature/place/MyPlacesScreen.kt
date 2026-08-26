@@ -67,7 +67,22 @@ fun MyPlacesScreen(
     viewModel: MyPlacesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    MyPlacesContent(
+        uiState = uiState,
+        onBack = onBack,
+        onAddPlace = onAddPlace,
+        onEditPlace = onEditPlace,
+    )
+}
 
+/** 상태 주입형 콘텐츠(계측 테스트 대상). */
+@Composable
+fun MyPlacesContent(
+    uiState: MyPlacesUiState,
+    onBack: () -> Unit,
+    onAddPlace: (isHome: Boolean) -> Unit,
+    onEditPlace: (Place) -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
