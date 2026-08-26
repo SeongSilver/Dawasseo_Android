@@ -5,6 +5,19 @@ UI를 수정할 때는 아래 **디자인 가이드**를 반드시 지킬 것.
 
 ---
 
+## Git 워크플로우 (PR 플로우 — 2026-08-26 전환)
+
+`gh` CLI 인증 완료(계정 SeongSilver). **main 직접 커밋·직접 머지 금지** — 모든 작업은 PR로:
+
+1. `main`에서 작업 브랜치 분기 (`feature/…`, `fix/…`, `chore/…`, `docs/…`).
+2. 작업 단위별 커밋 → `git push -u origin <branch>`.
+3. `gh pr create --base main` — 본문에 작업 내역·테스트 결과 요약.
+4. 검증(빌드 + 유닛테스트, UI 변경 시 계측 E2E) 그린이면 `gh pr merge --merge --delete-branch`
+   (머지 커밋 방식 — 기존 `--no-ff` 이력과 일관). 1인 저장소라 자체 승인 없이 바로 머지한다.
+5. phase/작업 종료 시 `docs/work-log/`에 작업·에러 로그 md 기록(기존 관례 유지).
+
+---
+
 ## 디자인 가이드 (v1.5 통일 리디자인 — 강제 규칙)
 
 > 출처: `design/v1.5-redesign.dc.html` (claude.ai 디자인 프로젝트 "세 가지 디자인 컨셉 보드").
