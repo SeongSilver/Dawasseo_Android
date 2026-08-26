@@ -8,18 +8,21 @@ import com.wakepoint.app.data.alarm.local.AlarmDao
 import com.wakepoint.app.data.alarm.local.AlarmEntity
 import com.wakepoint.app.data.friend.local.FriendDao
 import com.wakepoint.app.data.friend.local.FriendEntity
+import com.wakepoint.app.data.place.local.PlaceDao
+import com.wakepoint.app.data.place.local.PlaceEntity
 import com.wakepoint.app.data.timealarm.local.TimeAlarmDao
 import com.wakepoint.app.data.timealarm.local.TimeAlarmEntity
 
 @Database(
-    entities = [AlarmEntity::class, FriendEntity::class, TimeAlarmEntity::class],
-    version = 9,
+    entities = [AlarmEntity::class, FriendEntity::class, TimeAlarmEntity::class, PlaceEntity::class],
+    version = 10,
     exportSchema = true
 )
 abstract class WakepointDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun friendDao(): FriendDao
     abstract fun timeAlarmDao(): TimeAlarmDao
+    abstract fun placeDao(): PlaceDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -144,6 +147,28 @@ abstract class WakepointDatabase : RoomDatabase() {
                         `sound_enabled` INTEGER NOT NULL DEFAULT 1,
                         `vibrate` INTEGER NOT NULL DEFAULT 1,
                         `sound_uri` TEXT,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        // v10: 내 장소 테이블 신규 생성(기존 테이블 무변경).
+        // CREATE 문은 Room 이 엔티티로부터 생성하는 정규 형태와 일치시켜 스키마 검증 불일치를 방지한다.
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `places` (
+                        `id` TEXT NOT NULL,
+                        `my_name` TEXT NOT NULL,
+                        `address` TEXT NOT NULL,
+                        `latitude` REAL NOT NULL,
+                        `longitude` REAL NOT NULL,
+                        `is_public` INTEGER NOT NULL DEFAULT 0,
+                        `shared_name` TEXT,
+                        `is_home` INTEGER NOT NULL DEFAULT 0,
                         PRIMARY KEY(`id`)
                     )
                     """.trimIndent()

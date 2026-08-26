@@ -17,6 +17,9 @@ import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.local.FriendDao
 import com.wakepoint.app.data.sound.DefaultSoundRepository
 import com.wakepoint.app.data.sound.SoundRepository
+import com.wakepoint.app.data.place.DefaultPlaceRepository
+import com.wakepoint.app.data.place.PlaceRepository
+import com.wakepoint.app.data.place.local.PlaceDao
 import com.wakepoint.app.data.timealarm.DefaultTimeAlarmRepository
 import com.wakepoint.app.data.timealarm.TimeAlarmRepository
 import com.wakepoint.app.data.timealarm.local.TimeAlarmDao
@@ -47,6 +50,7 @@ object AppModule {
         .addMigrations(WakepointDatabase.MIGRATION_6_7)
         .addMigrations(WakepointDatabase.MIGRATION_7_8)
         .addMigrations(WakepointDatabase.MIGRATION_8_9)
+        .addMigrations(WakepointDatabase.MIGRATION_9_10)
         .build()
 
     @Provides
@@ -57,6 +61,9 @@ object AppModule {
 
     @Provides
     fun provideTimeAlarmDao(database: WakepointDatabase): TimeAlarmDao = database.timeAlarmDao()
+
+    @Provides
+    fun providePlaceDao(database: WakepointDatabase): PlaceDao = database.placeDao()
 
     @Provides
     @Singleton
@@ -77,6 +84,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideTimeAlarmRepository(repository: DefaultTimeAlarmRepository): TimeAlarmRepository = repository
+
+    @Provides
+    @Singleton
+    fun providePlaceRepository(repository: DefaultPlaceRepository): PlaceRepository = repository
 
     @Provides
     @Singleton
