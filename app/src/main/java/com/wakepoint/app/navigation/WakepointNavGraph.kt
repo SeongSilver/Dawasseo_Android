@@ -71,6 +71,8 @@ import com.wakepoint.app.feature.auth.SignUpScreen
 import com.wakepoint.app.feature.auth.SplashScreen
 import com.wakepoint.app.feature.friends.FriendsScreen
 import com.wakepoint.app.feature.home.HomeScreen
+import com.wakepoint.app.feature.place.MyPlacesScreen
+import com.wakepoint.app.feature.place.PlaceEditScreen
 import com.wakepoint.app.feature.profile.ProfileScreen
 
 private object AppRoute {
@@ -82,6 +84,12 @@ private object AppRoute {
     /** 특정 알람의 사운드를 편집할 때는 alarmId 를 전달, 전역 기본 사운드는 생략. */
     fun soundList(alarmId: String? = null): String =
         if (alarmId.isNullOrBlank()) SoundList else "$SoundList?alarmId=$alarmId"
+
+    const val MyPlaces = "my-places"
+
+    /** 장소 등록·편집. 신규는 placeId 생략, 집 슬롯 등록은 home=true. */
+    fun placeEdit(placeId: String? = null, home: Boolean = false): String =
+        "place-edit?placeId=${placeId.orEmpty()}&home=$home"
 }
 
 /**
@@ -255,8 +263,36 @@ fun WakepointApp() {
             composable(MainRoute.Profile.route) {
                 ProfileScreen(
                     onOpenSoundList = { navController.navigate(AppRoute.soundList()) },
+                    onOpenMyPlaces = { navController.navigate(AppRoute.MyPlaces) },
                     onLogout = authViewModel::signOut
                 )
+            }
+            composable(AppRoute.MyPlaces) {
+                MyPlacesScreen(
+                    onBack = { navController.popBackStack() },
+                    onAddPlace = { isHome ->
+                        navController.navigate(AppRoute.placeEdit(home = isHome))
+                    },
+                    onEditPlace = { place ->
+                        navController.navigate(AppRoute.placeEdit(placeId = place.id))
+                    }
+                )
+            }
+            composable(
+                route = "place-edit?placeId={placeId}&home={home}",
+                arguments = listOf(
+                    navArgument("placeId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("home") {
+                        type = NavType.StringType
+                        defaultValue = "false"
+                    }
+                )
+            ) {
+                PlaceEditScreen(onBack = { navController.popBackStack() })
             }
         }
 

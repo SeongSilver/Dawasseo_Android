@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -73,6 +74,7 @@ private val BOTTOM_LIST_CLEARANCE = 120.dp
 @Composable
 fun ProfileScreen(
     onOpenSoundList: () -> Unit,
+    onOpenMyPlaces: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -111,6 +113,7 @@ fun ProfileScreen(
             )
             SettingsGroupCard(
                 onOpenSoundList = onOpenSoundList,
+                onOpenMyPlaces = onOpenMyPlaces,
                 onOpenNotificationSettings = { context.openAppNotificationSettings() },
                 onOpenLocationSettings = { context.openAppDetailsSettings() },
                 onOpenSupport = { context.openSupportEmail(supportEmail, supportSubject, supportUnavailable) }
@@ -318,11 +321,19 @@ private fun StatDivider() {
 @Composable
 private fun SettingsGroupCard(
     onOpenSoundList: () -> Unit,
+    onOpenMyPlaces: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onOpenSupport: () -> Unit
 ) {
     WakepointCard(contentPadding = 0) {
+        // v2 STEP2 (2-1) 마이 진입점: 내 장소 관리
+        SettingsRow(
+            icon = Icons.Rounded.Map,
+            title = "내 장소",
+            onClick = onOpenMyPlaces
+        )
+        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.Rounded.Notifications,
             title = stringResource(R.string.profile_notification),
