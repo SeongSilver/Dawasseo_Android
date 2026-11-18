@@ -11,7 +11,7 @@
   - `com.google.maps.android:maps-compose:6.7.0`은 Kotlin metadata 버전 불일치가 발생했다.
   - Kotlin을 올리기 전까지 Maps Compose는 `6.4.1`을 유지한다.
 - Android resource 파일명은 소문자와 underscore만 안전하다.
-  - 폰트 파일도 `pretendard_regular.otf`처럼 소문자 이름을 사용한다.
+  - 폰트 파일을 추가할 때도 소문자 이름을 사용한다.
 
 ## 환경 변수와 키
 
@@ -55,8 +55,6 @@
 
 ## 디자인과 리소스
 
-- 앱 폰트는 Pretendard를 기본으로 사용한다.
-- Accent color는 `#0066cc` 하나만 사용한다.
-- font weight `500`은 쓰지 않고 `300`, `400`, `600` 중심으로 맞춘다.
+- 디자인 요소는 모두 제거된 상태다. 새 토큰은 `core/design/Theme.kt`와 `Component.kt`에만 추가한다.
+- 화면별 디자인 요구사항은 `docs/DESIGN_SPEC.md`를 먼저 읽는다.
 - UI 문자열은 가능한 `strings.xml`로 분리한다.
-

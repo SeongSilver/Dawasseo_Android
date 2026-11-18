@@ -68,7 +68,7 @@ app/
       WakepointApplication.kt
       core/
         data/                 # DataStore, Room, repository helpers
-        design/               # Compose theme, colors, typography, components
+        design/               # 테마 주입 지점, 공통 컴포넌트 API (디자인 미적용)
         location/             # 거리 계산, 위치 정책
         notification/         # 알람 채널, FCM 헬퍼
         supabase/             # Supabase 클라이언트
@@ -135,7 +135,8 @@ docs/
 - [SETUP.md](./docs/SETUP.md) — 개발 환경 세팅 및 키 설정
 - [SCHEMA.md](./docs/SCHEMA.md) — Supabase DB 스키마 및 RLS
 - [API.md](./docs/API.md) — API 연동 흐름
-- [DESIGN.md](./docs/DESIGN.md) — 디자인 시스템
+- [DESIGN.md](./docs/DESIGN.md) — 디자인 시스템 (미확정)
+- [DESIGN_SPEC.md](./docs/DESIGN_SPEC.md) — 화면별 디자인 요구사항
 - [IMPLEMENTATION_NOTES.md](./docs/IMPLEMENTATION_NOTES.md) — 구현 전 확인 사항
 
 ---
