@@ -7,36 +7,25 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
+import com.wakepoint.app.core.design.WakepointLogo
 import com.wakepoint.app.core.design.WakepointTheme
 import com.wakepoint.app.core.notification.AlarmAlertContract
 import com.wakepoint.app.core.notification.AlarmVibrationController
@@ -105,50 +94,33 @@ private fun AlarmAlertScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
-            .padding(24.dp),
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = WakepointCanvas,
-            shadowElevation = 8.dp
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.logo_square),
-                    contentDescription = stringResource(R.string.app_name),
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(76.dp)
-                )
+                WakepointLogo()
                 Text(
                     text = stringResource(R.string.alarm_alert_arrived),
-                    color = WakepointInk,
-                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = locationName,
-                    color = WakepointInk,
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
                 if (targetAddress.isNotBlank() && targetAddress != locationName) {
                     Text(
                         text = targetAddress,
-                        color = WakepointMuted,
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
                 WakepointButton(
                     text = stringResource(R.string.alarm_alert_stop),
                     onClick = onStop,

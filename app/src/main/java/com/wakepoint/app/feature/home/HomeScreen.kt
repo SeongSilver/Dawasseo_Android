@@ -8,19 +8,16 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.speech.RecognizerIntent
 import android.widget.Toast
-import androidx.compose.foundation.background
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GpsFixed
@@ -28,39 +25,35 @@ import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -68,17 +61,14 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.android.gms.tasks.CancellationTokenSource
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
+import com.wakepoint.app.core.design.ButtonRow
+import com.wakepoint.app.core.design.MessageText
 import com.wakepoint.app.core.design.RadiusSelector
+import com.wakepoint.app.core.design.SectionLabel
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
-import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.location.PlaceSearchResult
@@ -180,11 +170,7 @@ fun HomeScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WakepointParchment)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         WakepointGoogleMap(
             cameraPositionState = cameraPositionState,
             selectedTarget = selectedTarget,
@@ -207,7 +193,8 @@ fun HomeScreen(
         )
         Box(
             modifier = Modifier
-                .padding(horizontal = 28.dp, vertical = 28.dp)
+                .align(Alignment.TopCenter)
+                .padding(16.dp)
                 .fillMaxWidth()
         ) {
             HomeSearchBar(
@@ -234,13 +221,10 @@ fun HomeScreen(
                     permissionLauncher.launch(FOREGROUND_LOCATION_PERMISSIONS)
                 }
             },
-            shape = RoundedCornerShape(14.dp),
-            containerColor = WakepointCanvas,
-            contentColor = WakepointInk,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 96.dp)
-                .size(54.dp)
+                .padding(16.dp)
+                .padding(bottom = 64.dp)
         ) {
             Icon(imageVector = Icons.Rounded.GpsFixed, contentDescription = null)
         }
@@ -254,7 +238,7 @@ fun HomeScreen(
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .padding(16.dp)
                 .fillMaxWidth()
         )
     }
@@ -263,8 +247,7 @@ fun HomeScreen(
         ModalBottomSheet(
             onDismissRequest = { showAlarmSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() }
         ) {
             AlarmSetupSheet(
                 title = stringResource(R.string.alarm_setup_title),
@@ -298,8 +281,7 @@ fun HomeScreen(
         ModalBottomSheet(
             onDismissRequest = { showSearchSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() }
         ) {
             PlaceSearchSheet(
                 query = uiState.searchQuery,
@@ -356,8 +338,7 @@ private fun WakepointGoogleMap(
     ) {
         Marker(
             state = MarkerState(position = selectedTarget),
-            title = stringResource(R.string.home_map_default_marker),
-            icon = BitmapDescriptorFactory.fromResource(R.drawable.logo_point)
+            title = stringResource(R.string.home_map_default_marker)
         )
     }
 }
@@ -383,20 +364,17 @@ fun AlarmSetupSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = title,
-            color = WakepointPrimary,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         if (showAddressSearch) {
-            SheetSectionLabel(text = stringResource(R.string.alarm_address_search))
+            SectionLabel(text = stringResource(R.string.alarm_address_search))
             WakepointTextField(
                 value = "",
                 onValueChange = {},
@@ -405,14 +383,14 @@ fun AlarmSetupSheet(
             )
         }
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_location_alias))
+        SectionLabel(text = stringResource(R.string.alarm_location_alias))
         WakepointTextField(
             value = label,
             onValueChange = onLabelChange,
             placeholder = stringResource(R.string.alarm_default_label)
         )
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_selected_target))
+        SectionLabel(text = stringResource(R.string.alarm_selected_target))
         WakepointTextField(
             value = targetAddress.ifBlank {
                 stringResource(R.string.alarm_selected_target_unknown)
@@ -422,38 +400,27 @@ fun AlarmSetupSheet(
             readOnly = true
         )
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_radius_setting))
+        SectionLabel(text = stringResource(R.string.alarm_radius_setting))
         RadiusSelector(
             options = ALARM_RADIUS_OPTIONS,
             selectedOption = radius,
             onSelected = onRadiusChange
         )
 
-        SheetSectionLabel(text = stringResource(R.string.alarm_sound_setting))
+        SectionLabel(text = stringResource(R.string.alarm_sound_setting))
         SoundOptionRow(
             title = stringResource(R.string.alarm_default_sound),
             icon = Icons.Rounded.Notifications,
             trailing = {
-                Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = null,
-                    tint = WakepointMuted
-                )
+                Icon(imageVector = Icons.Rounded.ChevronRight, contentDescription = null)
             }
         )
 
         if (noticeMessage != null) {
-            Text(
-                text = noticeMessage,
-                color = WakepointMuted,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            MessageText(text = noticeMessage)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        ButtonRow {
             WakepointSecondaryButton(
                 text = stringResource(R.string.alarm_cancel),
                 onClick = onDismiss,
@@ -469,10 +436,9 @@ fun AlarmSetupSheet(
         }
 
         if (errorMessage != null) {
-            Text(
+            MessageText(
                 text = errorMessage,
-                color = WakepointMuted,
-                style = MaterialTheme.typography.bodyMedium,
+                isError = true,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
@@ -493,15 +459,12 @@ private fun PlaceSearchSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = stringResource(R.string.place_search_title),
-            color = WakepointPrimary,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         WakepointTextField(
@@ -525,11 +488,7 @@ private fun PlaceSearchSheet(
         )
 
         if (errorMessage != null) {
-            Text(
-                text = errorMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted
-            )
+            MessageText(text = errorMessage, isError = true)
         }
 
         results.forEach { place ->
@@ -537,26 +496,14 @@ private fun PlaceSearchSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onSelectPlace(place) }
-                    .padding(vertical = 10.dp),
+                    .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.LocationOn,
-                    contentDescription = null,
-                    tint = WakepointPrimary
-                )
+                Icon(imageVector = Icons.Rounded.LocationOn, contentDescription = null)
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = place.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WakepointInk
-                    )
-                    Text(
-                        text = place.address,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointMuted
-                    )
+                    Text(text = place.name, style = MaterialTheme.typography.bodyLarge)
+                    Text(text = place.address, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -570,53 +517,28 @@ private fun HomeSearchBar(
     onClick: () -> Unit,
     onMicClick: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = Color.White,
-        tonalElevation = 0.dp,
-        shadowElevation = 2.dp
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = onClick)
-                .padding(start = 16.dp, end = 8.dp),
+                .fillMaxWidth()
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = null,
-                tint = WakepointMuted
-            )
+            Icon(imageVector = Icons.Rounded.Search, contentDescription = null)
             Text(
                 text = placeholder,
-                color = WakepointMuted,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
             IconButton(onClick = onMicClick) {
-                Icon(
-                    imageVector = Icons.Rounded.Mic,
-                    contentDescription = micContentDescription,
-                    tint = WakepointMuted
-                )
+                Icon(imageVector = Icons.Rounded.Mic, contentDescription = micContentDescription)
             }
         }
     }
-}
-
-@Composable
-private fun SheetSectionLabel(text: String) {
-    Text(
-        text = text,
-        color = WakepointInk,
-        style = MaterialTheme.typography.labelLarge,
-        modifier = Modifier.padding(top = 4.dp)
-    )
 }
 
 private val FOREGROUND_LOCATION_PERMISSIONS = arrayOf(
@@ -684,5 +606,3 @@ private fun Context.createSpeechSearchIntent(): Intent {
         putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.place_voice_search_prompt))
     }
 }
-
-

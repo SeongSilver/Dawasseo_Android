@@ -2,9 +2,8 @@ package com.wakepoint.app.feature.auth
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -32,20 +30,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.MessageText
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLogo
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointTextField
 
 @Composable
@@ -53,22 +46,15 @@ fun SplashScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
-            .padding(horizontal = 24.dp, vertical = 72.dp),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.weight(1f))
-        Image(
-            painter = painterResource(R.drawable.logo_square),
-            contentDescription = stringResource(R.string.app_name),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.size(128.dp)
-        )
-        Spacer(modifier = Modifier.weight(1.5f))
+        WakepointLogo()
+        Spacer(modifier = Modifier.weight(1f))
         Text(
             text = stringResource(R.string.splash_tagline),
-            style = MaterialTheme.typography.bodyMedium,
-            color = WakepointInk
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }
@@ -84,25 +70,19 @@ fun AuthScreen(
 ) {
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WakepointParchment)
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         AuthTopBar()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(top = 88.dp, bottom = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             WakepointLogo(horizontal = false)
             Text(
                 text = stringResource(R.string.auth_intro),
-                style = MaterialTheme.typography.bodyLarge,
-                color = WakepointInk,
-                modifier = Modifier.padding(top = 28.dp, bottom = 28.dp)
+                style = MaterialTheme.typography.bodyLarge
             )
             WakepointTextField(
                 value = uiState.loginEmail,
@@ -110,7 +90,6 @@ fun AuthScreen(
                 placeholder = stringResource(R.string.field_email),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
-            Spacer(modifier = Modifier.height(8.dp))
             WakepointTextField(
                 value = uiState.loginPassword,
                 onValueChange = onLoginPasswordChange,
@@ -119,7 +98,6 @@ fun AuthScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
             AuthMessage(uiState = uiState)
-            Spacer(modifier = Modifier.height(12.dp))
             WakepointButton(
                 text = if (uiState.isSubmitting) {
                     stringResource(R.string.auth_processing)
@@ -130,7 +108,6 @@ fun AuthScreen(
                 enabled = !uiState.isSubmitting,
                 onClick = onSignIn
             )
-            Spacer(modifier = Modifier.height(12.dp))
             KakaoLoginButton(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isSubmitting,
@@ -139,17 +116,14 @@ fun AuthScreen(
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
             )
-            Spacer(modifier = Modifier.height(28.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
                     text = stringResource(R.string.auth_forgot_password),
-                    color = WakepointInk,
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(text = "|", color = WakepointMuted)
+                Text(text = "|")
                 Text(
                     text = stringResource(R.string.auth_signup),
-                    color = WakepointInk,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.clickable(onClick = onSignUp)
                 )
@@ -158,15 +132,11 @@ fun AuthScreen(
             Text(
                 text = stringResource(R.string.auth_terms),
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(72.dp))
             Text(
                 text = stringResource(R.string.auth_copyright),
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -180,7 +150,6 @@ private fun KakaoLoginButton(
 ) {
     Box(
         modifier = modifier
-            .height(45.dp)
             .alpha(if (enabled) 1f else 0.5f)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -204,17 +173,13 @@ fun SignUpScreen(
     onSubmit: () -> Unit,
     onBack: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WakepointParchment)
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         AuthTopBar(title = stringResource(R.string.signup_title), onBack = onBack)
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SignUpField(
                 value = uiState.signUpName,
@@ -246,7 +211,6 @@ fun SignUpScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
             AuthMessage(uiState = uiState)
-            Spacer(modifier = Modifier.height(12.dp))
             WakepointButton(
                 text = if (uiState.isSubmitting) {
                     stringResource(R.string.auth_processing)
@@ -267,10 +231,7 @@ private fun AuthTopBar(
     onBack: () -> Unit = {}
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(WakepointParchment),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
@@ -279,8 +240,7 @@ private fun AuthTopBar(
         if (title != null) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = WakepointInk
+                style = MaterialTheme.typography.titleLarge
             )
         }
     }
@@ -290,14 +250,10 @@ private fun AuthTopBar(
 private fun AuthMessage(uiState: AuthUiState) {
     val message = uiState.errorMessage ?: uiState.infoMessage
     if (message != null) {
-        Text(
+        MessageText(
             text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (uiState.errorMessage != null) WakepointDanger else WakepointMuted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            textAlign = TextAlign.Center
+            isError = uiState.errorMessage != null,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -312,7 +268,7 @@ private fun SignUpField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, color = WakepointInk)
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
         WakepointTextField(
             value = value,
             onValueChange = onValueChange,

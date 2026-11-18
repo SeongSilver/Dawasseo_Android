@@ -1,28 +1,14 @@
 package com.wakepoint.app.core.design
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
-private val WakepointLightScheme = lightColorScheme(
-    primary = WakepointPrimary,
-    onPrimary = Color.White,
-    secondary = WakepointSuccess,
-    error = WakepointDanger,
-    background = WakepointCanvas,
-    onBackground = WakepointInk,
-    surface = WakepointCanvas,
-    onSurface = WakepointInk,
-    surfaceVariant = WakepointParchment,
-    outline = WakepointBorder
-)
-
+/**
+ * 앱 테마 주입 지점.
+ * 색상, 타이포그래피, 모양 토큰은 모두 제거된 상태다.
+ * 새 디자인은 여기에 colorScheme, typography, shapes를 넘긴다. docs/DESIGN_SPEC.md 참조.
+ */
 @Composable
 fun WakepointTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = WakepointLightScheme,
-        typography = WakepointTypography,
-        content = content
-    )
+    MaterialTheme(content = content)
 }

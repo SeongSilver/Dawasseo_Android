@@ -10,7 +10,6 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +26,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.wakepoint.app.R
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
@@ -86,10 +81,9 @@ fun WakepointApp() {
     }
 
     Scaffold(
-        containerColor = WakepointCanvas,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(containerColor = WakepointCanvas) {
+                NavigationBar {
                     mainRoutes.forEach { item ->
                         val label = stringResource(item.labelResId)
                         NavigationBarItem(
@@ -109,16 +103,7 @@ fun WakepointApp() {
                                     imageVector = item.icon,
                                     contentDescription = label
                                 )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = WakepointPrimary,
-                                selectedTextColor = WakepointPrimary,
-                                unselectedIconColor = WakepointInk,
-                                unselectedTextColor = WakepointInk,
-                                indicatorColor = WakepointCanvas,
-                                disabledIconColor = WakepointMuted,
-                                disabledTextColor = WakepointMuted
-                            )
+                            }
                         )
                     }
                 }

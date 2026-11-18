@@ -1,22 +1,15 @@
 package com.wakepoint.app.feature.friends
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
@@ -27,14 +20,14 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -46,24 +39,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
+import com.wakepoint.app.core.design.ButtonRow
+import com.wakepoint.app.core.design.MessageText
+import com.wakepoint.app.core.design.SectionLabel
 import com.wakepoint.app.core.design.StatusPill
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointConfirmDialog
 import com.wakepoint.app.core.design.WakepointHeader
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
-import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.friend.AlarmPermissionRequest
@@ -95,11 +84,7 @@ fun FriendsScreen(
     var showSendAlarm by remember { mutableStateOf(false) }
     var confirmTarget by remember { mutableStateOf<FriendConfirmTarget?>(null) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WakepointParchment)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column {
             WakepointHeader(
                 action = {
@@ -116,9 +101,8 @@ fun FriendsScreen(
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 WakepointTextField(
                     value = "",
@@ -130,11 +114,7 @@ fun FriendsScreen(
                 )
 
                 uiState.errorMessage?.let { message ->
-                    Text(
-                        text = message,
-                        color = WakepointMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    MessageText(text = message)
                 }
 
                 val hasFriendContent = uiState.acceptedFriends.isNotEmpty() ||
@@ -147,7 +127,7 @@ fun FriendsScreen(
                     EmptyFriendsCard(onAddFriend = { showSearchSheet = true })
                 } else {
                     if (uiState.receivedFriendRequests.isNotEmpty()) {
-                        SectionTitle(text = "받은 친구 요청")
+                        SectionLabel(text = "받은 친구 요청")
                         uiState.receivedFriendRequests.forEach { friend ->
                             key("received-${friend.id}") {
                                 FriendRequestCard(
@@ -163,7 +143,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.sentFriendRequests.isNotEmpty()) {
-                        SectionTitle(text = "보낸 친구 요청")
+                        SectionLabel(text = "보낸 친구 요청")
                         uiState.sentFriendRequests.forEach { friend ->
                             key("sent-${friend.id}") {
                                 FriendRequestCard(
@@ -179,7 +159,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.receivedAlarmPermissionRequests.isNotEmpty()) {
-                        SectionTitle(text = "받은 알람 권한 요청")
+                        SectionLabel(text = "받은 알람 권한 요청")
                         uiState.receivedAlarmPermissionRequests.forEach { request ->
                             key("permission-received-${request.id}") {
                                 AlarmPermissionRequestCard(
@@ -194,7 +174,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.sentAlarmPermissionRequests.isNotEmpty()) {
-                        SectionTitle(text = "보낸 알람 권한 요청")
+                        SectionLabel(text = "보낸 알람 권한 요청")
                         uiState.sentAlarmPermissionRequests.forEach { request ->
                             key("permission-sent-${request.id}") {
                                 AlarmPermissionRequestCard(
@@ -209,7 +189,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.acceptedFriends.isNotEmpty()) {
-                        SectionTitle(text = stringResource(R.string.friends_section))
+                        SectionLabel(text = stringResource(R.string.friends_section))
                     }
                     uiState.acceptedFriends.forEach { friend ->
                         key(friend.id) {
@@ -238,32 +218,21 @@ fun FriendsScreen(
             }
         }
 
-        FloatingActionButton(
+        ExtendedFloatingActionButton(
             onClick = { showSearchSheet = true },
-            containerColor = WakepointPrimary,
-            contentColor = Color.White,
-            shape = CircleShape,
+            icon = { Icon(imageVector = Icons.Rounded.PersonAdd, contentDescription = null) },
+            text = { Text(text = stringResource(R.string.friends_add)) },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 28.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(imageVector = Icons.Rounded.PersonAdd, contentDescription = null)
-                Text(text = stringResource(R.string.friends_add), style = MaterialTheme.typography.labelLarge)
-            }
-        }
+                .padding(16.dp)
+        )
     }
 
     if (showSearchSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSearchSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() }
         ) {
             FriendSearchSheet(
                 uiState = uiState,
@@ -279,8 +248,7 @@ fun FriendsScreen(
         ModalBottomSheet(
             onDismissRequest = { showSendAlarm = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = 10.dp)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() }
         ) {
             AlarmSetupSheet(
                 title = stringResource(R.string.alarm_send_title),
@@ -325,16 +293,14 @@ fun FriendsScreen(
 @Composable
 private fun EmptyFriendsCard(onAddFriend: () -> Unit) {
     WakepointCard {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
                 text = "아직 친구가 없습니다.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = WakepointInk
+                style = MaterialTheme.typography.bodyLarge
             )
             Text(
                 text = "이메일이나 닉네임으로 친구를 검색해 요청을 보내보세요.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted
+                style = MaterialTheme.typography.bodyMedium
             )
             WakepointButton(
                 text = "친구 검색",
@@ -347,15 +313,6 @@ private fun EmptyFriendsCard(onAddFriend: () -> Unit) {
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = WakepointInk
-    )
-}
-
-@Composable
 private fun FriendRequestCard(
     friend: Friend,
     isIncoming: Boolean,
@@ -365,29 +322,26 @@ private fun FriendRequestCard(
     onCancel: () -> Unit
 ) {
     WakepointCard {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 FriendAvatar(profile = friend.toProfile())
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = friend.nickname,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WakepointInk,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
                         text = friend.email,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointMuted
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 FriendStatusPill(status = FriendStatus.Pending)
             }
             if (isIncoming) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ButtonRow {
                     WakepointButton(
                         text = "수락",
                         enabled = !isUpdating,
@@ -424,10 +378,10 @@ private fun AlarmPermissionRequestCard(
     val isIncoming = request.targetId == currentUserId
     val profile = if (isIncoming) request.requesterProfile else request.targetProfile
     WakepointCard {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (profile != null) {
                     FriendAvatar(profile = profile)
@@ -435,9 +389,7 @@ private fun AlarmPermissionRequestCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = profile?.nickname ?: "알 수 없는 사용자",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WakepointInk,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
                         text = if (isIncoming) {
@@ -445,19 +397,17 @@ private fun AlarmPermissionRequestCard(
                         } else {
                             "상대방 알람 설정 권한 요청 중"
                         },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointMuted
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
                         text = "만료 없음",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointMuted
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 PermissionStatusPill(status = request.status)
             }
             if (isIncoming) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ButtonRow {
                     WakepointButton(
                         text = "수락",
                         enabled = !isUpdating,
@@ -489,26 +439,23 @@ private fun FriendCard(
     onBlock: () -> Unit
 ) {
     WakepointCard(modifier = Modifier.clickable(onClick = onClick)) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 FriendAvatar(profile = friend.toProfile())
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = friend.nickname,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WakepointInk,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
                         text = friend.email,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointMuted
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     PermissionStatusLine(status = friend.permissionStatus)
                 }
@@ -520,12 +467,12 @@ private fun FriendCard(
             }
 
             if (expanded) {
-                HorizontalDivider(color = WakepointParchment)
+                HorizontalDivider()
                 val canSendAlarm = friend.status == FriendStatus.Accepted &&
                     friend.permissionStatus == PermissionStatus.Accepted
                 val canRequestPermission = friend.status == FriendStatus.Accepted &&
                     friend.permissionStatus == PermissionStatus.None
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ButtonRow {
                     WakepointButton(
                         text = stringResource(R.string.friends_send_alarm),
                         icon = Icons.AutoMirrored.Rounded.Send,
@@ -575,17 +522,17 @@ private fun FriendSearchSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 28.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = "친구 검색",
-            style = MaterialTheme.typography.titleLarge,
-            color = WakepointInk,
-            fontWeight = FontWeight.SemiBold
+            style = MaterialTheme.typography.titleLarge
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             WakepointTextField(
                 value = uiState.searchQuery,
                 onValueChange = onQueryChange,
@@ -596,20 +543,15 @@ private fun FriendSearchSheet(
             WakepointButton(
                 text = "검색",
                 enabled = !uiState.isSearching,
-                onClick = onSearch,
-                modifier = Modifier.size(width = 86.dp, height = 56.dp)
+                onClick = onSearch
             )
         }
 
         uiState.searchMessage?.let { message ->
-            Text(
-                text = message,
-                color = WakepointMuted,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            MessageText(text = message)
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             uiState.searchResults.forEach { result ->
                 FriendSearchResultRow(
                     result = result,
@@ -632,41 +574,28 @@ private fun FriendSearchResultRow(
     onSendRequest: () -> Unit
 ) {
     val status = result.existingFriendStatus
-    Surface(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .then(
-                if (selected) {
-                    Modifier.border(1.dp, WakepointPrimary, RoundedCornerShape(12.dp))
-                } else {
-                    Modifier
-                }
-            )
-            .clickable(enabled = status == null, onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        color = if (selected) WakepointPrimary.copy(alpha = 0.06f) else WakepointParchment,
-        border = BorderStroke(1.dp, Color(0xFFE3E5E8))
+            .clickable(enabled = status == null, onClick = onClick)
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             FriendAvatar(profile = result.profile)
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = result.profile.nickname,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = WakepointInk
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
                     text = result.profile.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = WakepointMuted
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
             if (status != null) {
@@ -675,8 +604,7 @@ private fun FriendSearchResultRow(
                 WakepointButton(
                     text = if (requesting) "요청 중" else "요청",
                     enabled = selected && !requesting,
-                    onClick = onSendRequest,
-                    modifier = Modifier.size(width = 82.dp, height = 44.dp)
+                    onClick = onSendRequest
                 )
             }
         }
@@ -692,8 +620,7 @@ private fun PermissionStatusLine(status: PermissionStatus) {
             PermissionStatus.Accepted -> "알람 권한 있음"
             PermissionStatus.Rejected -> "알람 권한 거절됨"
         },
-        style = MaterialTheme.typography.bodyMedium,
-        color = WakepointMuted
+        style = MaterialTheme.typography.bodyMedium
     )
 }
 
@@ -705,13 +632,7 @@ private fun PermissionStatusPill(status: PermissionStatus) {
         PermissionStatus.Accepted -> "승인"
         PermissionStatus.Rejected -> "거절"
     }
-    val color = when (status) {
-        PermissionStatus.None -> WakepointMuted
-        PermissionStatus.Pending -> Color(0xFF8A6D1D)
-        PermissionStatus.Accepted -> WakepointPrimary
-        PermissionStatus.Rejected -> Color(0xFFB3261E)
-    }
-    StatusPill(text = text, color = color)
+    StatusPill(text = text, color = Color.Unspecified)
 }
 
 @Composable
@@ -727,30 +648,19 @@ private fun FriendStatusPill(
         FriendStatus.Rejected -> "거절됨"
         FriendStatus.Blocked -> "차단됨"
     }
-    val color = when (status) {
-        FriendStatus.Accepted -> WakepointPrimary
-        FriendStatus.Pending -> Color(0xFF8A6D1D)
-        FriendStatus.Rejected -> WakepointMuted
-        FriendStatus.Blocked -> Color(0xFFB3261E)
-    }
-    StatusPill(text = text, color = color)
+    StatusPill(text = text, color = Color.Unspecified)
 }
 
 @Composable
 private fun FriendAvatar(profile: UserProfile) {
-    Surface(
-        modifier = Modifier.size(48.dp),
-        shape = CircleShape,
-        color = if (profile.avatarUrl.isNullOrBlank()) Color(0xFFE9EAEC) else Color(0xFFDDE7F8)
+    Box(
+        modifier = Modifier.size(40.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = profile.nickname.take(1).ifBlank { "?" },
-                color = WakepointInk,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        Text(
+            text = profile.nickname.take(1).ifBlank { "?" },
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
 
