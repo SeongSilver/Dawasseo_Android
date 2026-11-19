@@ -1,5 +1,6 @@
 package com.wakepoint.app.data.auth
 
+import com.wakepoint.app.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 
 data class AuthSession(
@@ -30,6 +31,14 @@ interface AuthRepository {
     ): Result<AuthOperationResult>
 
     fun kakaoOAuthUrl(): String
+
+    fun googleOAuthUrl(): String
+
+    suspend fun requestPasswordReset(email: String): Result<Unit>
+
+    suspend fun fetchCurrentProfile(): Result<UserProfile>
+
+    suspend fun updateNickname(nickname: String): Result<UserProfile>
 
     suspend fun completeOAuthSignIn(callbackUri: String): Result<AuthOperationResult>
 

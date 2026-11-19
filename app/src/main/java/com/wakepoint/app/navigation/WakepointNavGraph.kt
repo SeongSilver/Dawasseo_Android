@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -30,17 +32,23 @@ import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
 import com.wakepoint.app.feature.auth.AuthScreen
 import com.wakepoint.app.feature.auth.AuthViewModel
+import com.wakepoint.app.feature.auth.ForgotPasswordScreen
 import com.wakepoint.app.feature.auth.SignUpScreen
 import com.wakepoint.app.feature.auth.SplashScreen
 import com.wakepoint.app.feature.friends.FriendsScreen
 import com.wakepoint.app.feature.home.HomeScreen
 import com.wakepoint.app.feature.profile.ProfileScreen
+import com.wakepoint.app.feature.profile.ProfileViewModel
 
 private object AppRoute {
     const val Splash = "splash"
     const val Auth = "auth"
     const val SignUp = "sign-up"
-    const val SoundList = "sound-list"
+    const val ForgotPassword = "forgot-password"
+    const val SoundListArg = "alarmId"
+    const val SoundList = "sound-list/{$SoundListArg}"
+
+    fun soundList(alarmId: String) = "sound-list/$alarmId"
 }
 
 private enum class MainRoute(
@@ -123,7 +131,17 @@ fun WakepointApp() {
                     onLoginPasswordChange = authViewModel::updateLoginPassword,
                     onSignIn = authViewModel::signIn,
                     onKakaoLogin = authViewModel::kakaoOAuthUrl,
-                    onSignUp = { navController.navigate(AppRoute.SignUp) }
+                    onGoogleLogin = authViewModel::googleOAuthUrl,
+                    onSignUp = { navController.navigate(AppRoute.SignUp) },
+                    onForgotPassword = { navController.navigate(AppRoute.ForgotPassword) }
+                )
+            }
+            composable(AppRoute.ForgotPassword) {
+                ForgotPasswordScreen(
+                    uiState = authUiState,
+                    onEmailChange = authViewModel::updateResetEmail,
+                    onSubmit = authViewModel::requestPasswordReset,
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable(AppRoute.SignUp) {
@@ -137,8 +155,14 @@ fun WakepointApp() {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(AppRoute.SoundList) {
-                SoundListScreen(onBack = { navController.popBackStack() })
+            composable(
+                route = AppRoute.SoundList,
+                arguments = listOf(navArgument(AppRoute.SoundListArg) { type = NavType.StringType })
+            ) { entry ->
+                SoundListScreen(
+                    alarmId = entry.arguments?.getString(AppRoute.SoundListArg).orEmpty(),
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(MainRoute.Home.route) {
                 HomeScreen(
@@ -151,7 +175,7 @@ fun WakepointApp() {
             }
             composable(MainRoute.Alarms.route) {
                 AlarmsScreen(
-                    onOpenSoundList = { navController.navigate(AppRoute.SoundList) },
+                    onOpenSoundList = { alarmId -> navController.navigate(AppRoute.soundList(alarmId)) },
                     onCreateAlarm = {
                         navController.navigate(MainRoute.Home.route) {
                             launchSingleTop = true
@@ -161,8 +185,15 @@ fun WakepointApp() {
             }
             composable(MainRoute.Friends.route) { FriendsScreen() }
             composable(MainRoute.Profile.route) {
+                val profileViewModel: ProfileViewModel = hiltViewModel()
+                val profileUiState by profileViewModel.uiState.collectAsState()
                 ProfileScreen(
-                    email = authUiState.session?.email.orEmpty(),
+                    uiState = profileUiState,
+                    fallbackEmail = authUiState.session?.email.orEmpty(),
+                    onNicknameDraftChange = profileViewModel::updateNicknameDraft,
+                    onStartEditNickname = profileViewModel::startEditingNickname,
+                    onCancelEditNickname = profileViewModel::cancelEditingNickname,
+                    onSaveNickname = profileViewModel::saveNickname,
                     onLogout = authViewModel::signOut
                 )
             }

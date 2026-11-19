@@ -39,6 +39,7 @@ import com.wakepoint.app.R
 import com.wakepoint.app.core.design.MessageText
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointLogo
+import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 
 @Composable
@@ -66,7 +67,9 @@ fun AuthScreen(
     onLoginPasswordChange: (String) -> Unit,
     onSignIn: () -> Unit,
     onKakaoLogin: () -> String?,
-    onSignUp: () -> Unit
+    onGoogleLogin: () -> String?,
+    onSignUp: () -> Unit,
+    onForgotPassword: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -116,10 +119,20 @@ fun AuthScreen(
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
             )
+            WakepointSecondaryButton(
+                text = stringResource(R.string.auth_google_login),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isSubmitting,
+                onClick = {
+                    val url = onGoogleLogin() ?: return@WakepointSecondaryButton
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                }
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
                     text = stringResource(R.string.auth_forgot_password),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable(onClick = onForgotPassword)
                 )
                 Text(text = "|")
                 Text(
@@ -216,6 +229,47 @@ fun SignUpScreen(
                     stringResource(R.string.auth_processing)
                 } else {
                     stringResource(R.string.auth_signup)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isSubmitting,
+                onClick = onSubmit
+            )
+        }
+    }
+}
+
+@Composable
+fun ForgotPasswordScreen(
+    uiState: AuthUiState,
+    onEmailChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onBack: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        AuthTopBar(title = stringResource(R.string.forgot_password_title), onBack = onBack)
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.forgot_password_intro),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            SignUpField(
+                value = uiState.resetEmail,
+                onValueChange = onEmailChange,
+                label = stringResource(R.string.field_email),
+                hint = stringResource(R.string.signup_email_hint),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+            AuthMessage(uiState = uiState)
+            WakepointButton(
+                text = if (uiState.isSubmitting) {
+                    stringResource(R.string.auth_processing)
+                } else {
+                    stringResource(R.string.forgot_password_submit)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isSubmitting,

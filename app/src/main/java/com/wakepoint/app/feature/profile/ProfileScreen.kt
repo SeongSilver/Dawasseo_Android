@@ -12,12 +12,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,15 +28,28 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.MessageText
 import com.wakepoint.app.core.design.WakepointHeader
+import com.wakepoint.app.core.design.WakepointTextField
 
 @Composable
 fun ProfileScreen(
-    email: String,
+    uiState: ProfileUiState,
+    fallbackEmail: String,
+    onNicknameDraftChange: (String) -> Unit,
+    onStartEditNickname: () -> Unit,
+    onCancelEditNickname: () -> Unit,
+    onSaveNickname: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val profileName = stringResource(R.string.profile_name)
-    val profileEmail = email.ifBlank { stringResource(R.string.profile_email) }
+    val profile = uiState.profile
+    val loadingLabel = stringResource(R.string.profile_loading)
+    val unknownName = stringResource(R.string.profile_name_unknown)
+    val unknownEmail = stringResource(R.string.profile_email_unknown)
+    val profileName = profile?.nickname?.ifBlank { null }
+        ?: if (uiState.isLoading) loadingLabel else unknownName
+    val profileEmail = profile?.email?.ifBlank { null }
+        ?: fallbackEmail.ifBlank { unknownEmail }
 
     Column(modifier = Modifier.fillMaxSize()) {
         WakepointHeader()
@@ -61,8 +77,18 @@ fun ProfileScreen(
                 text = profileEmail,
                 style = MaterialTheme.typography.bodyMedium
             )
+            if (!uiState.isEditingNickname) {
+                uiState.errorMessage?.let { message ->
+                    MessageText(text = message, isError = true)
+                }
+            }
         }
         HorizontalDivider()
+        ProfileMenuItem(
+            icon = Icons.Rounded.Edit,
+            text = stringResource(R.string.profile_edit_nickname),
+            onClick = onStartEditNickname
+        )
         ProfileMenuItem(
             icon = Icons.Rounded.Settings,
             text = stringResource(R.string.profile_setting)
@@ -76,6 +102,42 @@ fun ProfileScreen(
             text = stringResource(R.string.profile_logout),
             showChevron = false,
             onClick = onLogout
+        )
+    }
+
+    if (uiState.isEditingNickname) {
+        AlertDialog(
+            onDismissRequest = onCancelEditNickname,
+            title = { Text(text = stringResource(R.string.profile_edit_nickname)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WakepointTextField(
+                        value = uiState.nicknameDraft,
+                        onValueChange = onNicknameDraftChange,
+                        placeholder = stringResource(R.string.profile_nickname_hint),
+                        readOnly = uiState.isSaving
+                    )
+                    uiState.errorMessage?.let { message ->
+                        MessageText(text = message, isError = true)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onSaveNickname, enabled = !uiState.isSaving) {
+                    Text(
+                        text = if (uiState.isSaving) {
+                            stringResource(R.string.auth_processing)
+                        } else {
+                            stringResource(R.string.alarm_save)
+                        }
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancelEditNickname, enabled = !uiState.isSaving) {
+                    Text(text = stringResource(R.string.alarm_cancel))
+                }
+            }
         )
     }
 }

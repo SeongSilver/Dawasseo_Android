@@ -21,6 +21,7 @@ data class AuthUiState(
     val signUpPassword: String = "",
     val signUpPasswordConfirm: String = "",
     val signUpName: String = "",
+    val resetEmail: String = "",
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
     val infoMessage: String? = null
@@ -150,6 +151,49 @@ class AuthViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun updateResetEmail(value: String) {
+        _uiState.update { it.copy(resetEmail = value, errorMessage = null, infoMessage = null) }
+    }
+
+    fun requestPasswordReset() {
+        val email = _uiState.value.resetEmail.trim()
+        if (email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "이메일을 입력해주세요.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true, errorMessage = null, infoMessage = null) }
+            val result = authRepository.requestPasswordReset(email)
+            _uiState.update { current ->
+                result.fold(
+                    onSuccess = {
+                        current.copy(
+                            isSubmitting = false,
+                            infoMessage = "비밀번호 재설정 메일을 보냈습니다. 메일함을 확인해주세요."
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            isSubmitting = false,
+                            errorMessage = error.message ?: "비밀번호 재설정 요청에 실패했습니다."
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun googleOAuthUrl(): String? {
+        return runCatching {
+            authRepository.googleOAuthUrl()
+        }.onFailure { error ->
+            _uiState.update {
+                it.copy(errorMessage = error.message ?: "Google 로그인을 시작하지 못했습니다.")
+            }
+        }.getOrNull()
     }
 
     fun kakaoOAuthUrl(): String? {

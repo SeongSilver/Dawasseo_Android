@@ -3,6 +3,7 @@ package com.wakepoint.app.data.auth
 import android.net.Uri
 import com.wakepoint.app.core.data.preferences.UserPreferencesDataStore
 import com.wakepoint.app.core.supabase.SupabaseConfig
+import com.wakepoint.app.domain.model.UserProfile
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
 @Singleton
@@ -78,6 +80,50 @@ class DefaultAuthRepository @Inject constructor(
             "?provider=kakao&redirect_to=$redirectTo&scopes=$scopes"
     }
 
+    override fun googleOAuthUrl(): String {
+        ensureConfigured()
+        val redirectTo = URLEncoder.encode(OAUTH_REDIRECT_URI, Charsets.UTF_8.name())
+        return "${config.url.trimEnd('/')}/auth/v1/authorize" +
+            "?provider=google&redirect_to=$redirectTo"
+    }
+
+    override suspend fun requestPasswordReset(email: String): Result<Unit> = runCatching {
+        ensureConfigured()
+        val body = JSONObject().put("email", email)
+        postAuth("/auth/v1/recover", body)
+        Unit
+    }
+
+    override suspend fun fetchCurrentProfile(): Result<UserProfile> = runCatching {
+        ensureConfigured()
+        val session = requireValidSession()
+        val rows = requestProfiles(
+            query = "id=eq.${session.userId}&select=$PROFILE_COLUMNS",
+            session = session
+        )
+        rows.firstOrNull()?.toUserProfile()
+            ?: UserProfile(
+                id = session.userId,
+                email = session.email,
+                nickname = session.email.substringBefore("@"),
+                avatarUrl = null,
+                pushToken = null
+            )
+    }
+
+    override suspend fun updateNickname(nickname: String): Result<UserProfile> = runCatching {
+        ensureConfigured()
+        val trimmed = nickname.trim()
+        check(trimmed.isNotBlank()) { "닉네임을 입력해주세요." }
+        val session = requireValidSession()
+        val rows = patchProfile(
+            session = session,
+            body = JSONObject().put("nickname", trimmed)
+        )
+        rows.firstOrNull()?.toUserProfile()
+            ?: error("닉네임 변경 결과를 확인하지 못했습니다.")
+    }
+
     override suspend fun completeOAuthSignIn(
         callbackUri: String
     ): Result<AuthOperationResult> = runCatching {
@@ -89,12 +135,16 @@ class DefaultAuthRepository @Inject constructor(
         }
 
         val accessToken = params["access_token"]
-            ?: error("카카오 로그인 콜백에서 Supabase 세션을 확인하지 못했습니다.")
+            ?: error("소셜 로그인 콜백에서 Supabase 세션을 확인하지 못했습니다.")
         val user = fetchUser(accessToken)
         val userId = user.optString("id").takeIf { it.isNotBlank() }
-            ?: error("카카오 로그인 사용자 정보를 확인하지 못했습니다.")
+            ?: error("소셜 로그인 사용자 정보를 확인하지 못했습니다.")
+        val provider = user.optJSONObject("app_metadata")
+            ?.optString("provider")
+            ?.takeIf { it.isNotBlank() }
+            ?: "oauth"
         val email = user.optString("email").takeIf { it.isNotBlank() }
-            ?: "$userId@kakao.local"
+            ?: "$userId@$provider.local"
         val session = AuthSession(
             userId = userId,
             email = email,
@@ -224,6 +274,69 @@ class DefaultAuthRepository @Inject constructor(
         }
     }
 
+    private suspend fun requestProfiles(
+        query: String,
+        session: AuthSession
+    ): List<JSONObject> = withContext(Dispatchers.IO) {
+        val endpoint = URL("${config.url.trimEnd('/')}/rest/v1/user_profiles?$query")
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer ${session.accessToken}")
+        }
+
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException(parseErrorMessage(responseText))
+        }
+        responseText.toJsonObjects()
+    }
+
+    private suspend fun patchProfile(
+        session: AuthSession,
+        body: JSONObject
+    ): List<JSONObject> = withContext(Dispatchers.IO) {
+        val endpoint = URL(
+            "${config.url.trimEnd('/')}/rest/v1/user_profiles?id=eq.${session.userId}&select=$PROFILE_COLUMNS"
+        )
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "PATCH"
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("apikey", config.anonKey)
+            setRequestProperty("Authorization", "Bearer ${session.accessToken}")
+            setRequestProperty("Prefer", "return=representation")
+        }
+
+        connection.outputStream.use { output ->
+            output.write(body.toString().toByteArray(Charsets.UTF_8))
+        }
+
+        val responseText = connection.readResponseText()
+        if (connection.responseCode !in 200..299) {
+            throw IllegalStateException(parseErrorMessage(responseText))
+        }
+        responseText.toJsonObjects()
+    }
+
+    private fun String.toJsonObjects(): List<JSONObject> {
+        if (isBlank()) return emptyList()
+        val array = JSONArray(this)
+        return List(array.length()) { index -> array.getJSONObject(index) }
+    }
+
+    private fun JSONObject.toUserProfile(): UserProfile = UserProfile(
+        id = optString("id"),
+        email = optString("email"),
+        nickname = optString("nickname"),
+        avatarUrl = optString("avatar_url").takeIf { it.isNotBlank() },
+        pushToken = optString("push_token").takeIf { it.isNotBlank() }
+    )
+
     private suspend fun fetchUser(accessToken: String): JSONObject = withContext(Dispatchers.IO) {
         val endpoint = URL("${config.url.trimEnd('/')}/auth/v1/user")
         val connection = (endpoint.openConnection() as HttpURLConnection).apply {
@@ -329,6 +442,7 @@ class DefaultAuthRepository @Inject constructor(
     companion object {
         const val OAUTH_REDIRECT_URI = "com.wakepoint.app://auth-callback"
         private const val KAKAO_OAUTH_SCOPES = "profile_nickname profile_image"
+        private const val PROFILE_COLUMNS = "id,email,nickname,avatar_url,push_token"
         private const val REFRESH_WINDOW_SECONDS = 300L
     }
 }
