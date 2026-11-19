@@ -9,6 +9,7 @@ import com.wakepoint.app.service.AlarmAlertService
 class AlarmStopReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AlarmVibrationController.stop()
+        AlarmSoundPlayer.stop()
         context.stopService(AlarmAlertService.stopIntent(context))
         val alarmId = intent.getStringExtra(AlarmAlertContract.EXTRA_ALARM_ID)
         if (alarmId != null) {

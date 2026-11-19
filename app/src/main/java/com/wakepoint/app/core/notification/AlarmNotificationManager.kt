@@ -50,7 +50,7 @@ class AlarmNotificationManager(
 
     fun buildTrackingNotification(activeAlarmCount: Int): Notification {
         return NotificationCompat.Builder(context, TRACKING_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_alarm)
             .setContentTitle(context.getString(R.string.location_tracking_title))
             .setContentText(context.getString(R.string.location_tracking_message, activeAlarmCount))
             .setContentIntent(contentIntent())
@@ -66,7 +66,8 @@ class AlarmNotificationManager(
             context = context,
             alarmId = alarm.id,
             label = alarm.label,
-            targetAddress = alarm.targetAddress
+            targetAddress = alarm.targetAddress,
+            soundUri = alarm.soundUri
         )
         startForegroundService(context, intent)
     }
@@ -77,14 +78,14 @@ class AlarmNotificationManager(
         targetAddress: String
     ): Notification {
         val notification = NotificationCompat.Builder(context, ALARM_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_alarm)
             .setContentTitle(context.getString(R.string.alarm_alert_arrived))
             .setContentText(targetAddress.ifBlank { label })
             .setContentIntent(alarmAlertIntent(alarmId, label, targetAddress))
             .setFullScreenIntent(alarmAlertIntent(alarmId, label, targetAddress), true)
             .setDeleteIntent(stopAlarmIntent(alarmId))
             .addAction(
-                R.drawable.ic_launcher,
+                R.drawable.ic_stat_alarm,
                 context.getString(R.string.alarm_alert_stop),
                 stopAlarmIntent(alarmId)
             )
