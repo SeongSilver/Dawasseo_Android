@@ -57,6 +57,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideSoundStorageRepository(
+        repository: com.wakepoint.app.data.sound.DefaultSoundStorageRepository
+    ): com.wakepoint.app.data.sound.SoundStorageRepository = repository
+
+    @Provides
+    @Singleton
     fun provideSupabaseConfig(): SupabaseConfig = SupabaseConfig()
 
     @Provides
