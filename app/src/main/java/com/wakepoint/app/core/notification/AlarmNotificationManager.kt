@@ -43,9 +43,49 @@ class AlarmNotificationManager(
         ).apply {
             description = context.getString(R.string.location_tracking_channel_description)
         }
+        val invitationChannel = NotificationChannel(
+            INVITATION_CHANNEL_ID,
+            context.getString(R.string.invitation_channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = context.getString(R.string.invitation_channel_description)
+        }
         notificationManager.createNotificationChannels(
-            listOf(alarmChannel, trackingChannel)
+            listOf(alarmChannel, trackingChannel, invitationChannel)
         )
+    }
+
+    /**
+     * 친구가 보낸 알람 초대를 알린다. 초대 사실과 별칭만 표시하며
+     * 위치, 도착, 알람 발생 정보는 포함하지 않는다.
+     */
+    fun showInvitationNotification(
+        invitationId: String?,
+        requesterNickname: String,
+        label: String
+    ) {
+        if (!canPostNotifications()) return
+
+        val nickname = requesterNickname.ifBlank {
+            context.getString(R.string.invitation_unknown_requester)
+        }
+        val body = if (label.isBlank()) {
+            context.getString(R.string.invitation_notification_body_no_label)
+        } else {
+            context.getString(R.string.invitation_notification_body, label)
+        }
+        val notification = NotificationCompat.Builder(context, INVITATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_alarm)
+            .setContentTitle(context.getString(R.string.invitation_notification_title, nickname))
+            .setContentText(body)
+            .setContentIntent(contentIntent())
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_SOCIAL)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+        val notificationId = INVITATION_NOTIFICATION_BASE_ID +
+            (invitationId?.hashCode()?.let { it and 0x7FFF } ?: 0)
+        NotificationManagerCompat.from(context).notify(notificationId, notification)
     }
 
     fun buildTrackingNotification(activeAlarmCount: Int): Notification {
@@ -155,5 +195,7 @@ class AlarmNotificationManager(
         const val ALARM_CHANNEL_ID = "arrival_alarm"
         const val TRACKING_CHANNEL_ID = "location_tracking"
         const val TRACKING_NOTIFICATION_ID = 1001
+        const val INVITATION_CHANNEL_ID = "invitations"
+        const val INVITATION_NOTIFICATION_BASE_ID = 3000
     }
 }

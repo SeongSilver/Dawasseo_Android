@@ -124,6 +124,18 @@ class DefaultAuthRepository @Inject constructor(
             ?: error("닉네임 변경 결과를 확인하지 못했습니다.")
     }
 
+    override suspend fun syncPushToken(): Result<Unit> = runCatching {
+        ensureConfigured()
+        val token = preferences.pushToken.first()?.trim().orEmpty()
+        if (token.isBlank()) return@runCatching
+        val session = refreshSessionIfNeeded().getOrNull() ?: return@runCatching
+        patchProfile(
+            session = session,
+            body = JSONObject().put("push_token", token)
+        )
+        Unit
+    }
+
     override suspend fun completeOAuthSignIn(
         callbackUri: String
     ): Result<AuthOperationResult> = runCatching {

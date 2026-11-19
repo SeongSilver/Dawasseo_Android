@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="invitation_channel_name">알람 초대</string>
+    <string name="invitation_channel_description">친구가 보낸 알람 초대 알림</string>
+    <string name="invitation_notification_title">%1$s님이 알람 초대를 보냈습니다</string>
+    <string name="invitation_notification_body">\'%1$s\' 도착 알람 초대를 친구 탭에서 확인하세요</string>
+    <string name="invitation_notification_body_no_label">도착 알람 초대를 친구 탭에서 확인하세요</string>
+    <string name="invitation_unknown_requester">친구</string>
+</resources>

@@ -40,6 +40,12 @@ interface AuthRepository {
 
     suspend fun updateNickname(nickname: String): Result<UserProfile>
 
+    /**
+     * DataStore에 저장된 FCM 토큰을 로그인 사용자의 `user_profiles.push_token`에 반영한다.
+     * 저장된 토큰이나 세션이 없으면 아무것도 하지 않고 성공을 반환한다.
+     */
+    suspend fun syncPushToken(): Result<Unit>
+
     suspend fun completeOAuthSignIn(callbackUri: String): Result<AuthOperationResult>
 
     suspend fun refreshSessionIfNeeded(): Result<AuthSession?>
