@@ -19,7 +19,7 @@
 | 12 | Google 로그인 | done | 2026-11-19 완료. provider=google, 대시보드 설정 별도 |
 | 13 | 프로필 ViewModel + 닉네임 편집 | done | 2026-11-19 완료. ProfileViewModel |
 | 14 | FCM 토큰 서버 업로드 + 수신 알림 표시 | done | 2026-11-19 완료. user_profiles.push_token PATCH, 초대 알림 채널 |
-| 15 | 초대 푸시 발송 Edge Function | done | 2026-11-19 완료. supabase/functions/notify-alarm-invitation, 배포 별도 |
+| 15 | 초대 푸시 발송 Edge Function | done | 2026-11-19 완료. 프로덕션 배포, 시크릿 설정, 호출 확인 |
 | 16 | Firebase google-services 적용 | done | 2026-11-19 완료. google-services.json 배치, 플러그인 4.4.2 적용, 빌드 성공 |
 | 17 | 알람음 Supabase Storage 업로드 | done | 2026-11-19 완료. bucket alarm-sounds 필요, 테스트 3개 |
 | 18 | 전화번호 인증 | blocked | MVP 제외, SMS provider 미정 |
