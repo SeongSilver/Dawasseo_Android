@@ -18,8 +18,8 @@
 | 11 | 비밀번호 찾기 | done | 2026-11-19 완료. /auth/v1/recover |
 | 12 | Google 로그인 | done | 2026-11-19 완료. provider=google, 대시보드 설정 별도 |
 | 13 | 프로필 ViewModel + 닉네임 편집 | done | 2026-11-19 완료. ProfileViewModel |
-| 14 | FCM 토큰 서버 업로드 + 수신 알림 표시 | now | 2026-11-19 시작 |
-| 15 | 초대 푸시 발송 Edge Function | now | 2026-11-19 시작 |
+| 14 | FCM 토큰 서버 업로드 + 수신 알림 표시 | done | 2026-11-19 완료. user_profiles.push_token PATCH, 초대 알림 채널 |
+| 15 | 초대 푸시 발송 Edge Function | done | 2026-11-19 완료. supabase/functions/notify-alarm-invitation, 배포 별도 |
 | 16 | Firebase google-services 적용 | blocked | google-services.json 없음. Firebase 콘솔에서 받아 app/ 에 두면 플러그인 적용 가능 |
 | 17 | 알람음 Supabase Storage 업로드 | done | 2026-11-19 완료. bucket alarm-sounds 필요, 테스트 3개 |
 | 18 | 전화번호 인증 | blocked | MVP 제외, SMS provider 미정 |
@@ -56,9 +56,9 @@
   확인: `assembleDebug` 성공. Supabase 대시보드 Google provider 설정은 별도.
 - [x] **13. 프로필 ViewModel**: `user_profiles`에서 닉네임/이메일을 읽고 닉네임을 수정한다.
   확인: `assembleDebug` 성공.
-- [ ] **14. FCM 토큰 업로드 + 수신 알림**: 로그인 후와 토큰 갱신 시 `user_profiles.push_token`을 갱신한다. 수신한 초대 메시지를 알림으로 표시한다.
+- [x] **14. FCM 토큰 업로드 + 수신 알림**: 로그인 후와 토큰 갱신 시 `user_profiles.push_token`을 갱신한다. 수신한 초대 메시지를 알림으로 표시한다.
   확인: `assembleDebug` 성공.
-- [ ] **15. 초대 푸시 Edge Function**: `supabase/functions/notify-alarm-invitation`에 초대 insert 시 대상 토큰으로 FCM을 보내는 함수를 둔다. 배포는 별도.
+- [x] **15. 초대 푸시 Edge Function**: `supabase/functions/notify-alarm-invitation`에 초대 insert 시 대상 토큰으로 FCM을 보내는 함수를 둔다. 배포는 별도.
   확인: 함수 소스 존재.
 - [ ] **16. google-services 적용**: `google-services.json`과 플러그인 적용.
   확인: 파일 존재, 빌드 성공.
