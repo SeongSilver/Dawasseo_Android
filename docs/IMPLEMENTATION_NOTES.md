@@ -1,6 +1,9 @@
 # IMPLEMENTATION_NOTES.md
 
-Android Studio 초기 프로젝트 구축 전에 문서 간 충돌 또는 구현 시 확인이 필요한 내용을 기록한다.
+구현 중 문서 간 충돌이나 외부 설정이 필요한 미결 사항만 남긴다. 해결된 항목은 삭제한다.
+남은 기능 체크리스트는 `docs/REMAINING.md`를 따른다.
+
+갱신일: 2026-11-19
 
 ## 우선순위 기준
 
@@ -13,38 +16,40 @@ Android Studio 초기 프로젝트 구축 전에 문서 간 충돌 또는 구현
 5. `API.md`
 6. `DESIGN.md`
 
-## 충돌 사항
-
-### 알람 반경 최소값
-
-- DB 제약: `radius_km >= 0.01 and radius_km <= 50`
-- 현재 UI 옵션: 10m, 50m, 100m, 300m, 500m, 1km, 3km, 10km
-- README의 과거 반경 설명은 현재 앱 UI와 다를 수 있다.
-
-결정: 개인기기 테스트 편의를 위해 10m/50m를 허용하고 50km UI 옵션은 제거한다. 기존 데이터 호환을 위해 DB 최대값 50km는 유지한다.
-
-## 애매하거나 확인 필요한 사항
-
-### CBM.md 부재
-
-`AGENTS.md`는 파일 직접 읽기 전에 `CBM.md`를 확인하라고 하지만, 현재 저장소에는 `CBM.md`가 없다. 초기 구축은 사용자가 지정한 6개 문서(`AGENTS.md`, `README.md`, `SETUP.md`, `SCHEMA.md`, `API.md`, `DESIGN.md`)를 기준으로 진행한다.
-
-### 문서 위치
-
-문서의 디렉토리 예시는 `docs/` 아래에 `README.md`, `SETUP.md`, `SCHEMA.md`, `API.md`, `DESIGN.md`가 있는 형태를 보여주지만, 현재 실제 파일은 루트에 존재한다. 초기 프로젝트 구축에서는 현재 루트 문서를 유지하고, Android 프로젝트 파일을 추가한다.
-
-### Supabase Edge Functions 의존성
-
-`API.md`는 `supabase.functions.invoke(...)` 사용 예시를 포함하지만, `SETUP.md`의 Supabase 의존성 예시에는 Functions 모듈이 명시되어 있지 않다. 초기 Gradle 구성 시 Functions 연동을 바로 구현한다면 Supabase Functions 관련 의존성 추가 여부를 확인해야 한다.
+## 외부 설정이 필요한 항목
 
 ### Firebase 구성 파일
 
-FCM을 사용하려면 `app/google-services.json`이 필요하지만, 현재 저장소에는 없다. 초기 프로젝트는 파일이 없어도 빌드 가능한 형태를 우선 고려하거나, google-services 플러그인 적용 시 해당 파일 배치가 필요하다는 안내를 남겨야 한다.
+`app/google-services.json`이 저장소에 없다. FCM 토큰 저장과 수신 핸들러는 구현돼 있으나 Google Services Gradle 플러그인은 파일이 생긴 뒤에 적용한다. 파일이 없어도 빌드는 성공해야 한다.
 
-### Kakao 로그인 토큰
+### Supabase Auth Provider
 
-`API.md`는 Kakao SDK 로그인 후 `idToken`을 Supabase OIDC로 전달하는 흐름을 제시한다. 실제 Kakao OIDC 설정 및 idToken 발급 조건은 Kakao 개발자 콘솔과 Supabase Auth Provider 설정에 따라 달라질 수 있으므로, 초기 구현에서는 인터페이스와 설정 지점만 마련하고 실연동은 별도 검증이 필요하다.
+- Kakao: 브라우저 OAuth 흐름으로 연결돼 있다. Supabase 대시보드의 Kakao provider 설정과 redirect `com.wakepoint.app://auth-callback` 등록이 필요하다.
+- Google: 같은 흐름으로 `provider=google` 버튼이 있다. 대시보드에서 Google provider를 켜고 client id/secret을 넣어야 동작한다.
+- 이메일 확인 정책이 켜져 있으면 회원가입 직후 세션이 없어 홈 대신 안내 문구가 표시된다. 실계정으로 확인되지 않았다.
 
-### 대리 알람 커스텀 사운드 접근
+### Supabase Storage
 
-`SCHEMA.md`는 친구가 대리로 설정한 알람의 사운드는 owner가 접근할 수 있도록 별도 Storage 정책이 필요할 수 있다고 한다. 초기 버전에서는 문서 제안대로 대리 알람은 기본 알람음만 사용하는 방향이 안전하다.
+커스텀 알람음 업로드는 `alarm-sounds` 버킷을 전제로 한다. 버킷과 `{user_id}/` 경로 기준 RLS를 대시보드에서 만들어야 한다. 업로드 실패 시 앱은 로컬 URI만 유지한다.
+
+### 초대 푸시 발송
+
+`supabase/functions/notify-alarm-invitation`은 `alarm_invitations` insert 웹훅으로 배포해야 한다. FCM 서비스 계정 JSON과 service role key를 함수 환경 변수로 넣는다. 앱에는 포함하지 않는다.
+
+### 전화번호 인증
+
+MVP에서 제외했다. SMS provider를 정한 뒤 Edge Function으로 붙인다.
+
+## 설계상 유지하는 결정
+
+### 알람 반경
+
+DB 제약은 `radius_km >= 0.01 and radius_km <= 50`이다. UI 옵션은 10m에서 10km까지이며 50km 옵션은 UI에서만 제거했다. 기존 데이터 호환을 위해 DB 최대값은 유지한다.
+
+### 대리 알람 사운드
+
+친구가 보낸 초대를 수락해 만들어지는 알람은 기본 알람음만 사용한다. 요청자의 커스텀 사운드를 대상자 기기에서 접근하려면 별도 Storage 정책이 필요하므로 보류한다.
+
+### 개인정보 경계
+
+초대 상태(대기, 수락, 거절, 만료, 취소) 외의 어떤 위치, 도착, 알람 발생 정보도 서버, 푸시, 로그에 남기지 않는다. 상세는 `docs/DESTINATION_ALARM_PRIVACY.md`.
