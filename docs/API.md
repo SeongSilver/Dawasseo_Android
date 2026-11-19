@@ -344,3 +344,23 @@ val signedUrl = supabase.storage.from("alarm-sounds")
 | PUSH_TOKEN_NOT_FOUND | FCM 토큰 없음 | 알림 권한 확인 |
 | KAKAO_LOGIN_CANCELED | 카카오 로그인 취소 | 재시도 |
 
+
+---
+
+## 푸시 알림
+
+### 토큰 업로드 (앱)
+
+- FCM 토큰은 `UserPreferencesDataStore`에 저장되고, 로그인 세션이 생길 때마다 `AuthRepository.syncPushToken()`이 `user_profiles.push_token`을 PATCH한다.
+- 토큰 갱신(`onNewToken`) 시에도 같은 메서드로 즉시 반영한다.
+- `google-services.json`이 없는 빌드에서는 Firebase 초기화 실패를 조용히 건너뛴다.
+
+### 초대 알림 발송 (서버)
+
+- `supabase/functions/notify-alarm-invitation`: `alarm_invitations` INSERT 웹훅으로 호출되어 대상의 `push_token`으로 FCM HTTP v1 data 메시지를 보낸다.
+- 페이로드: `type=alarm_invitation`, `invitation_id`, `requester_nickname`, `label`.
+- 위치, 도착, 알람 발생 정보는 어떤 경로로도 보내지 않는다 (`docs/DESTINATION_ALARM_PRIVACY.md`).
+
+### 초대 알림 수신 (앱)
+
+- `WakepointFirebaseMessagingService.onMessageReceived`가 `type=alarm_invitation`이면 `invitations` 채널로 알림을 표시하고, 탭하면 앱을 연다.
