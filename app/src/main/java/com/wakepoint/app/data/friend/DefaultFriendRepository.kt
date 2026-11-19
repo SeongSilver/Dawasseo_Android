@@ -5,7 +5,9 @@ import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.friend.local.FriendDao
 import com.wakepoint.app.data.friend.local.toDomain
 import com.wakepoint.app.data.friend.local.toEntity
+import com.wakepoint.app.domain.model.AlarmInvitation
 import com.wakepoint.app.domain.model.Friend
+import com.wakepoint.app.domain.model.InvitationStatus
 import com.wakepoint.app.domain.model.FriendStatus
 import com.wakepoint.app.domain.model.PermissionStatus
 import com.wakepoint.app.domain.model.UserProfile
@@ -174,6 +176,102 @@ class DefaultFriendRepository @Inject constructor(
 
     override suspend fun rejectAlarmPermission(permissionId: String) {
         updateAlarmPermissionStatus(permissionId, PermissionStatus.Rejected)
+    }
+
+    override suspend fun fetchAlarmInvitations(): List<AlarmInvitation> {
+        val session = authRepository.requireValidSession()
+        val currentUserId = session.userId
+        val rows = executeRemoteRequest(
+            path = "/rest/v1/alarm_invitations?or=(requester_id.eq.$currentUserId,target_id.eq.$currentUserId)&select=*&order=created_at.desc",
+            method = "GET",
+            body = null,
+            accessToken = session.accessToken,
+            prefer = "return=representation"
+        ).toJsonArray()
+        val invitationRows = (0 until rows.length()).map { index -> rows.getJSONObject(index) }
+        val profiles = fetchUserProfiles(
+            userIds = invitationRows
+                .flatMap { listOf(it.optString("requester_id"), it.optString("target_id")) }
+                .filter { it.isNotBlank() }
+                .distinct(),
+            accessToken = session.accessToken
+        ).associateBy { it.id }
+        return invitationRows.map { row ->
+            val requesterId = row.optString("requester_id")
+            val targetId = row.optString("target_id")
+            AlarmInvitation(
+                id = row.optString("id"),
+                requesterId = requesterId,
+                targetId = targetId,
+                label = row.optString("label"),
+                targetAddress = row.optString("target_address"),
+                targetLat = row.optDouble("target_lat", 0.0),
+                targetLng = row.optDouble("target_lng", 0.0),
+                radiusKm = row.optDouble("radius_km", 0.5),
+                status = InvitationStatus.fromValue(row.optString("status")),
+                expiresAt = row.optString("expires_at").takeIf { it.isNotBlank() },
+                createdAt = row.optString("created_at").takeIf { it.isNotBlank() },
+                requesterProfile = profiles[requesterId],
+                targetProfile = profiles[targetId]
+            )
+        }
+    }
+
+    override suspend fun sendAlarmInvitation(
+        targetUserId: String,
+        label: String,
+        targetAddress: String,
+        lat: Double,
+        lng: Double,
+        radiusKm: Double
+    ) {
+        val session = authRepository.requireValidSession()
+        require(targetUserId != session.userId) {
+            "본인에게 알람 초대를 보낼 수 없습니다."
+        }
+        val body = JSONObject()
+            .put("requester_id", session.userId)
+            .put("target_id", targetUserId)
+            .put("label", label)
+            .put("target_address", targetAddress)
+            .put("target_lat", lat)
+            .put("target_lng", lng)
+            .put("radius_km", radiusKm)
+            .put("status", InvitationStatus.Pending.toValue())
+            .put("expires_at", JSONObject.NULL)
+        executeRemoteRequest(
+            path = "/rest/v1/alarm_invitations",
+            method = "POST",
+            body = body,
+            accessToken = session.accessToken,
+            prefer = "return=minimal"
+        )
+    }
+
+    override suspend fun cancelAlarmInvitation(invitationId: String) {
+        updateAlarmInvitationStatus(invitationId, InvitationStatus.Cancelled)
+    }
+
+    override suspend fun acceptAlarmInvitation(invitationId: String) {
+        updateAlarmInvitationStatus(invitationId, InvitationStatus.Accepted)
+    }
+
+    override suspend fun rejectAlarmInvitation(invitationId: String) {
+        updateAlarmInvitationStatus(invitationId, InvitationStatus.Rejected)
+    }
+
+    private suspend fun updateAlarmInvitationStatus(
+        invitationId: String,
+        status: InvitationStatus
+    ) {
+        val session = authRepository.requireValidSession()
+        executeRemoteRequest(
+            path = "/rest/v1/alarm_invitations?id=eq.$invitationId",
+            method = "PATCH",
+            body = JSONObject().put("status", status.toValue()),
+            accessToken = session.accessToken,
+            prefer = "return=minimal"
+        )
     }
 
     private suspend fun updateFriendStatus(

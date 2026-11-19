@@ -1,5 +1,6 @@
 package com.wakepoint.app.data.friend
 
+import com.wakepoint.app.domain.model.AlarmInvitation
 import com.wakepoint.app.domain.model.Friend
 import com.wakepoint.app.domain.model.FriendStatus
 import com.wakepoint.app.domain.model.PermissionStatus
@@ -36,4 +37,18 @@ interface FriendRepository {
     suspend fun requestAlarmPermission(targetUserId: String)
     suspend fun acceptAlarmPermission(permissionId: String)
     suspend fun rejectAlarmPermission(permissionId: String)
+
+    /** 내가 보냈거나 받은 알람 초대를 모두 가져온다. */
+    suspend fun fetchAlarmInvitations(): List<AlarmInvitation>
+    suspend fun sendAlarmInvitation(
+        targetUserId: String,
+        label: String,
+        targetAddress: String,
+        lat: Double,
+        lng: Double,
+        radiusKm: Double
+    )
+    suspend fun cancelAlarmInvitation(invitationId: String)
+    suspend fun acceptAlarmInvitation(invitationId: String)
+    suspend fun rejectAlarmInvitation(invitationId: String)
 }

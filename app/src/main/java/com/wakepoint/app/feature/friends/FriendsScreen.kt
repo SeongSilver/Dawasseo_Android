@@ -31,6 +31,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -40,9 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.ButtonRow
@@ -57,11 +61,13 @@ import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.friend.AlarmPermissionRequest
 import com.wakepoint.app.data.friend.FriendSearchResult
+import com.wakepoint.app.domain.model.AlarmInvitation
 import com.wakepoint.app.domain.model.Friend
 import com.wakepoint.app.domain.model.FriendStatus
+import com.wakepoint.app.domain.model.InvitationStatus
 import com.wakepoint.app.domain.model.PermissionStatus
 import com.wakepoint.app.domain.model.UserProfile
-import com.wakepoint.app.feature.home.AlarmSetupSheet
+import kotlinx.coroutines.delay
 
 private enum class FriendConfirmAction {
     Delete,
@@ -81,15 +87,26 @@ fun FriendsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var expandedFriendId by remember { mutableStateOf<String?>(null) }
     var showSearchSheet by remember { mutableStateOf(false) }
-    var showSendAlarm by remember { mutableStateOf(false) }
     var confirmTarget by remember { mutableStateOf<FriendConfirmTarget?>(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val defaultAlarmLabel = stringResource(R.string.alarm_default_label)
+
+    // 화면이 보이는 동안 친구, 권한, 초대 상태를 주기적으로 다시 불러온다.
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(AUTO_REFRESH_INTERVAL_MS)
+                viewModel.refreshAll()
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             WakepointHeader(
                 action = {
                     Row {
-                        IconButton(onClick = viewModel::refreshFriends) {
+                        IconButton(onClick = viewModel::refreshAll) {
                             Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null)
                         }
                         IconButton(onClick = { showSearchSheet = true }) {
@@ -114,20 +131,54 @@ fun FriendsScreen(
                 )
 
                 uiState.errorMessage?.let { message ->
-                    MessageText(text = message)
+                    MessageText(text = message.resolve())
                 }
 
                 val hasFriendContent = uiState.acceptedFriends.isNotEmpty() ||
                     uiState.receivedFriendRequests.isNotEmpty() ||
                     uiState.sentFriendRequests.isNotEmpty() ||
                     uiState.receivedAlarmPermissionRequests.isNotEmpty() ||
-                    uiState.sentAlarmPermissionRequests.isNotEmpty()
+                    uiState.sentAlarmPermissionRequests.isNotEmpty() ||
+                    uiState.receivedInvitations.isNotEmpty() ||
+                    uiState.sentInvitations.isNotEmpty()
 
                 if (!hasFriendContent) {
                     EmptyFriendsCard(onAddFriend = { showSearchSheet = true })
                 } else {
+                    if (uiState.receivedInvitations.isNotEmpty()) {
+                        SectionLabel(text = stringResource(R.string.friends_section_received_invitations))
+                        uiState.receivedInvitations.forEach { invitation ->
+                            key("invitation-received-${invitation.id}") {
+                                AlarmInvitationCard(
+                                    invitation = invitation,
+                                    isIncoming = true,
+                                    isUpdating = invitation.id in uiState.updatingInvitationIds,
+                                    onAccept = { viewModel.acceptAlarmInvitation(invitation) },
+                                    onReject = { viewModel.rejectAlarmInvitation(invitation.id) },
+                                    onCancel = {}
+                                )
+                            }
+                        }
+                    }
+
+                    if (uiState.sentInvitations.isNotEmpty()) {
+                        SectionLabel(text = stringResource(R.string.friends_section_sent_invitations))
+                        uiState.sentInvitations.forEach { invitation ->
+                            key("invitation-sent-${invitation.id}") {
+                                AlarmInvitationCard(
+                                    invitation = invitation,
+                                    isIncoming = false,
+                                    isUpdating = invitation.id in uiState.updatingInvitationIds,
+                                    onAccept = {},
+                                    onReject = {},
+                                    onCancel = { viewModel.cancelAlarmInvitation(invitation.id) }
+                                )
+                            }
+                        }
+                    }
+
                     if (uiState.receivedFriendRequests.isNotEmpty()) {
-                        SectionLabel(text = "받은 친구 요청")
+                        SectionLabel(text = stringResource(R.string.friends_section_received_requests))
                         uiState.receivedFriendRequests.forEach { friend ->
                             key("received-${friend.id}") {
                                 FriendRequestCard(
@@ -143,7 +194,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.sentFriendRequests.isNotEmpty()) {
-                        SectionLabel(text = "보낸 친구 요청")
+                        SectionLabel(text = stringResource(R.string.friends_section_sent_requests))
                         uiState.sentFriendRequests.forEach { friend ->
                             key("sent-${friend.id}") {
                                 FriendRequestCard(
@@ -159,7 +210,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.receivedAlarmPermissionRequests.isNotEmpty()) {
-                        SectionLabel(text = "받은 알람 권한 요청")
+                        SectionLabel(text = stringResource(R.string.friends_section_received_permissions))
                         uiState.receivedAlarmPermissionRequests.forEach { request ->
                             key("permission-received-${request.id}") {
                                 AlarmPermissionRequestCard(
@@ -174,7 +225,7 @@ fun FriendsScreen(
                     }
 
                     if (uiState.sentAlarmPermissionRequests.isNotEmpty()) {
-                        SectionLabel(text = "보낸 알람 권한 요청")
+                        SectionLabel(text = stringResource(R.string.friends_section_sent_permissions))
                         uiState.sentAlarmPermissionRequests.forEach { request ->
                             key("permission-sent-${request.id}") {
                                 AlarmPermissionRequestCard(
@@ -201,7 +252,7 @@ fun FriendsScreen(
                                 onClick = {
                                     expandedFriendId = if (expandedFriendId == friend.id) null else friend.id
                                 },
-                                onSendAlarm = { showSendAlarm = true },
+                                onSendAlarm = { viewModel.openSendAlarm(friend) },
                                 onRequestAlarmPermission = {
                                     viewModel.requestAlarmPermission(friend.otherUserId(uiState.currentUserId))
                                 },
@@ -244,18 +295,21 @@ fun FriendsScreen(
         }
     }
 
-    if (showSendAlarm) {
+    if (uiState.sendTarget != null) {
         ModalBottomSheet(
-            onDismissRequest = { showSendAlarm = false },
+            onDismissRequest = viewModel::dismissSendAlarm,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle() }
         ) {
-            AlarmSetupSheet(
-                title = stringResource(R.string.alarm_send_title),
-                primaryButton = stringResource(R.string.alarm_send),
-                showAddressSearch = true,
-                onPrimaryClick = { showSendAlarm = false },
-                onDismiss = { showSendAlarm = false }
+            SendAlarmSheet(
+                uiState = uiState,
+                onLabelChange = viewModel::updateSendLabel,
+                onRadiusChange = viewModel::updateSendRadiusOption,
+                onSearchQueryChange = viewModel::updateSendSearchQuery,
+                onSearch = viewModel::searchSendDestination,
+                onSelectPlace = viewModel::selectSendDestination,
+                onSend = { viewModel.sendAlarmInvitation(fallbackLabel = defaultAlarmLabel) },
+                onDismiss = viewModel::dismissSendAlarm
             )
         }
     }
@@ -263,17 +317,19 @@ fun FriendsScreen(
     confirmTarget?.let { target ->
         WakepointConfirmDialog(
             title = when (target.action) {
-                FriendConfirmAction.Delete -> "친구를 삭제하시겠습니까?"
-                FriendConfirmAction.Block -> "친구를 차단하시겠습니까?"
+                FriendConfirmAction.Delete -> stringResource(R.string.friends_delete_confirm_title)
+                FriendConfirmAction.Block -> stringResource(R.string.friends_block_confirm_title)
             },
             message = when (target.action) {
-                FriendConfirmAction.Delete -> "${target.friend.nickname}님과의 친구 관계가 삭제됩니다."
-                FriendConfirmAction.Block -> "${target.friend.nickname}님은 더 이상 친구 목록에 일반 친구로 표시되지 않습니다."
+                FriendConfirmAction.Delete ->
+                    stringResource(R.string.friends_delete_confirm_message, target.friend.nickname)
+                FriendConfirmAction.Block ->
+                    stringResource(R.string.friends_block_confirm_message, target.friend.nickname)
             },
             cancelText = stringResource(R.string.alarm_cancel),
             confirmText = when (target.action) {
                 FriendConfirmAction.Delete -> stringResource(R.string.alarm_delete)
-                FriendConfirmAction.Block -> "차단"
+                FriendConfirmAction.Block -> stringResource(R.string.friends_block)
             },
             onDismiss = { confirmTarget = null },
             onConfirm = {
@@ -295,19 +351,99 @@ private fun EmptyFriendsCard(onAddFriend: () -> Unit) {
     WakepointCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                text = "아직 친구가 없습니다.",
+                text = stringResource(R.string.friends_empty_title),
                 style = MaterialTheme.typography.bodyLarge
             )
             Text(
-                text = "이메일이나 닉네임으로 친구를 검색해 요청을 보내보세요.",
+                text = stringResource(R.string.friends_empty_body),
                 style = MaterialTheme.typography.bodyMedium
             )
             WakepointButton(
-                text = "친구 검색",
+                text = stringResource(R.string.friends_search_action),
                 icon = Icons.Rounded.Search,
                 onClick = onAddFriend,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+}
+
+/**
+ * 알람 초대 카드. 요청자(보낸 쪽)에게는 초대 처리 상태만 보여준다.
+ * 상대의 위치, 도착, 알람 울림 여부는 어떤 형태로도 표시하지 않는다.
+ */
+@Composable
+private fun AlarmInvitationCard(
+    invitation: AlarmInvitation,
+    isIncoming: Boolean,
+    isUpdating: Boolean,
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val counterpart = if (isIncoming) invitation.requesterProfile else invitation.targetProfile
+    val counterpartName = counterpart?.nickname ?: stringResource(R.string.friends_unknown_user)
+    WakepointCard {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (counterpart != null) {
+                    FriendAvatar(profile = counterpart)
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = if (isIncoming) {
+                            stringResource(R.string.invite_incoming_from, counterpartName)
+                        } else {
+                            stringResource(R.string.invite_outgoing_to, counterpartName)
+                        },
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.alarm_list_location_prefix, invitation.label),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (invitation.targetAddress.isNotBlank()) {
+                        Text(
+                            text = invitation.targetAddress,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.alarm_radius_line, radiusKmToOption(invitation.radiusKm)),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                InvitationStatusPill(status = invitation.status)
+            }
+            if (isIncoming) {
+                ButtonRow {
+                    WakepointButton(
+                        text = stringResource(R.string.friends_accept),
+                        enabled = !isUpdating,
+                        onClick = onAccept,
+                        modifier = Modifier.weight(1f)
+                    )
+                    WakepointSecondaryButton(
+                        text = stringResource(R.string.friends_reject),
+                        enabled = !isUpdating,
+                        onClick = onReject,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            } else if (invitation.status == InvitationStatus.Pending) {
+                WakepointSecondaryButton(
+                    text = stringResource(R.string.invite_cancel),
+                    enabled = !isUpdating,
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -343,13 +479,13 @@ private fun FriendRequestCard(
             if (isIncoming) {
                 ButtonRow {
                     WakepointButton(
-                        text = "수락",
+                        text = stringResource(R.string.friends_accept),
                         enabled = !isUpdating,
                         onClick = onAccept,
                         modifier = Modifier.weight(1f)
                     )
                     WakepointSecondaryButton(
-                        text = "거절",
+                        text = stringResource(R.string.friends_reject),
                         enabled = !isUpdating,
                         onClick = onReject,
                         modifier = Modifier.weight(1f)
@@ -357,7 +493,7 @@ private fun FriendRequestCard(
                 }
             } else {
                 WakepointSecondaryButton(
-                    text = "요청 취소",
+                    text = stringResource(R.string.friends_cancel_request),
                     enabled = !isUpdating,
                     onClick = onCancel,
                     modifier = Modifier.fillMaxWidth()
@@ -388,19 +524,19 @@ private fun AlarmPermissionRequestCard(
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = profile?.nickname ?: "알 수 없는 사용자",
+                        text = profile?.nickname ?: stringResource(R.string.friends_unknown_user),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
                         text = if (isIncoming) {
-                            "내 알람을 대신 설정할 권한 요청"
+                            stringResource(R.string.friends_permission_incoming_desc)
                         } else {
-                            "상대방 알람 설정 권한 요청 중"
+                            stringResource(R.string.friends_permission_outgoing_desc)
                         },
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "만료 없음",
+                        text = stringResource(R.string.friends_no_expiry),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -409,13 +545,13 @@ private fun AlarmPermissionRequestCard(
             if (isIncoming) {
                 ButtonRow {
                     WakepointButton(
-                        text = "수락",
+                        text = stringResource(R.string.friends_accept),
                         enabled = !isUpdating,
                         onClick = onAccept,
                         modifier = Modifier.weight(1f)
                     )
                     WakepointSecondaryButton(
-                        text = "거절",
+                        text = stringResource(R.string.friends_reject),
                         enabled = !isUpdating,
                         onClick = onReject,
                         modifier = Modifier.weight(1f)
@@ -481,7 +617,7 @@ private fun FriendCard(
                         modifier = Modifier.weight(1f)
                     )
                     WakepointSecondaryButton(
-                        text = "차단",
+                        text = stringResource(R.string.friends_block),
                         icon = Icons.Rounded.Block,
                         enabled = !isUpdating && friend.status != FriendStatus.Blocked,
                         onClick = onBlock,
@@ -497,9 +633,9 @@ private fun FriendCard(
                 }
                 WakepointSecondaryButton(
                     text = when (friend.permissionStatus) {
-                        PermissionStatus.Accepted -> "권한 있음"
-                        PermissionStatus.Pending -> "권한 대기"
-                        else -> "권한 요청"
+                        PermissionStatus.Accepted -> stringResource(R.string.friends_permission_granted)
+                        PermissionStatus.Pending -> stringResource(R.string.friends_permission_waiting)
+                        else -> stringResource(R.string.friends_permission_request)
                     },
                     icon = Icons.Rounded.Lock,
                     enabled = canRequestPermission && !isUpdating,
@@ -526,7 +662,7 @@ private fun FriendSearchSheet(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "친구 검색",
+            text = stringResource(R.string.friends_search),
             style = MaterialTheme.typography.titleLarge
         )
         Row(
@@ -536,19 +672,19 @@ private fun FriendSearchSheet(
             WakepointTextField(
                 value = uiState.searchQuery,
                 onValueChange = onQueryChange,
-                placeholder = "이메일 또는 닉네임",
+                placeholder = stringResource(R.string.friends_search_placeholder),
                 leadingIcon = Icons.Rounded.Search,
                 modifier = Modifier.weight(1f)
             )
             WakepointButton(
-                text = "검색",
+                text = stringResource(R.string.friends_search_button),
                 enabled = !uiState.isSearching,
                 onClick = onSearch
             )
         }
 
         uiState.searchMessage?.let { message ->
-            MessageText(text = message)
+            MessageText(text = message.resolve())
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -602,7 +738,11 @@ private fun FriendSearchResultRow(
                 FriendStatusPill(status = status)
             } else {
                 WakepointButton(
-                    text = if (requesting) "요청 중" else "요청",
+                    text = if (requesting) {
+                        stringResource(R.string.friends_requesting)
+                    } else {
+                        stringResource(R.string.friends_request)
+                    },
                     enabled = selected && !requesting,
                     onClick = onSendRequest
                 )
@@ -615,10 +755,10 @@ private fun FriendSearchResultRow(
 private fun PermissionStatusLine(status: PermissionStatus) {
     Text(
         text = when (status) {
-            PermissionStatus.None -> "알람 권한 없음"
-            PermissionStatus.Pending -> "알람 권한 요청 중"
-            PermissionStatus.Accepted -> "알람 권한 있음"
-            PermissionStatus.Rejected -> "알람 권한 거절됨"
+            PermissionStatus.None -> stringResource(R.string.friends_permission_line_none)
+            PermissionStatus.Pending -> stringResource(R.string.friends_permission_line_pending)
+            PermissionStatus.Accepted -> stringResource(R.string.friends_permission_line_accepted)
+            PermissionStatus.Rejected -> stringResource(R.string.friends_permission_line_rejected)
         },
         style = MaterialTheme.typography.bodyMedium
     )
@@ -627,10 +767,22 @@ private fun PermissionStatusLine(status: PermissionStatus) {
 @Composable
 private fun PermissionStatusPill(status: PermissionStatus) {
     val text = when (status) {
-        PermissionStatus.None -> "권한 없음"
-        PermissionStatus.Pending -> "대기"
-        PermissionStatus.Accepted -> "승인"
-        PermissionStatus.Rejected -> "거절"
+        PermissionStatus.None -> stringResource(R.string.friends_permission_pill_none)
+        PermissionStatus.Pending -> stringResource(R.string.friends_permission_pill_pending)
+        PermissionStatus.Accepted -> stringResource(R.string.friends_permission_pill_accepted)
+        PermissionStatus.Rejected -> stringResource(R.string.friends_permission_pill_rejected)
+    }
+    StatusPill(text = text, color = Color.Unspecified)
+}
+
+@Composable
+private fun InvitationStatusPill(status: InvitationStatus) {
+    val text = when (status) {
+        InvitationStatus.Pending -> stringResource(R.string.invite_status_pending)
+        InvitationStatus.Accepted -> stringResource(R.string.invite_status_accepted)
+        InvitationStatus.Rejected -> stringResource(R.string.invite_status_rejected)
+        InvitationStatus.Expired -> stringResource(R.string.invite_status_expired)
+        InvitationStatus.Cancelled -> stringResource(R.string.invite_status_cancelled)
     }
     StatusPill(text = text, color = Color.Unspecified)
 }
@@ -643,10 +795,14 @@ private fun FriendStatusPill(
 ) {
     val isOutgoingPending = status == FriendStatus.Pending && currentUserId.isNotBlank() && currentUserId == userId
     val text = when (status) {
-        FriendStatus.Accepted -> "친구"
-        FriendStatus.Pending -> if (isOutgoingPending) "요청 중" else "요청 받음"
-        FriendStatus.Rejected -> "거절됨"
-        FriendStatus.Blocked -> "차단됨"
+        FriendStatus.Accepted -> stringResource(R.string.friends_status_friend)
+        FriendStatus.Pending -> if (isOutgoingPending) {
+            stringResource(R.string.friends_status_outgoing)
+        } else {
+            stringResource(R.string.friends_status_incoming)
+        }
+        FriendStatus.Rejected -> stringResource(R.string.friends_status_rejected)
+        FriendStatus.Blocked -> stringResource(R.string.friends_status_blocked)
     }
     StatusPill(text = text, color = Color.Unspecified)
 }
@@ -672,6 +828,4 @@ private fun Friend.toProfile(): UserProfile = UserProfile(
     pushToken = null
 )
 
-private fun Friend.otherUserId(currentUserId: String): String {
-    return if (friendId == currentUserId) userId else friendId
-}
+private const val AUTO_REFRESH_INTERVAL_MS = 30_000L

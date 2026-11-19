@@ -138,6 +138,46 @@ create table public.alarm_permissions (
 
 ---
 
+## 5. alarm_invitations
+
+친구가 권한 있는 상대에게 목적지 알람을 제안하는 초대. 서버에는 제안한 알람 설정값과 초대 처리 상태만 둔다.
+
+```sql
+create table public.alarm_invitations (
+  id             uuid primary key default gen_random_uuid(),
+  requester_id   uuid not null references public.user_profiles(id) on delete cascade,
+  target_id      uuid not null references public.user_profiles(id) on delete cascade,
+  label          text not null default 'alarm',
+  target_address text,
+  target_lat     double precision not null,
+  target_lng     double precision not null,
+  radius_km      numeric(5,2) not null default 0.5
+                 check (radius_km >= 0.01 and radius_km <= 50),
+  status         text not null default 'pending'
+                 check (status in ('pending', 'accepted', 'rejected', 'expired', 'cancelled')),
+  expires_at     timestamptz,                       -- null = 만료 없음
+  created_at     timestamptz default now(),
+  accepted_at    timestamptz,
+  rejected_at    timestamptz,
+  check (requester_id <> target_id)
+);
+
+create index alarm_invitations_requester_id_idx on public.alarm_invitations(requester_id);
+create index alarm_invitations_target_id_idx on public.alarm_invitations(target_id);
+```
+
+| 컬럼 | 설명 |
+|------|------|
+| requester_id | 초대를 보낸 친구 (A) |
+| target_id | 초대를 받은 사람 (B). 수락 시 B 기기에서만 알람을 만든다 |
+| label / target_* / radius_km | 제안한 알람 설정값. 생성 후 변경 불가 (트리거) |
+| status | pending / accepted / rejected / expired / cancelled. A에게는 이 값만 보여준다 |
+| accepted_at / rejected_at | 상태 전이 시각. 트리거가 자동으로 채운다 |
+
+`alarm_invitations`에는 B의 현재 위치, 도착 여부, 알람 울림 여부, 확인 여부를 저장하지 않는다. 수락 후 알람 실행은 B 기기의 로컬 `alarms`로만 이어진다. 상세 원칙은 `DESTINATION_ALARM_PRIVACY.md`를 따른다.
+
+---
+
 ## RLS 정책
 
 ```sql
@@ -226,6 +266,41 @@ create policy "알람 권한 참여자 삭제"
 -- validate_alarm_permission_update_trigger
 -- requester_id/target_id 변경 방지
 -- pending -> accepted/rejected는 권한 부여 대상(target_id)만 가능
+
+-- alarm_invitations
+alter table public.alarm_invitations enable row level security;
+
+create policy "알람 초대 참여자 조회"
+  on public.alarm_invitations for select
+  using (auth.uid() = requester_id or auth.uid() = target_id);
+
+create policy "권한 있는 친구만 초대 생성"
+  on public.alarm_invitations for insert
+  with check (
+    auth.uid() = requester_id
+    and requester_id <> target_id
+    and status = 'pending'
+    and exists (
+      select 1 from public.alarm_permissions
+      where requester_id = auth.uid()
+        and target_id = alarm_invitations.target_id
+        and status = 'accepted'
+    )
+  );
+
+create policy "알람 초대 참여자 수정"
+  on public.alarm_invitations for update
+  using (auth.uid() = requester_id or auth.uid() = target_id)
+  with check (auth.uid() = requester_id or auth.uid() = target_id);
+
+create policy "알람 초대 요청자 삭제"
+  on public.alarm_invitations for delete
+  using (auth.uid() = requester_id);
+
+-- validate_alarm_invitation_update_trigger
+-- 참여자와 알람 설정값 변경 방지
+-- pending -> accepted/rejected는 대상(target_id)만, pending -> cancelled는 요청자(requester_id)만 가능
+-- accepted_at / rejected_at 자동 기록
 ```
 
 ---

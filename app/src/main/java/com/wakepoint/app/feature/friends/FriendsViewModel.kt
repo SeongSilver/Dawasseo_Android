@@ -1,15 +1,26 @@
 package com.wakepoint.app.feature.friends
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wakepoint.app.R
+import com.wakepoint.app.data.alarm.AlarmRepository
 import com.wakepoint.app.data.auth.AuthRepository
 import com.wakepoint.app.data.friend.AlarmPermissionRequest
 import com.wakepoint.app.data.friend.FriendRepository
 import com.wakepoint.app.data.friend.FriendSearchResult
+import com.wakepoint.app.data.location.KakaoLocalRepository
+import com.wakepoint.app.data.location.PlaceSearchResult
+import com.wakepoint.app.domain.model.Alarm
+import com.wakepoint.app.domain.model.AlarmInvitation
 import com.wakepoint.app.domain.model.Friend
 import com.wakepoint.app.domain.model.FriendStatus
+import com.wakepoint.app.domain.model.InvitationStatus
 import com.wakepoint.app.domain.model.PermissionStatus
+import com.wakepoint.app.domain.model.SoundType
+import com.wakepoint.app.feature.home.DEFAULT_ALARM_RADIUS_OPTION
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,9 +30,23 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** 화면에 보여줄 메시지. 리소스 ID 또는 서버/예외에서 온 텍스트 중 하나를 담는다. */
+data class FriendsMessage(
+    @StringRes val resId: Int? = null,
+    val text: String? = null
+) {
+    companion object {
+        fun of(@StringRes resId: Int) = FriendsMessage(resId = resId)
+        fun of(text: String?, @StringRes fallbackResId: Int): FriendsMessage {
+            return if (text.isNullOrBlank()) FriendsMessage(resId = fallbackResId) else FriendsMessage(text = text)
+        }
+    }
+}
+
 data class FriendsUiState(
     val friends: List<Friend> = emptyList(),
     val alarmPermissionRequests: List<AlarmPermissionRequest> = emptyList(),
+    val alarmInvitations: List<AlarmInvitation> = emptyList(),
     val currentUserId: String = "",
     val searchQuery: String = "",
     val searchResults: List<FriendSearchResult> = emptyList(),
@@ -30,9 +55,20 @@ data class FriendsUiState(
     val isSearching: Boolean = false,
     val updatingFriendIds: Set<String> = emptySet(),
     val updatingPermissionIds: Set<String> = emptySet(),
+    val updatingInvitationIds: Set<String> = emptySet(),
     val requestingUserIds: Set<String> = emptySet(),
-    val errorMessage: String? = null,
-    val searchMessage: String? = null
+    val errorMessage: FriendsMessage? = null,
+    val searchMessage: FriendsMessage? = null,
+    // 알람 보내기 시트
+    val sendTarget: Friend? = null,
+    val sendLabel: String = "",
+    val sendRadiusOption: String = DEFAULT_ALARM_RADIUS_OPTION,
+    val sendSearchQuery: String = "",
+    val sendSearchResults: List<PlaceSearchResult> = emptyList(),
+    val sendDestination: PlaceSearchResult? = null,
+    val isSendSearching: Boolean = false,
+    val isSendingInvitation: Boolean = false,
+    val sendMessage: FriendsMessage? = null
 ) {
     val acceptedFriends: List<Friend> = friends.filter { it.status == FriendStatus.Accepted }
     val receivedFriendRequests: List<Friend> = friends.filter {
@@ -47,12 +83,20 @@ data class FriendsUiState(
     val sentAlarmPermissionRequests: List<AlarmPermissionRequest> = alarmPermissionRequests.filter {
         it.status == PermissionStatus.Pending && it.requesterId == currentUserId
     }
+    val receivedInvitations: List<AlarmInvitation> = alarmInvitations.filter {
+        it.status == InvitationStatus.Pending && it.targetId == currentUserId
+    }
+    val sentInvitations: List<AlarmInvitation> = alarmInvitations.filter {
+        it.requesterId == currentUserId
+    }
 }
 
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
     private val friendRepository: FriendRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val alarmRepository: AlarmRepository,
+    private val kakaoLocalRepository: KakaoLocalRepository
 ) : ViewModel() {
     private val transientState = MutableStateFlow(FriendsUiState())
 
@@ -68,10 +112,11 @@ class FriendsViewModel @Inject constructor(
     )
 
     init {
-        refreshFriends()
+        refreshAll()
     }
 
-    fun refreshFriends() {
+    /** 친구, 권한 요청, 알람 초대를 모두 다시 불러온다. 수동 새로고침과 주기 갱신이 함께 쓴다. */
+    fun refreshAll() {
         viewModelScope.launch {
             transientState.update {
                 it.copy(isRefreshing = true, errorMessage = null)
@@ -79,19 +124,26 @@ class FriendsViewModel @Inject constructor(
             val result = runCatching {
                 val session = authRepository.requireValidSession()
                 friendRepository.refreshFriends()
-                session.userId to friendRepository.fetchAlarmPermissionRequests()
+                RefreshResult(
+                    currentUserId = session.userId,
+                    permissionRequests = friendRepository.fetchAlarmPermissionRequests(),
+                    invitations = friendRepository.fetchAlarmInvitations()
+                )
             }
             transientState.update { current ->
-                val resultValue = result.getOrNull()
+                val value = result.getOrNull()
                 current.copy(
-                    currentUserId = resultValue?.first.orEmpty().ifBlank { current.currentUserId },
-                    alarmPermissionRequests = resultValue?.second ?: current.alarmPermissionRequests,
+                    currentUserId = value?.currentUserId.orEmpty().ifBlank { current.currentUserId },
+                    alarmPermissionRequests = value?.permissionRequests ?: current.alarmPermissionRequests,
+                    alarmInvitations = value?.invitations ?: current.alarmInvitations,
                     isRefreshing = false,
-                    errorMessage = result.exceptionOrNull()?.message
+                    errorMessage = result.exceptionOrNull()?.message?.let { FriendsMessage(text = it) }
                 )
             }
         }
     }
+
+    fun refreshFriends() = refreshAll()
 
     fun updateSearchQuery(value: String) {
         transientState.update {
@@ -110,7 +162,7 @@ class FriendsViewModel @Inject constructor(
                 transientState.update {
                     it.copy(
                         searchResults = emptyList(),
-                        searchMessage = "두 글자 이상 입력해주세요."
+                        searchMessage = FriendsMessage.of(R.string.friends_search_min_length)
                     )
                 }
                 return@launch
@@ -133,13 +185,17 @@ class FriendsViewModel @Inject constructor(
                             searchResults = results,
                             selectedSearchUserId = null,
                             isSearching = false,
-                            searchMessage = if (results.isEmpty()) "검색 결과가 없습니다." else null
+                            searchMessage = if (results.isEmpty()) {
+                                FriendsMessage.of(R.string.friends_search_empty)
+                            } else {
+                                null
+                            }
                         )
                     },
                     onFailure = { error ->
                         current.copy(
                             isSearching = false,
-                            searchMessage = error.message ?: "친구 검색에 실패했습니다."
+                            searchMessage = FriendsMessage.of(error.message, R.string.friends_search_failed)
                         )
                     }
                 )
@@ -174,13 +230,13 @@ class FriendsViewModel @Inject constructor(
                             searchResults = results,
                             requestingUserIds = requestingUserIds,
                             selectedSearchUserId = null,
-                            searchMessage = "친구 요청을 보냈습니다."
+                            searchMessage = FriendsMessage.of(R.string.friends_request_sent)
                         )
                     },
                     onFailure = { error ->
                         current.copy(
                             requestingUserIds = requestingUserIds,
-                            searchMessage = error.message ?: "친구 요청에 실패했습니다."
+                            searchMessage = FriendsMessage.of(error.message, R.string.friends_request_failed)
                         )
                     }
                 )
@@ -236,7 +292,7 @@ class FriendsViewModel @Inject constructor(
                     onFailure = { error ->
                         current.copy(
                             requestingUserIds = requestingUserIds,
-                            errorMessage = error.message ?: "알람 권한 요청에 실패했습니다."
+                            errorMessage = FriendsMessage.of(error.message, R.string.friends_permission_request_failed)
                         )
                     }
                 )
@@ -256,6 +312,199 @@ class FriendsViewModel @Inject constructor(
         }
     }
 
+    // ----- 알람 보내기 시트 -----
+
+    fun openSendAlarm(friend: Friend) {
+        transientState.update {
+            it.copy(
+                sendTarget = friend,
+                sendLabel = "",
+                sendRadiusOption = DEFAULT_ALARM_RADIUS_OPTION,
+                sendSearchQuery = "",
+                sendSearchResults = emptyList(),
+                sendDestination = null,
+                isSendSearching = false,
+                isSendingInvitation = false,
+                sendMessage = null
+            )
+        }
+    }
+
+    fun dismissSendAlarm() {
+        transientState.update { it.copy(sendTarget = null) }
+    }
+
+    fun updateSendLabel(value: String) {
+        transientState.update { it.copy(sendLabel = value) }
+    }
+
+    fun updateSendRadiusOption(value: String) {
+        transientState.update { it.copy(sendRadiusOption = value) }
+    }
+
+    fun updateSendSearchQuery(value: String) {
+        transientState.update { it.copy(sendSearchQuery = value, sendMessage = null) }
+    }
+
+    fun searchSendDestination() {
+        val query = transientState.value.sendSearchQuery.trim()
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            transientState.update { it.copy(isSendSearching = true, sendMessage = null) }
+            val result = kakaoLocalRepository.searchKeyword(query)
+            transientState.update { current ->
+                result.fold(
+                    onSuccess = { places ->
+                        current.copy(
+                            isSendSearching = false,
+                            sendSearchResults = places,
+                            sendMessage = if (places.isEmpty()) {
+                                FriendsMessage.of(R.string.friends_search_empty)
+                            } else {
+                                null
+                            }
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            isSendSearching = false,
+                            sendMessage = FriendsMessage.of(error.message, R.string.invite_search_failed)
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun selectSendDestination(place: PlaceSearchResult) {
+        transientState.update {
+            it.copy(
+                sendDestination = place,
+                sendSearchResults = emptyList(),
+                sendMessage = null
+            )
+        }
+    }
+
+    fun sendAlarmInvitation(fallbackLabel: String) {
+        val state = transientState.value
+        val target = state.sendTarget ?: return
+        val destination = state.sendDestination
+        if (destination == null) {
+            transientState.update { it.copy(sendMessage = FriendsMessage.of(R.string.invite_select_destination)) }
+            return
+        }
+        viewModelScope.launch {
+            transientState.update { it.copy(isSendingInvitation = true, sendMessage = null) }
+            val result = runCatching {
+                friendRepository.sendAlarmInvitation(
+                    targetUserId = target.otherUserId(state.currentUserId),
+                    label = state.sendLabel.trim().ifBlank { fallbackLabel },
+                    targetAddress = destination.address.ifBlank { destination.name },
+                    lat = destination.lat,
+                    lng = destination.lng,
+                    radiusKm = radiusOptionToKm(state.sendRadiusOption)
+                )
+                friendRepository.fetchAlarmInvitations()
+            }
+            transientState.update { current ->
+                result.fold(
+                    onSuccess = { invitations ->
+                        current.copy(
+                            isSendingInvitation = false,
+                            sendTarget = null,
+                            alarmInvitations = invitations,
+                            errorMessage = FriendsMessage.of(R.string.invite_sent)
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            isSendingInvitation = false,
+                            sendMessage = FriendsMessage.of(error.message, R.string.invite_send_failed)
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    // ----- 초대 처리 -----
+
+    fun cancelAlarmInvitation(invitationId: String) {
+        runInvitationAction(invitationId) {
+            friendRepository.cancelAlarmInvitation(invitationId)
+        }
+    }
+
+    fun rejectAlarmInvitation(invitationId: String) {
+        runInvitationAction(invitationId) {
+            friendRepository.rejectAlarmInvitation(invitationId)
+        }
+    }
+
+    /**
+     * 초대를 수락하고 내 기기에 알람을 만든다.
+     * 알람의 소유자는 나, 생성자는 요청자다. 이후 위치 판단과 알람 실행은 내 기기에서만 일어난다.
+     */
+    fun acceptAlarmInvitation(invitation: AlarmInvitation) {
+        runInvitationAction(invitation.id, successMessageResId = R.string.invite_accepted) {
+            val session = authRepository.requireValidSession()
+            friendRepository.acceptAlarmInvitation(invitation.id)
+            alarmRepository.saveAlarm(
+                Alarm(
+                    id = UUID.randomUUID().toString(),
+                    ownerId = session.userId,
+                    createdBy = invitation.requesterId,
+                    label = invitation.label,
+                    targetLat = invitation.targetLat,
+                    targetLng = invitation.targetLng,
+                    targetAddress = invitation.targetAddress,
+                    radiusKm = invitation.radiusKm,
+                    isActive = true,
+                    soundType = SoundType.Default,
+                    soundUri = null
+                )
+            )
+        }
+    }
+
+    private fun runInvitationAction(
+        invitationId: String,
+        @StringRes successMessageResId: Int? = null,
+        action: suspend () -> Unit
+    ) {
+        viewModelScope.launch {
+            transientState.update {
+                it.copy(
+                    updatingInvitationIds = it.updatingInvitationIds + invitationId,
+                    errorMessage = null
+                )
+            }
+            val result = runCatching {
+                action()
+                friendRepository.fetchAlarmInvitations()
+            }
+            transientState.update { current ->
+                val updatingInvitationIds = current.updatingInvitationIds - invitationId
+                result.fold(
+                    onSuccess = { invitations ->
+                        current.copy(
+                            alarmInvitations = invitations,
+                            updatingInvitationIds = updatingInvitationIds,
+                            errorMessage = successMessageResId?.let { FriendsMessage.of(it) }
+                        )
+                    },
+                    onFailure = { error ->
+                        current.copy(
+                            updatingInvitationIds = updatingInvitationIds,
+                            errorMessage = FriendsMessage.of(error.message, R.string.invite_action_failed)
+                        )
+                    }
+                )
+            }
+        }
+    }
+
     private fun runFriendAction(
         friendshipId: String,
         action: suspend () -> Unit
@@ -272,11 +521,11 @@ class FriendsViewModel @Inject constructor(
                 val updatingFriendIds = current.updatingFriendIds - friendshipId
                 current.copy(
                     updatingFriendIds = updatingFriendIds,
-                    errorMessage = result.exceptionOrNull()?.message
+                    errorMessage = result.exceptionOrNull()?.message?.let { FriendsMessage(text = it) }
                 )
             }
             if (result.isSuccess) {
-                refreshFriends()
+                refreshAll()
             }
         }
     }
@@ -308,13 +557,23 @@ class FriendsViewModel @Inject constructor(
                     onFailure = { error ->
                         current.copy(
                             updatingPermissionIds = updatingPermissionIds,
-                            errorMessage = error.message ?: "알람 권한 요청 처리에 실패했습니다."
+                            errorMessage = FriendsMessage.of(error.message, R.string.friends_permission_action_failed)
                         )
                     }
                 )
             }
         }
     }
+
+    private data class RefreshResult(
+        val currentUserId: String,
+        val permissionRequests: List<AlarmPermissionRequest>,
+        val invitations: List<AlarmInvitation>
+    )
+}
+
+internal fun Friend.otherUserId(currentUserId: String): String {
+    return if (friendId == currentUserId) userId else friendId
 }
 
 private const val MIN_SEARCH_QUERY_LENGTH = 2
