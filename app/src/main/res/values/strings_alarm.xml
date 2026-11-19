@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="place_search_result_fallback">검색 결과</string>
+    <string name="background_location_dialog_title">백그라운드 위치 권한</string>
+    <string name="background_location_dialog_message">앱을 닫아도 목적지에 도착했을 때 알람이 울리려면 위치 권한을 "항상 허용"으로 설정해야 해요. 위치는 기기 안에서만 사용하고 서버로 보내지 않아요.</string>
+    <string name="background_location_dialog_confirm">권한 설정</string>
+    <string name="background_location_dialog_later">나중에</string>
+    <string name="background_location_denied_hint">백그라운드 위치 권한이 없으면 앱이 닫힌 동안 알람이 울리지 않을 수 있어요.</string>
+    <string name="background_location_open_settings">앱 설정 열기</string>
+</resources>

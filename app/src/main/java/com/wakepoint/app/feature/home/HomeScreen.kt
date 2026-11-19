@@ -5,6 +5,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import android.os.Build
 import android.speech.RecognizerIntent
 import android.widget.Toast
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -33,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -113,6 +117,18 @@ fun HomeScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasNotificationPermission = granted || !context.requiresPostNotificationPermission()
+    }
+    var hasBackgroundLocationPermission by remember {
+        mutableStateOf(context.hasBackgroundLocationPermission())
+    }
+    var backgroundLocationAsked by remember { mutableStateOf(false) }
+    var showBackgroundLocationDialog by remember { mutableStateOf(false) }
+    var showBackgroundLocationDeniedHint by remember { mutableStateOf(false) }
+    val backgroundLocationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasBackgroundLocationPermission = granted
+        showBackgroundLocationDeniedHint = !granted
     }
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -234,12 +250,48 @@ fun HomeScreen(
                 if (!hasNotificationPermission && context.requiresPostNotificationPermission()) {
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
+                val backgroundAction = backgroundLocationAction(
+                    sdkInt = Build.VERSION.SDK_INT,
+                    hasForeground = hasLocationPermission,
+                    hasBackground = hasBackgroundLocationPermission
+                )
+                if (backgroundAction == BackgroundLocationAction.RequestPermission && !backgroundLocationAsked) {
+                    backgroundLocationAsked = true
+                    showBackgroundLocationDialog = true
+                }
                 showAlarmSheet = true
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
                 .fillMaxWidth()
+        )
+    }
+
+    if (showBackgroundLocationDialog) {
+        AlertDialog(
+            onDismissRequest = { showBackgroundLocationDialog = false },
+            title = { Text(text = stringResource(R.string.background_location_dialog_title)) },
+            text = { Text(text = stringResource(R.string.background_location_dialog_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showBackgroundLocationDialog = false
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            backgroundLocationLauncher.launch(
+                                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                            )
+                        }
+                    }
+                ) {
+                    Text(text = stringResource(R.string.background_location_dialog_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBackgroundLocationDialog = false }) {
+                    Text(text = stringResource(R.string.background_location_dialog_later))
+                }
+            }
         )
     }
 
@@ -258,8 +310,15 @@ fun HomeScreen(
                 radius = uiState.radiusOption,
                 isSaving = uiState.isSavingAlarm,
                 errorMessage = uiState.saveErrorMessage,
-                noticeMessage = if (!hasNotificationPermission) {
-                    stringResource(R.string.alarm_notification_permission_hint)
+                noticeMessage = when {
+                    !hasNotificationPermission ->
+                        stringResource(R.string.alarm_notification_permission_hint)
+                    showBackgroundLocationDeniedHint ->
+                        stringResource(R.string.background_location_denied_hint)
+                    else -> null
+                },
+                onOpenAppSettings = if (showBackgroundLocationDeniedHint) {
+                    { context.openAppSettings() }
                 } else {
                     null
                 },
@@ -294,7 +353,7 @@ fun HomeScreen(
                 onSelectPlace = { place ->
                     val target = LatLng(place.lat, place.lng)
                     selectedTarget = target
-                    selectedTargetAddress = place.displayName()
+                    selectedTargetAddress = place.displayName(context.getString(R.string.place_search_result_fallback))
                     cameraPositionState.centerOn(target)
                     showSearchSheet = false
                     viewModel.clearSearch()
@@ -356,6 +415,7 @@ fun AlarmSetupSheet(
     errorMessage: String? = null,
     noticeMessage: String? = null,
     showAddressSearch: Boolean = false,
+    onOpenAppSettings: (() -> Unit)? = null,
     onLabelChange: (String) -> Unit = {},
     onRadiusChange: (String) -> Unit = {},
     onPrimaryClick: () -> Unit = {},
@@ -418,6 +478,11 @@ fun AlarmSetupSheet(
 
         if (noticeMessage != null) {
             MessageText(text = noticeMessage)
+        }
+        if (onOpenAppSettings != null) {
+            TextButton(onClick = onOpenAppSettings) {
+                Text(text = stringResource(R.string.background_location_open_settings))
+            }
         }
 
         ButtonRow {
@@ -559,6 +624,22 @@ private fun Context.hasForegroundLocationPermission(): Boolean {
         ) == PackageManager.PERMISSION_GRANTED
 }
 
+private fun Context.hasBackgroundLocationPermission(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+    return ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun Context.openAppSettings() {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", packageName, null)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    runCatching { startActivity(intent) }
+}
+
 private fun Context.requiresPostNotificationPermission(): Boolean {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 }
@@ -595,8 +676,8 @@ private fun FusedLocationProviderClient.fetchCurrentLocation(
     }
 }
 
-private fun PlaceSearchResult.displayName(): String {
-    return name.ifBlank { address.ifBlank { "검색 결과" } }
+private fun PlaceSearchResult.displayName(fallback: String): String {
+    return name.ifBlank { address.ifBlank { fallback } }
 }
 
 private fun Context.createSpeechSearchIntent(): Intent {
