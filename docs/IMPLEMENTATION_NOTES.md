@@ -18,10 +18,6 @@
 
 ## 외부 설정이 필요한 항목
 
-### Firebase 구성 파일
-
-`app/google-services.json`이 저장소에 없다. FCM 토큰 저장과 수신 핸들러는 구현돼 있으나 Google Services Gradle 플러그인은 파일이 생긴 뒤에 적용한다. 파일이 없어도 빌드는 성공해야 한다.
-
 ### Supabase Auth Provider
 
 - Kakao: 브라우저 OAuth 흐름으로 연결돼 있다. Supabase 대시보드의 Kakao provider 설정과 redirect `com.wakepoint.app://auth-callback` 등록이 필요하다.

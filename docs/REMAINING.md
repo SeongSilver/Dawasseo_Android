@@ -20,7 +20,7 @@
 | 13 | 프로필 ViewModel + 닉네임 편집 | done | 2026-11-19 완료. ProfileViewModel |
 | 14 | FCM 토큰 서버 업로드 + 수신 알림 표시 | done | 2026-11-19 완료. user_profiles.push_token PATCH, 초대 알림 채널 |
 | 15 | 초대 푸시 발송 Edge Function | done | 2026-11-19 완료. supabase/functions/notify-alarm-invitation, 배포 별도 |
-| 16 | Firebase google-services 적용 | blocked | google-services.json 없음. Firebase 콘솔에서 받아 app/ 에 두면 플러그인 적용 가능 |
+| 16 | Firebase google-services 적용 | done | 2026-11-19 완료. google-services.json 배치, 플러그인 4.4.2 적용, 빌드 성공 |
 | 17 | 알람음 Supabase Storage 업로드 | done | 2026-11-19 완료. bucket alarm-sounds 필요, 테스트 3개 |
 | 18 | 전화번호 인증 | blocked | MVP 제외, SMS provider 미정 |
 | 19 | 단위 테스트 보강 | done | 2026-11-19 완료. 단위 테스트 22개 통과 |
@@ -60,7 +60,7 @@
   확인: `assembleDebug` 성공.
 - [x] **15. 초대 푸시 Edge Function**: `supabase/functions/notify-alarm-invitation`에 초대 insert 시 대상 토큰으로 FCM을 보내는 함수를 둔다. 배포는 별도.
   확인: 함수 소스 존재.
-- [ ] **16. google-services 적용**: `google-services.json`과 플러그인 적용.
+- [x] **16. google-services 적용**: `google-services.json`과 플러그인 적용.
   확인: 파일 존재, 빌드 성공.
 - [x] **17. Storage 업로드**: 커스텀 알람음을 Supabase Storage에 올린다.
   확인: 업로드 Repository 존재, `assembleDebug` 성공.
