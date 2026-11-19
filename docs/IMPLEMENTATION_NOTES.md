@@ -30,7 +30,7 @@
 
 ### 초대 푸시 발송
 
-`supabase/functions/notify-alarm-invitation`은 프로덕션에 배포됐고 `FCM_SERVICE_ACCOUNT` 시크릿도 설정됐다 (2026-11-19). 남은 것은 대시보드 Database → Webhooks에서 `alarm_invitations` INSERT 웹훅을 이 함수로 연결하는 일이다. 서비스 계정 JSON은 앱이나 저장소에 포함하지 않는다.
+`supabase/functions/notify-alarm-invitation`은 프로덕션에 배포됐고 `FCM_SERVICE_ACCOUNT` 시크릿과 `alarm_invitations` INSERT 웹훅(`notify_alarm_invitation_insert`)까지 연결됐다 (2026-11-19). 실제 수신은 실기기 두 계정으로 확인해야 한다. 서비스 계정 JSON은 앱이나 저장소에 포함하지 않는다.
 
 ### 전화번호 인증
 
