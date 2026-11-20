@@ -12,3 +12,4 @@ app/build/
 app/google-services.json
 *.iml
 supabase/.temp/
+.claude/settings.local.json
