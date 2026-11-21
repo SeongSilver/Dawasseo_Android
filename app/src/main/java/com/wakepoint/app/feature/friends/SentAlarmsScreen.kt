@@ -29,21 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.StatusPill
-import com.wakepoint.app.core.design.WakepointBackground
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointConfirmDialog
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
 import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
-import com.wakepoint.app.core.design.WakepointWarning
-import com.wakepoint.app.core.design.WakepointWarningLight
 
 /**
  * v2 STEP3 (3-6) — 보낸 알람 목록(친구 탭 서브 화면).
@@ -81,13 +74,13 @@ fun SentAlarmsContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground),
+            .background(LocalWakepointColors.current.background),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .padding(horizontal = WakepointSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -95,10 +88,10 @@ fun SentAlarmsContent(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "뒤로",
-                    tint = WakepointInk,
+                    tint = LocalWakepointColors.current.text,
                 )
             }
-            Text("보낸 알람", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+            Text("보낸 알람", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
         }
         Column(
             modifier = Modifier
@@ -119,7 +112,7 @@ fun SentAlarmsContent(
                     uiState.items.isEmpty() -> Text(
                         "아직 보낸 알람이 없어요.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = WakepointTextTertiary,
+                        color = LocalWakepointColors.current.textTertiary,
                         modifier = Modifier.padding(vertical = WakepointSpacing.xl),
                     )
                     else -> uiState.items.forEach { item ->
@@ -162,26 +155,26 @@ private fun SentAlarmCard(item: SentAlarmItem, canceling: Boolean, onCancel: () 
                 Text(
                     "${item.recipientName}님 · ${item.alarm.label}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                 )
                 Spacer(Modifier.height(WakepointSpacing.xs))
                 Text(
                     "위치 · $radiusLabel · ${item.alarm.targetAddress}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextSecondary,
+                    color = LocalWakepointColors.current.textSecondary,
                 )
             }
             if (item.pending) {
-                StatusPill("전송 대기", color = WakepointWarning, background = WakepointWarningLight)
+                StatusPill("전송 대기", color = LocalWakepointColors.current.cautionary, background = LocalWakepointColors.current.cautionarySurface)
             } else {
-                StatusPill("전송됨", color = WakepointTextSecondary)
+                StatusPill("전송됨", color = LocalWakepointColors.current.textSecondary)
             }
         }
         Spacer(Modifier.height(WakepointSpacing.md))
         Text(
             text = if (canceling) "취소 중…" else "취소",
             style = MaterialTheme.typography.labelLarge,
-            color = if (canceling) WakepointTextTertiary else WakepointDanger,
+            color = if (canceling) LocalWakepointColors.current.textTertiary else LocalWakepointColors.current.negative,
             modifier = Modifier.clickable(enabled = !canceling, onClick = onCancel),
         )
     }

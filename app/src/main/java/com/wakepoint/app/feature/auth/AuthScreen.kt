@@ -40,25 +40,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
-import com.wakepoint.app.core.design.WakepointBorder
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLogo
 import com.wakepoint.app.core.design.WakepointMessageDialog
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextSecondary
 
 @Composable
 fun SplashScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
+            .background(LocalWakepointColors.current.surfaceElevated)
             .padding(horizontal = 28.dp, vertical = 72.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -73,7 +67,7 @@ fun SplashScreen() {
         Text(
             text = stringResource(R.string.splash_tagline),
             style = MaterialTheme.typography.titleMedium,
-            color = WakepointInk,
+            color = LocalWakepointColors.current.text,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.weight(1.5f))
@@ -98,7 +92,7 @@ fun AuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
+            .background(LocalWakepointColors.current.surfaceElevated)
     ) {
         AuthTopBar()
         Column(
@@ -113,7 +107,7 @@ fun AuthScreen(
             Text(
                 text = stringResource(R.string.auth_intro),
                 style = MaterialTheme.typography.headlineLarge,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = WakepointSpacing.xl, bottom = WakepointSpacing.xl)
             )
@@ -157,14 +151,14 @@ fun AuthScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)) {
                 Text(
                     text = stringResource(R.string.auth_forgot_password),
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.clickable(enabled = !uiState.isSubmitting, onClick = onForgotPassword)
                 )
-                Text(text = "|", color = WakepointMuted)
+                Text(text = "|", color = LocalWakepointColors.current.textSecondary)
                 Text(
                     text = stringResource(R.string.auth_signup),
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.clickable(onClick = onSignUp)
                 )
@@ -173,14 +167,14 @@ fun AuthScreen(
             Text(
                 text = stringResource(R.string.auth_terms),
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted,
+                color = LocalWakepointColors.current.textSecondary,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(WakepointSpacing.xxl))
             Text(
                 text = stringResource(R.string.auth_copyright),
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted,
+                color = LocalWakepointColors.current.textSecondary,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -194,13 +188,13 @@ private fun OrDivider() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
     ) {
-        HorizontalDivider(modifier = Modifier.weight(1f), color = WakepointBorder)
+        HorizontalDivider(modifier = Modifier.weight(1f), color = LocalWakepointColors.current.line)
         Text(
             text = stringResource(R.string.auth_or),
             style = MaterialTheme.typography.bodySmall,
-            color = WakepointTextSecondary
+            color = LocalWakepointColors.current.textSecondary
         )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = WakepointBorder)
+        HorizontalDivider(modifier = Modifier.weight(1f), color = LocalWakepointColors.current.line)
     }
 }
 
@@ -242,7 +236,7 @@ fun SignUpScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
+            .background(LocalWakepointColors.current.surfaceElevated)
     ) {
         AuthTopBar(title = stringResource(R.string.signup_title), onBack = onBack)
         Column(
@@ -304,7 +298,7 @@ private fun AuthTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .background(WakepointCanvas),
+            .background(LocalWakepointColors.current.surfaceElevated),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
@@ -314,7 +308,7 @@ private fun AuthTopBar(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                color = WakepointInk
+                color = LocalWakepointColors.current.text
             )
         }
     }
@@ -343,7 +337,7 @@ private fun SignUpField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, color = WakepointInk)
+        Text(text = label, style = MaterialTheme.typography.labelLarge, color = LocalWakepointColors.current.text)
         WakepointTextField(
             value = value,
             onValueChange = onValueChange,

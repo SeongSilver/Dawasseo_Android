@@ -51,13 +51,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.wakepoint.app.R
-import com.wakepoint.app.core.design.WakepointBackground
-import com.wakepoint.app.core.design.WakepointBorder
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointIconInactive
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.feature.alarms.AlarmsScreen
@@ -200,7 +194,7 @@ fun WakepointApp() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground)
+            .background(LocalWakepointColors.current.background)
     ) {
         NavHost(
             navController = navController,
@@ -344,9 +338,9 @@ private fun WakepointTabBar(
                 .fillMaxWidth()
                 .height(68.dp),
             shape = WakepointShape.full,
-            color = WakepointCanvas,
+            color = LocalWakepointColors.current.surfaceElevated,
             shadowElevation = 12.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, WakepointBorder)
+            border = androidx.compose.foundation.BorderStroke(1.dp, LocalWakepointColors.current.line)
         ) {
             Row(
                 modifier = Modifier
@@ -376,7 +370,7 @@ private fun WakepointTabItem(
     modifier: Modifier = Modifier
 ) {
     val label = stringResource(item.labelResId)
-    val tint = if (selected) WakepointPrimary else WakepointIconInactive
+    val tint = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.inactive
     Column(
         modifier = modifier
             .clip(WakepointShape.full)
@@ -390,7 +384,7 @@ private fun WakepointTabItem(
                 .width(56.dp)
                 .height(30.dp)
                 .clip(WakepointShape.full)
-                .background(if (selected) WakepointPrimaryLight else androidx.compose.ui.graphics.Color.Transparent),
+                .background(if (selected) LocalWakepointColors.current.brandSubtle else androidx.compose.ui.graphics.Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Icon(

@@ -37,13 +37,14 @@ fun WakepointMessageDialog(
     confirmText: String = "확인",
     isError: Boolean = true
 ) {
-    val accent = if (isError) WakepointDanger else WakepointPrimary
+    val colors = LocalWakepointColors.current
+    val accent = if (isError) colors.negative else colors.brand
     val resolvedTitle = title ?: if (isError) "알림" else "안내"
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = modifier.fillMaxWidth(),
-            shape = WakepointShape.card,
-            color = WakepointCanvas
+            shape = WakepointShape.dialog,
+            color = colors.surfaceElevated
         ) {
             Column(
                 modifier = Modifier.padding(WakepointSpacing.xl),
@@ -53,7 +54,7 @@ fun WakepointMessageDialog(
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .background(accent.copy(alpha = 0.1f), CircleShape),
+                        .background(if (isError) colors.negativeSurface else colors.brandSubtle, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -65,13 +66,13 @@ fun WakepointMessageDialog(
                 }
                 Text(
                     text = resolvedTitle,
-                    color = WakepointInk,
-                    style = MaterialTheme.typography.titleLarge,
+                    color = colors.text,
+                    style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = message,
-                    color = WakepointTextSecondary,
+                    color = colors.textSecondary,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )

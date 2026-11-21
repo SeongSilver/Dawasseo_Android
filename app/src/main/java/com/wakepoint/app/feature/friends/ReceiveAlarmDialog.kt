@@ -14,14 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointField
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.domain.model.Alarm
 
 /**
@@ -42,7 +39,7 @@ fun ReceiveAlarmDialog(
         "${alarm.radiusKm.toInt()}km"
     }
     Dialog(onDismissRequest = onActivate) {
-        Surface(shape = WakepointShape.card, color = WakepointCanvas, modifier = Modifier.fillMaxWidth()) {
+        Surface(shape = WakepointShape.card, color = LocalWakepointColors.current.surfaceElevated, modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(WakepointSpacing.xl),
                 verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg),
@@ -50,13 +47,13 @@ fun ReceiveAlarmDialog(
                 Text(
                     "${senderName}님이 알람을 보냈어요",
                     style = MaterialTheme.typography.titleLarge,
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                 )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(WakepointShape.control)
-                        .background(WakepointField)
+                        .clip(WakepointShape.message)
+                        .background(LocalWakepointColors.current.fill)
                         .padding(WakepointSpacing.cardPadding),
                     verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm),
                 ) {
@@ -85,9 +82,9 @@ private fun SpecRow(label: String, value: String) {
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = WakepointTextSecondary,
+            color = LocalWakepointColors.current.textSecondary,
             modifier = Modifier.weight(1f),
         )
-        Text(value, style = MaterialTheme.typography.bodyLarge, color = WakepointInk)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = LocalWakepointColors.current.text)
     }
 }

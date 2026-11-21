@@ -84,37 +84,25 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.StatusDot
-import com.wakepoint.app.core.design.WakepointBackground
-import com.wakepoint.app.core.design.WakepointBorder
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
-import com.wakepoint.app.core.design.WakepointDanger
 import com.wakepoint.app.core.design.WakepointDangerButton
 import com.wakepoint.app.core.design.WakepointMessageDialog
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointPageHeader
-import com.wakepoint.app.core.design.WakepointParchment
-import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointStar
 import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextDisabled
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
 import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.AlarmSound
 import com.wakepoint.app.domain.model.SoundKind
@@ -200,7 +188,7 @@ fun AlarmsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground)
+            .background(LocalWakepointColors.current.background)
     ) {
         if (selectionMode) {
             AlarmSelectionHeader(
@@ -425,7 +413,7 @@ fun AlarmsScreen(
             onDismissRequest = { showTypeSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             AlarmTypeSheetContent(
                 onSelectLocation = {
@@ -446,7 +434,7 @@ fun AlarmsScreen(
             onDismissRequest = { showTimeCreateSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             TimeAlarmCreateSheetContent(
                 onCancel = { showTimeCreateSheet = false },
@@ -486,13 +474,13 @@ private fun AlarmSelectionHeader(
             Icon(
                 imageVector = Icons.Rounded.Close,
                 contentDescription = stringResource(R.string.alarm_selection_close),
-                tint = WakepointInk
+                tint = LocalWakepointColors.current.text
             )
         }
         Text(
             text = stringResource(R.string.alarm_selection_count, count),
             style = MaterialTheme.typography.titleMedium,
-            color = WakepointInk,
+            color = LocalWakepointColors.current.text,
             modifier = Modifier
                 .weight(1f)
                 .padding(start = WakepointSpacing.xs)
@@ -501,14 +489,14 @@ private fun AlarmSelectionHeader(
             Icon(
                 imageVector = Icons.Rounded.SelectAll,
                 contentDescription = stringResource(R.string.alarm_select_all),
-                tint = if (allSelected) WakepointPrimary else WakepointInk
+                tint = if (allSelected) LocalWakepointColors.current.brand else LocalWakepointColors.current.text
             )
         }
         IconButton(onClick = onDelete, enabled = count > 0) {
             Icon(
                 imageVector = Icons.Rounded.DeleteOutline,
                 contentDescription = stringResource(R.string.alarm_delete_selected),
-                tint = if (count > 0) WakepointDanger else WakepointMuted
+                tint = if (count > 0) LocalWakepointColors.current.negative else LocalWakepointColors.current.textSecondary
             )
         }
     }
@@ -575,10 +563,10 @@ private fun SelectableAlarmCard(
             .clip(WakepointShape.card)
             .clickable(onClick = onToggleSelect),
         shape = WakepointShape.card,
-        color = if (selected) WakepointPrimaryLight else WakepointCanvas,
+        color = if (selected) LocalWakepointColors.current.brandSubtle else LocalWakepointColors.current.surfaceElevated,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (selected) WakepointPrimary else WakepointBorder
+            if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.line
         )
     ) {
         Row(
@@ -588,7 +576,7 @@ private fun SelectableAlarmCard(
             Icon(
                 imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
                 contentDescription = stringResource(R.string.alarm_select_item),
-                tint = if (selected) WakepointPrimary else WakepointMuted,
+                tint = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.textSecondary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(WakepointSpacing.md))
@@ -625,13 +613,13 @@ private fun AlarmCardInfo(
             Text(
                 text = alarm.label,
                 style = MaterialTheme.typography.labelSmall,
-                color = if (alarm.isActive) WakepointPrimary else WakepointTextDisabled
+                color = if (alarm.isActive) LocalWakepointColors.current.brand else LocalWakepointColors.current.disabledContent
             )
         }
         Text(
             text = alarm.targetAddress,
             style = MaterialTheme.typography.titleMedium,
-            color = if (alarm.isActive) WakepointInk else WakepointTextTertiary,
+            color = if (alarm.isActive) LocalWakepointColors.current.text else LocalWakepointColors.current.textTertiary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -643,11 +631,11 @@ private fun AlarmCardInfo(
             Text(
                 text = "·",
                 style = MaterialTheme.typography.bodySmall,
-                color = WakepointTextTertiary
+                color = LocalWakepointColors.current.textTertiary
             )
             Text(
                 text = stringResource(R.string.alarm_meta_line, radiusLabel, soundTitle),
-                color = WakepointTextSecondary,
+                color = LocalWakepointColors.current.textSecondary,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -662,7 +650,7 @@ private fun FavoriteStarButton(isFavorite: Boolean, onClick: () -> Unit) {
             contentDescription = stringResource(
                 if (isFavorite) R.string.alarm_favorite_remove else R.string.alarm_favorite_add
             ),
-            tint = if (isFavorite) WakepointStar else WakepointMuted,
+            tint = if (isFavorite) LocalWakepointColors.current.brand else LocalWakepointColors.current.textSecondary,
             modifier = Modifier.size(22.dp)
         )
     }
@@ -693,7 +681,7 @@ private fun EditableAlarmCard(
             ) {
                 Text(
                     text = alarm.label,
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -729,7 +717,7 @@ private fun EditableAlarmCard(
                         Icon(
                             imageVector = Icons.Rounded.ChevronRight,
                             contentDescription = null,
-                            tint = WakepointMuted
+                            tint = LocalWakepointColors.current.textSecondary
                         )
                     },
                     onClick = onOpenSoundList
@@ -798,12 +786,12 @@ private fun EditToggleRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
                 style = MaterialTheme.typography.labelLarge
             )
             Text(
                 text = hint,
-                color = WakepointTextTertiary,
+                color = LocalWakepointColors.current.textTertiary,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -859,13 +847,13 @@ private fun EmptyAlarmMessage(onCreateAlarm: () -> Unit) {
             Surface(
                 modifier = Modifier.size(72.dp),
                 shape = WakepointShape.card,
-                color = WakepointParchment
+                color = LocalWakepointColors.current.fill
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Rounded.NotificationsNone,
                         contentDescription = null,
-                        tint = WakepointTextTertiary,
+                        tint = LocalWakepointColors.current.textTertiary,
                         modifier = Modifier.size(30.dp)
                     )
                 }
@@ -873,12 +861,12 @@ private fun EmptyAlarmMessage(onCreateAlarm: () -> Unit) {
             Text(
                 text = stringResource(R.string.alarm_empty_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = WakepointInk
+                color = LocalWakepointColors.current.text
             )
             Text(
                 text = stringResource(R.string.alarm_empty_hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointTextSecondary,
+                color = LocalWakepointColors.current.textSecondary,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             WakepointButton(
@@ -896,7 +884,7 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleSmall,
-        color = WakepointInk,
+        color = LocalWakepointColors.current.text,
         modifier = Modifier.padding(top = WakepointSpacing.sm)
     )
 }
@@ -995,13 +983,13 @@ fun SoundListScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
+            .background(LocalWakepointColors.current.fill)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .padding(horizontal = WakepointSpacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1014,7 +1002,7 @@ fun SoundListScreen(
             Text(
                 text = stringResource(R.string.alarm_sound_setting),
                 style = MaterialTheme.typography.titleSmall,
-                color = WakepointInk
+                color = LocalWakepointColors.current.text
             )
         }
         Column(
@@ -1027,7 +1015,7 @@ fun SoundListScreen(
             uiState.errorMessage?.let { message ->
                 Text(
                     text = message,
-                    color = WakepointMuted,
+                    color = LocalWakepointColors.current.textSecondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -1036,7 +1024,7 @@ fun SoundListScreen(
             if (uiState.bundledSounds.isEmpty()) {
                 Text(
                     text = stringResource(R.string.sound_bundled_empty),
-                    color = WakepointTextSecondary,
+                    color = LocalWakepointColors.current.textSecondary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = WakepointSpacing.xs)
                 )
@@ -1058,7 +1046,7 @@ fun SoundListScreen(
             if (uiState.customSounds.isEmpty()) {
                 Text(
                     text = stringResource(R.string.sound_custom_empty),
-                    color = WakepointTextSecondary,
+                    color = LocalWakepointColors.current.textSecondary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = WakepointSpacing.xs)
                 )
@@ -1078,7 +1066,7 @@ fun SoundListScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .navigationBarsPadding()
                 .padding(WakepointSpacing.cardPadding),
             verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
@@ -1111,7 +1099,7 @@ fun SoundListScreen(
             onDismissRequest = { viewModel.closeRecordSheet() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             RecordingSheet(
                 phase = uiState.recordingPhase,
@@ -1162,7 +1150,7 @@ private fun SelectableSoundRow(
                     Icon(
                         imageVector = Icons.Rounded.CheckCircle,
                         contentDescription = null,
-                        tint = WakepointPrimary
+                        tint = LocalWakepointColors.current.brand
                     )
                 }
                 if (onDelete != null) {
@@ -1170,7 +1158,7 @@ private fun SelectableSoundRow(
                         Icon(
                             imageVector = Icons.Rounded.DeleteOutline,
                             contentDescription = stringResource(R.string.sound_delete),
-                            tint = WakepointMuted,
+                            tint = LocalWakepointColors.current.textSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -1206,13 +1194,13 @@ private fun RecordingSheet(
     ) {
         Text(
             text = stringResource(R.string.record_title),
-            color = WakepointPrimary,
+            color = LocalWakepointColors.current.brand,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold
         )
         Text(
             text = formatElapsed(elapsedSeconds),
-            color = WakepointPrimary,
+            color = LocalWakepointColors.current.brand,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -1222,7 +1210,7 @@ private fun RecordingSheet(
                 RecordingPhase.Recording -> stringResource(R.string.record_recording)
                 RecordingPhase.Recorded -> stringResource(R.string.record_done)
             },
-            color = WakepointTextSecondary,
+            color = LocalWakepointColors.current.textSecondary,
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -1245,13 +1233,13 @@ private fun RecordingSheet(
                 Icon(
                     imageVector = Icons.Rounded.CheckCircle,
                     contentDescription = null,
-                    tint = WakepointPrimary,
+                    tint = LocalWakepointColors.current.brand,
                     modifier = Modifier.size(56.dp)
                 )
             }
         }
 
-        HorizontalDivider(color = WakepointParchment)
+        HorizontalDivider(color = LocalWakepointColors.current.fill)
         Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
             WakepointSecondaryButton(
                 text = stringResource(
@@ -1281,14 +1269,14 @@ private fun RecordCircleButton(
             .size(72.dp)
             .clickable(onClick = onClick),
         shape = CircleShape,
-        border = androidx.compose.foundation.BorderStroke(2.dp, WakepointPrimary),
-        color = WakepointCanvas
+        border = androidx.compose.foundation.BorderStroke(2.dp, LocalWakepointColors.current.brand),
+        color = LocalWakepointColors.current.surfaceElevated
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                tint = WakepointPrimary,
+                tint = LocalWakepointColors.current.brand,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -1303,7 +1291,7 @@ private fun formatElapsed(seconds: Int): String {
 
 @Composable
 private fun SectionLabel(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+    Text(text = text, style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
 }
 
 private fun Double.toRadiusOption(): String {

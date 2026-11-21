@@ -63,39 +63,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.StatusPill
 import com.wakepoint.app.core.design.WakepointAvatar
-import com.wakepoint.app.core.design.WakepointBackground
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointChipActiveBorder
-import com.wakepoint.app.core.design.WakepointChipBorder
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointDangerLight
 import com.wakepoint.app.core.design.WakepointMessageDialog
-import com.wakepoint.app.core.design.WakepointDivider
-import com.wakepoint.app.core.design.WakepointField
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
-import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPageHeader
-import com.wakepoint.app.core.design.WakepointParchment
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextTertiary
-import com.wakepoint.app.core.design.WakepointWarning
-import com.wakepoint.app.core.design.WakepointWarningLight
 import com.wakepoint.app.data.friend.AlarmPermissionRequest
 import com.wakepoint.app.data.friend.FriendSearchResult
 import com.wakepoint.app.domain.model.Friend
@@ -147,7 +131,7 @@ fun FriendsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground)
+            .background(LocalWakepointColors.current.background)
     ) {
         Column {
             WakepointPageHeader(
@@ -292,7 +276,7 @@ fun FriendsScreen(
 
         FloatingActionButton(
             onClick = { showSearchSheet = true },
-            containerColor = WakepointPrimary,
+            containerColor = LocalWakepointColors.current.brand,
             contentColor = Color.White,
             shape = CircleShape,
             modifier = Modifier
@@ -316,7 +300,7 @@ fun FriendsScreen(
             onDismissRequest = { showSearchSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             val inviteLink = stringResource(R.string.invite_link)
             val inviteMessage = if (uiState.currentUserEmail.isBlank()) {
@@ -349,7 +333,7 @@ fun FriendsScreen(
             onDismissRequest = { viewModel.dismissSendAlarm() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             // v2 통합: 친구 알람 보내기는 주소/장소/시간 3탭 형태. 주소 탭만 실기능(백엔드 존재)이고
             // 장소·시간 탭은 도메인/영속성 미구현이라 "준비 중"으로 안내한다.
@@ -445,12 +429,12 @@ private fun EmptyFriendsCard(onAddFriend: () -> Unit) {
             Text(
                 text = "아직 친구가 없어요",
                 style = MaterialTheme.typography.titleMedium,
-                color = WakepointInk
+                color = LocalWakepointColors.current.text
             )
             Text(
                 text = "이메일이나 닉네임으로 친구를 검색해\n요청을 보내보세요",
                 style = MaterialTheme.typography.bodySmall,
-                color = WakepointTextTertiary,
+                color = LocalWakepointColors.current.textTertiary,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             WakepointButton(
@@ -468,7 +452,7 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleSmall,
-        color = WakepointInk,
+        color = LocalWakepointColors.current.text,
         modifier = Modifier.padding(top = WakepointSpacing.sm)
     )
 }
@@ -493,12 +477,12 @@ private fun FriendRequestCard(
                     Text(
                         text = friend.nickname,
                         style = MaterialTheme.typography.titleMedium,
-                        color = WakepointInk
+                        color = LocalWakepointColors.current.text
                     )
                     Text(
                         text = friend.email,
                         style = MaterialTheme.typography.bodySmall,
-                        color = WakepointTextTertiary
+                        color = LocalWakepointColors.current.textTertiary
                     )
                 }
                 FriendStatusPill(status = FriendStatus.Pending)
@@ -553,7 +537,7 @@ private fun AlarmPermissionRequestCard(
                     Text(
                         text = profile?.nickname ?: "알 수 없는 사용자",
                         style = MaterialTheme.typography.titleMedium,
-                        color = WakepointInk
+                        color = LocalWakepointColors.current.text
                     )
                     Text(
                         text = if (isIncoming) {
@@ -562,12 +546,12 @@ private fun AlarmPermissionRequestCard(
                             "상대방 알람 설정 권한 요청 중"
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        color = WakepointTextTertiary
+                        color = LocalWakepointColors.current.textTertiary
                     )
                     Text(
                         text = "만료 없음",
                         style = MaterialTheme.typography.bodySmall,
-                        color = WakepointTextTertiary
+                        color = LocalWakepointColors.current.textTertiary
                     )
                 }
                 PermissionStatusPill(status = request.status)
@@ -618,12 +602,12 @@ private fun FriendCard(
                     Text(
                         text = friend.nickname,
                         style = MaterialTheme.typography.titleMedium,
-                        color = WakepointInk
+                        color = LocalWakepointColors.current.text
                     )
                     Text(
                         text = friend.email,
                         style = MaterialTheme.typography.bodySmall,
-                        color = WakepointTextTertiary
+                        color = LocalWakepointColors.current.textTertiary
                     )
                     PermissionStatusLine(status = friend.permissionStatus)
                 }
@@ -635,7 +619,7 @@ private fun FriendCard(
             }
 
             if (expanded) {
-                HorizontalDivider(color = WakepointDivider)
+                HorizontalDivider(color = LocalWakepointColors.current.line)
                 val canSendAlarm = friend.status == FriendStatus.Accepted &&
                     friend.permissionStatus == PermissionStatus.Accepted
                 val canRequestPermission = friend.status == FriendStatus.Accepted &&
@@ -694,8 +678,8 @@ private fun SendAlarmSegmentedTabs(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(WakepointShape.control)
-            .background(WakepointField)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.fill)
             .padding(WakepointSpacing.xs),
         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
@@ -705,15 +689,15 @@ private fun SendAlarmSegmentedTabs(
                 modifier = Modifier
                     .weight(1f)
                     .height(WakepointSize.chipHeight)
-                    .clip(WakepointShape.control)
-                    .background(if (isSelected) WakepointCanvas else Color.Transparent)
+                    .clip(WakepointShape.message)
+                    .background(if (isSelected) LocalWakepointColors.current.surfaceElevated else Color.Transparent)
                     .clickable { onSelect(tab) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = tab.label,
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) WakepointPrimary else WakepointMuted
+                    color = if (isSelected) LocalWakepointColors.current.brand else LocalWakepointColors.current.textSecondary
                 )
             }
         }
@@ -730,13 +714,13 @@ private fun SendAlarmPrivacyNote() {
         Icon(
             imageVector = Icons.Rounded.Lock,
             contentDescription = null,
-            tint = WakepointTextTertiary,
+            tint = LocalWakepointColors.current.textTertiary,
             modifier = Modifier.size(16.dp)
         )
         Text(
             text = "위치나 도착 여부는 볼 수 없어요.",
             style = MaterialTheme.typography.bodySmall,
-            color = WakepointTextTertiary
+            color = LocalWakepointColors.current.textTertiary
         )
     }
 }
@@ -771,12 +755,12 @@ private fun SendAlarmPlaceTab(
                 Text(
                     text = "${friendName}님이 아직 공개한 장소가 없어요",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = WakepointTextTertiary
+                    color = LocalWakepointColors.current.textTertiary
                 )
                 Text(
                     text = "친구가 마이 탭 > 내 장소에서 장소를 공개하면\n여기서 골라 보낼 수 있어요.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextTertiary,
+                    color = LocalWakepointColors.current.textTertiary,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
@@ -810,7 +794,7 @@ private fun SendAlarmTimeTab(
     ) {
         BottomSheetTitle(title = "시간 알람")
         Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-            Text("언제 울릴까요?", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+            Text("언제 울릴까요?", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
             Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
                     SEND_TIME_PRESETS.take(2).forEach { p ->
@@ -825,7 +809,7 @@ private fun SendAlarmTimeTab(
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-            Text("알람 이름", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+            Text("알람 이름", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
             WakepointTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -835,8 +819,8 @@ private fun SendAlarmTimeTab(
         // 3-5: 수신 측 미지원 안내(서버 전송 스키마 준비 전까지 보내기 차단)
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = WakepointShape.control,
-            color = WakepointWarningLight
+            shape = WakepointShape.message,
+            color = LocalWakepointColors.current.cautionarySurface
         ) {
             Row(
                 modifier = Modifier.padding(WakepointSpacing.md),
@@ -846,13 +830,13 @@ private fun SendAlarmTimeTab(
                 Icon(
                     imageVector = Icons.Rounded.Lock,
                     contentDescription = null,
-                    tint = WakepointWarning,
+                    tint = LocalWakepointColors.current.cautionary,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
                     text = "시간 알람 전송은 서버 업데이트 후 열려요.\n지금은 주소 알람만 보낼 수 있어요.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointWarning
+                    color = LocalWakepointColors.current.cautionary
                 )
             }
         }
@@ -882,12 +866,12 @@ private fun SendTimeChip(
     Box(
         modifier = modifier
             .height(WakepointSize.chipHeight)
-            .clip(WakepointShape.control)
-            .background(if (selected) WakepointPrimaryLight else WakepointCanvas)
+            .clip(WakepointShape.message)
+            .background(if (selected) LocalWakepointColors.current.brandSubtle else LocalWakepointColors.current.surfaceElevated)
             .border(
                 width = if (selected) 2.dp else 1.5.dp,
-                color = if (selected) WakepointChipActiveBorder else WakepointChipBorder,
-                shape = WakepointShape.control
+                color = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.line,
+                shape = WakepointShape.message
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -895,7 +879,7 @@ private fun SendTimeChip(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (selected) WakepointPrimary else WakepointTextSecondary
+            color = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.textSecondary
         )
     }
 }
@@ -939,7 +923,7 @@ private fun FriendSearchSheet(
         uiState.searchMessage?.let { message ->
             Text(
                 text = message,
-                color = WakepointMuted,
+                color = LocalWakepointColors.current.textSecondary,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -966,9 +950,9 @@ private fun InviteSection(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(WakepointShape.control),
-        shape = WakepointShape.control,
-        color = WakepointParchment
+            .clip(WakepointShape.message),
+        shape = WakepointShape.message,
+        color = LocalWakepointColors.current.fill
     ) {
         Column(
             modifier = Modifier.padding(WakepointSpacing.cardPadding),
@@ -977,12 +961,12 @@ private fun InviteSection(
             Text(
                 text = stringResource(R.string.invite_section_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = WakepointInk
+                color = LocalWakepointColors.current.text
             )
             Text(
                 text = stringResource(R.string.invite_section_hint),
                 style = MaterialTheme.typography.bodySmall,
-                color = WakepointTextTertiary
+                color = LocalWakepointColors.current.textTertiary
             )
             Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
                 WakepointButton(
@@ -1043,18 +1027,18 @@ private fun FriendSearchResultRow(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(WakepointShape.control)
+            .clip(WakepointShape.message)
             .then(
                 if (selected) {
-                    Modifier.border(1.5.dp, WakepointPrimary, WakepointShape.control)
+                    Modifier.border(1.5.dp, LocalWakepointColors.current.brand, WakepointShape.message)
                 } else {
                     Modifier
                 }
             )
             .clickable(enabled = status == null, onClick = onClick),
-        shape = WakepointShape.control,
-        color = if (selected) WakepointPrimaryLight else WakepointCanvas,
-        border = BorderStroke(1.dp, WakepointDivider)
+        shape = WakepointShape.message,
+        color = if (selected) LocalWakepointColors.current.brandSubtle else LocalWakepointColors.current.surfaceElevated,
+        border = BorderStroke(1.dp, LocalWakepointColors.current.line)
     ) {
         Row(
             modifier = Modifier.padding(WakepointSpacing.cardPadding),
@@ -1069,12 +1053,12 @@ private fun FriendSearchResultRow(
                 Text(
                     text = result.profile.nickname,
                     style = MaterialTheme.typography.titleMedium,
-                    color = WakepointInk
+                    color = LocalWakepointColors.current.text
                 )
                 Text(
                     text = result.profile.email,
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextTertiary
+                    color = LocalWakepointColors.current.textTertiary
                 )
             }
             if (status != null) {
@@ -1101,7 +1085,7 @@ private fun PermissionStatusLine(status: PermissionStatus) {
             PermissionStatus.Rejected -> "알람 권한 거절됨"
         },
         style = MaterialTheme.typography.bodyMedium,
-        color = WakepointMuted
+        color = LocalWakepointColors.current.textSecondary
     )
 }
 
@@ -1115,13 +1099,13 @@ private fun PermissionStatusPill(status: PermissionStatus) {
     }
     when (status) {
         PermissionStatus.None ->
-            StatusPill(text = text, color = WakepointTextTertiary, background = WakepointField)
+            StatusPill(text = text, color = LocalWakepointColors.current.textTertiary, background = LocalWakepointColors.current.fill)
         PermissionStatus.Pending ->
-            StatusPill(text = text, color = WakepointWarning, background = WakepointWarningLight)
+            StatusPill(text = text, color = LocalWakepointColors.current.cautionary, background = LocalWakepointColors.current.cautionarySurface)
         PermissionStatus.Accepted ->
-            StatusPill(text = text, color = WakepointPrimary, background = WakepointPrimaryLight)
+            StatusPill(text = text, color = LocalWakepointColors.current.brand, background = LocalWakepointColors.current.brandSubtle)
         PermissionStatus.Rejected ->
-            StatusPill(text = text, color = WakepointTextTertiary, background = WakepointField)
+            StatusPill(text = text, color = LocalWakepointColors.current.textTertiary, background = LocalWakepointColors.current.fill)
     }
 }
 
@@ -1140,13 +1124,13 @@ private fun FriendStatusPill(
     }
     when (status) {
         FriendStatus.Accepted ->
-            StatusPill(text = text, color = WakepointPrimary, background = WakepointPrimaryLight)
+            StatusPill(text = text, color = LocalWakepointColors.current.brand, background = LocalWakepointColors.current.brandSubtle)
         FriendStatus.Pending ->
-            StatusPill(text = text, color = WakepointWarning, background = WakepointWarningLight)
+            StatusPill(text = text, color = LocalWakepointColors.current.cautionary, background = LocalWakepointColors.current.cautionarySurface)
         FriendStatus.Rejected ->
-            StatusPill(text = text, color = WakepointTextTertiary, background = WakepointField)
+            StatusPill(text = text, color = LocalWakepointColors.current.textTertiary, background = LocalWakepointColors.current.fill)
         FriendStatus.Blocked ->
-            StatusPill(text = text, color = WakepointDanger, background = WakepointDangerLight)
+            StatusPill(text = text, color = LocalWakepointColors.current.negative, background = LocalWakepointColors.current.negativeSurface)
     }
 }
 

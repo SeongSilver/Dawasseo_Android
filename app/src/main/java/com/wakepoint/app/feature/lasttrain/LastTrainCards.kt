@@ -26,25 +26,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.StatusPill
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointDarkTile
-import com.wakepoint.app.core.design.WakepointImminentRing
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSizeV2
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointTypeV2
-import com.wakepoint.app.core.design.WakepointWarning
-import com.wakepoint.app.core.design.WakepointWarningLight
 import com.wakepoint.app.feature.timealarm.TimeAlarmFormat
 
 /**
@@ -60,13 +51,13 @@ fun LastTrainCard(
     onTaxiLookup: () -> Unit = {},
 ) {
     val critical = state.level == LastTrainLevel.CRITICAL
-    val containerColor = if (critical) WakepointDanger else WakepointCanvas
-    val onContainer = if (critical) Color.White else WakepointInk
-    val secondaryColor = if (critical) Color.White.copy(alpha = 0.85f) else WakepointTextSecondary
+    val containerColor = if (critical) LocalWakepointColors.current.negative else LocalWakepointColors.current.surfaceElevated
+    val onContainer = if (critical) Color.White else LocalWakepointColors.current.text
+    val secondaryColor = if (critical) Color.White.copy(alpha = 0.85f) else LocalWakepointColors.current.textSecondary
     val deadlineLabel = "${state.stationName} ${TimeAlarmFormat.timeText(state.deadlineHour, state.deadlineMinute)}"
 
     val ringModifier = when (state.level) {
-        LastTrainLevel.IMMINENT -> Modifier.border(1.5.dp, WakepointImminentRing, WakepointShape.card)
+        LastTrainLevel.IMMINENT -> Modifier.border(1.5.dp, LocalWakepointColors.current.cautionary, WakepointShape.card)
         else -> Modifier
     }
 
@@ -123,9 +114,9 @@ fun LastTrainCard(
 @Composable
 private fun LevelBadge(level: LastTrainLevel) {
     when (level) {
-        LastTrainLevel.RELAXED -> StatusPill("여유", color = WakepointPrimary, background = WakepointPrimaryLight)
-        LastTrainLevel.IMMINENT -> StatusPill("임박", color = WakepointWarning, background = WakepointWarningLight)
-        LastTrainLevel.CRITICAL -> StatusPill("아슬", color = WakepointDanger, background = Color.White)
+        LastTrainLevel.RELAXED -> StatusPill("여유", color = LocalWakepointColors.current.brand, background = LocalWakepointColors.current.brandSubtle)
+        LastTrainLevel.IMMINENT -> StatusPill("임박", color = LocalWakepointColors.current.cautionary, background = LocalWakepointColors.current.cautionarySurface)
+        LastTrainLevel.CRITICAL -> StatusPill("아슬", color = LocalWakepointColors.current.negative, background = Color.White)
     }
 }
 
@@ -135,14 +126,14 @@ private fun TaxiFareRow(fare: String?, critical: Boolean, onLookup: () -> Unit) 
         Text(
             "택시비 탭해서 조회",
             style = MaterialTheme.typography.bodyMedium,
-            color = if (critical) Color.White else WakepointPrimary,
+            color = if (critical) Color.White else LocalWakepointColors.current.brand,
             modifier = Modifier.clickable(onClick = onLookup),
         )
     } else {
         Text(
             fare,
             style = WakepointTypeV2.amountEmphasis,
-            color = if (critical) Color.White else WakepointInk,
+            color = if (critical) Color.White else LocalWakepointColors.current.text,
         )
     }
 }
@@ -153,8 +144,8 @@ private fun DarkButton(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(WakepointSize.buttonHeight)
-            .clip(WakepointShape.control)
-            .background(WakepointDarkTile)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.backgroundSecondary)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -176,10 +167,10 @@ fun LastTrainEndedCard(
     val firstTrainLabel = TimeAlarmFormat.timeText(state.firstTrainHour, state.firstTrainMinute)
     WakepointCard(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)) {
-            Text("오늘은 대중교통이 끊겼어요", style = MaterialTheme.typography.titleLarge, color = WakepointInk)
-            Text("첫차 $firstTrainLabel", style = MaterialTheme.typography.bodyMedium, color = WakepointTextSecondary)
-            Text(state.taxiFare, style = WakepointTypeV2.amountEmphasis, color = WakepointInk)
-            Text(state.taxiDetail, style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+            Text("오늘은 대중교통이 끊겼어요", style = MaterialTheme.typography.titleLarge, color = LocalWakepointColors.current.text)
+            Text("첫차 $firstTrainLabel", style = MaterialTheme.typography.bodyMedium, color = LocalWakepointColors.current.textSecondary)
+            Text(state.taxiFare, style = WakepointTypeV2.amountEmphasis, color = LocalWakepointColors.current.text)
+            Text(state.taxiDetail, style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
             Spacer(Modifier.height(WakepointSpacing.xs))
             WakepointSecondaryButton("카카오맵에서 보기", Modifier.fillMaxWidth(), icon = Icons.Rounded.Map, onClick = onOpenKakao)
             WakepointButton("첫차 ${firstTrainLabel}에 알람 걸기", Modifier.fillMaxWidth(), onClick = onSetFirstTrainAlarm)
@@ -195,15 +186,15 @@ fun LastTrainNoHomeCard(
 ) {
     WakepointCard(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)) {
-            Text("집을 등록하면 막차를 챙겨드릴게요", style = MaterialTheme.typography.titleLarge, color = WakepointInk)
-            Text("집까지 가는 막차·택시비를 알려드려요.", style = MaterialTheme.typography.bodyMedium, color = WakepointTextSecondary)
+            Text("집을 등록하면 막차를 챙겨드릴게요", style = MaterialTheme.typography.titleLarge, color = LocalWakepointColors.current.text)
+            Text("집까지 가는 막차·택시비를 알려드려요.", style = MaterialTheme.typography.bodyMedium, color = LocalWakepointColors.current.textSecondary)
             WakepointButton("집 등록하기", Modifier.fillMaxWidth(), icon = Icons.Rounded.Home, onClick = onRegisterHome)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap),
             ) {
-                Icon(Icons.Rounded.Lock, contentDescription = null, tint = WakepointPrimary, modifier = Modifier.size(16.dp))
-                Text("주소는 나만 볼 수 있어요.", style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+                Icon(Icons.Rounded.Lock, contentDescription = null, tint = LocalWakepointColors.current.brand, modifier = Modifier.size(16.dp))
+                Text("주소는 나만 볼 수 있어요.", style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
             }
         }
     }
@@ -218,8 +209,8 @@ fun LastTrainUnsupportedCard(
 ) {
     WakepointCard(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)) {
-            Text("이 구간은 막차 안내를 지원하지 않아요", style = MaterialTheme.typography.titleLarge, color = WakepointInk)
-            Text(reason, style = MaterialTheme.typography.bodyMedium, color = WakepointTextSecondary)
+            Text("이 구간은 막차 안내를 지원하지 않아요", style = MaterialTheme.typography.titleLarge, color = LocalWakepointColors.current.text)
+            Text(reason, style = MaterialTheme.typography.bodyMedium, color = LocalWakepointColors.current.textSecondary)
             WakepointSecondaryButton("카카오맵에서 보기", Modifier.fillMaxWidth(), icon = Icons.Rounded.Map, onClick = onOpenKakao)
         }
     }

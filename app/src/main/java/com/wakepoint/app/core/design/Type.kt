@@ -2,140 +2,64 @@ package com.wakepoint.app.core.design
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.wakepoint.app.R
-
-// v1.5 디자인 스펙은 본문 폰트로 Pretendard 를 지정하지만, 프로젝트에 Pretendard
-// 폰트 리소스가 없어 임의 추가하지 않고(스펙에 없는 값 임의 생성 금지) 기존에 번들된
-// Spoqa Han Sans Neo 를 유지한다. 타이포 "6단계 스케일(크기/굵기)"만 통일 적용한다.
-val SpoqaFontFamily = FontFamily(
-    Font(R.font.spoqa_han_sans_neo_thin, FontWeight.Thin),
-    Font(R.font.spoqa_han_sans_neo_light, FontWeight.Light),
-    Font(R.font.spoqa_han_sans_neo_regular, FontWeight.Normal),
-    Font(R.font.spoqa_han_sans_neo_medium, FontWeight.Medium),
-    // Spoqa Han Sans Neo에는 SemiBold(600)가 없어 Medium(500)으로 매핑한다.
-    Font(R.font.spoqa_han_sans_neo_medium, FontWeight.SemiBold),
-    Font(R.font.spoqa_han_sans_neo_bold, FontWeight.Bold)
-)
 
 /**
- * v1.5 통일 리디자인 — 타이포 6단계 단일 소스(SSOT).
+ * 다왔어 타입 스케일 — 단일 소스(SSOT). 출처: `design-handoff/DESIGN.md` 3절.
  *
- * Material3 Typography 역할(role) 이름에 6단계를 매핑한다. 화면 코드는
- * `MaterialTheme.typography.<role>` 로만 참조하고 인라인 fontSize/fontWeight 를 쓰지 않는다.
+ * 디자인 스펙의 본문 폰트는 Pretendard 지만 `res/font` 에 Pretendard 리소스가 없다.
+ * 스펙에 없는 에셋을 임의로 추가하지 않고 시스템 폰트(`FontFamily.Default`)로 진행한다.
+ * (`docs/DESIGN_PROGRESS.md` 의 "디자인과 다르게 구현한 곳" 참고)
  *
- *   T1 화면 타이틀   28 / Bold      → headlineLarge, headlineMedium
- *   T2 섹션 타이틀   18 / SemiBold  → titleSmall
- *   T3 카드 제목     16 / SemiBold  → titleMedium
- *   T4 본문·기본     15 / Regular   → bodyLarge, bodyMedium
- *   T5 보조          13 / Regular   → bodySmall
- *   T6 캡션·배지     11 / Medium    → labelSmall
- *   버튼 텍스트      15 / SemiBold  → labelLarge, labelMedium
- *
- * (line-height/letter-spacing 는 v1.5 스펙에 명시가 없어 기존 값에서 크기 변화에 맞춰
- *  최소 조정만 하고 임의 신설하지 않았다.)
- * 예외: displayMedium(스플래시), titleLarge(전체화면 알람 알림 = OS 화면 #07, 리디자인 제외)
- *       은 6단계 밖으로 그대로 둔다.
+ * 굵기는 Regular(400) 와 Medium(500) 두 가지만 쓴다. Bold 를 쓰지 않는다.
+ * 화면 코드는 `MaterialTheme.typography.<role>` 로만 참조하고 인라인 fontSize/fontWeight 를 쓰지 않는다.
  */
-val WakepointTypography = Typography(
-    // 스플래시 디스플레이 (리디자인 범위 밖)
-    displayMedium = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 34.sp,
-        lineHeight = 45.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.027).em
-    ),
-    // T1 화면 타이틀 — 28 / Bold
-    headlineLarge = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 28.sp,
-        lineHeight = 38.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.024).em
-    ),
-    // T1 화면 타이틀 — 로그인 타이틀도 동일 스타일로 통일
-    headlineMedium = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 28.sp,
-        lineHeight = 38.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.024).em
-    ),
-    // 전체화면 알람 알림 hero (OS 화면 #07, 리디자인 제외 — 기존 유지)
-    titleLarge = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.02).em
-    ),
-    // T3 카드 제목 — 16 / SemiBold (구 19~20px 강등)
-    titleMedium = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = (-0.015).em
-    ),
-    // T2 섹션 타이틀 — 18 / SemiBold
-    titleSmall = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = (-0.01).em
-    ),
-    // T4 본문·기본 — 15 / Regular
-    bodyLarge = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 15.sp,
-        lineHeight = 22.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = (-0.01).em
-    ),
-    // T4 본문·기본 — 15 / Regular
-    bodyMedium = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 15.sp,
-        lineHeight = 22.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = (-0.01).em
-    ),
-    // T5 보조 — 13 / Regular
-    bodySmall = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 13.sp,
-        lineHeight = 20.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = 0.sp
-    ),
-    // 버튼 텍스트 — 15 / SemiBold
-    labelLarge = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 15.sp,
-        lineHeight = 20.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.sp
-    ),
-    // 버튼 텍스트(소형·보조 라벨) — 15 / SemiBold 로 통일
-    labelMedium = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 15.sp,
-        lineHeight = 20.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.sp
-    ),
-    // T6 캡션·배지 — 11 / Medium
-    labelSmall = TextStyle(
-        fontFamily = SpoqaFontFamily,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 0.sp
-    )
+val WakepointFontFamily = FontFamily.Default
+
+private fun wakepointStyle(
+    size: Int,
+    lineHeight: Int,
+    weight: FontWeight,
+    letterSpacing: Double
+) = TextStyle(
+    fontFamily = WakepointFontFamily,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    fontWeight = weight,
+    letterSpacing = letterSpacing.sp
 )
+
+val WakepointTypography = Typography(
+    /** 57/64 · 400 — 녹음 경과 시간 */
+    displayLarge = wakepointStyle(57, 64, FontWeight.Normal, -0.25),
+    /** 45/52 · 400 — 알람 울림 "도착했습니다" */
+    displayMedium = wakepointStyle(45, 52, FontWeight.Normal, 0.0),
+    displaySmall = wakepointStyle(36, 44, FontWeight.Normal, 0.0),
+    headlineLarge = wakepointStyle(32, 40, FontWeight.Normal, 0.0),
+    headlineMedium = wakepointStyle(28, 36, FontWeight.Normal, 0.0),
+    /** 24/32 · 400 — 시트·다이얼로그 제목, 알람 중지 버튼 라벨 */
+    headlineSmall = wakepointStyle(24, 32, FontWeight.Normal, 0.0),
+    /** 22/28 · 400 — 상단 바 제목, 빈 상태 제목 */
+    titleLarge = wakepointStyle(22, 28, FontWeight.Normal, 0.0),
+    /** 16/24 · 500 — 섹션 제목, 행의 이름, 버튼 m 라벨 */
+    titleMedium = wakepointStyle(16, 24, FontWeight.Medium, 0.15),
+    /** 14/20 · 500 — 요청/친구 탭 */
+    titleSmall = wakepointStyle(14, 20, FontWeight.Medium, 0.1),
+    /** 16/24 · 400 — 본문, 필드 입력값, 목록 행 제목 */
+    bodyLarge = wakepointStyle(16, 24, FontWeight.Normal, 0.5),
+    /** 14/20 · 400 — 보조 설명, 메시지 */
+    bodyMedium = wakepointStyle(14, 20, FontWeight.Normal, 0.25),
+    /** 12/16 · 400 — 떠오른 필드 라벨, 필드 보조 문구, 행 부제 */
+    bodySmall = wakepointStyle(12, 16, FontWeight.Normal, 0.4),
+    /** 14/20 · 500 — 버튼 s 라벨, 상태 pill, 섹션 라벨 */
+    labelLarge = wakepointStyle(14, 20, FontWeight.Medium, 0.1),
+    /** 12/16 · 500 — 하단 탭 라벨 */
+    labelMedium = wakepointStyle(12, 16, FontWeight.Medium, 0.5),
+    /** 11/16 · 500 — 탭 배지 숫자 */
+    labelSmall = wakepointStyle(11, 16, FontWeight.Medium, 0.5)
+)
+
+/** 브랜드 워드마크 "다왔어" — 22/28 · 500 (DESIGN.md 3절 titleLarge 단서). */
+val WakepointWordmarkStyle = wakepointStyle(22, 28, FontWeight.Medium, 0.0)

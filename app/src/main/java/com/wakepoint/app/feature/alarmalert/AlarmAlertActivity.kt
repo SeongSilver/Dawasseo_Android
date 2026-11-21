@@ -33,11 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
 import com.wakepoint.app.core.design.WakepointTheme
 import com.wakepoint.app.core.notification.AlarmAlertContract
 import com.wakepoint.app.core.notification.AlarmVibrationController
@@ -124,14 +121,14 @@ private fun AlarmAlertScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
+            .background(LocalWakepointColors.current.fill)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            color = WakepointCanvas,
+            color = LocalWakepointColors.current.surfaceElevated,
             shadowElevation = 8.dp
         ) {
             Column(
@@ -147,14 +144,14 @@ private fun AlarmAlertScreen(
                 )
                 Text(
                     text = stringResource(R.string.alarm_alert_arrived),
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = locationName,
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
@@ -162,7 +159,7 @@ private fun AlarmAlertScreen(
                 if (targetAddress.isNotBlank() && targetAddress != locationName) {
                     Text(
                         text = targetAddress,
-                        color = WakepointMuted,
+                        color = LocalWakepointColors.current.textSecondary,
                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )

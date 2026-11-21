@@ -18,17 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointField
-import com.wakepoint.app.core.design.WakepointIconMuted
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.feature.timealarm.TimeAlarmFormat
 
 /**
@@ -49,22 +44,22 @@ fun FriendLastTrainSendCard(
             Text(
                 "${recipientName}님에게 막차 알람 보내기",
                 style = MaterialTheme.typography.titleLarge,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
             )
             Text(
                 "'막차 챙기라'는 신호만 보내요. 막차·택시비 계산은 ${recipientName}님 휴대폰에서 해요.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointTextSecondary,
+                color = LocalWakepointColors.current.textSecondary,
             )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(WakepointShape.control)
-                    .background(WakepointField)
+                    .clip(WakepointShape.message)
+                    .background(LocalWakepointColors.current.fill)
                     .padding(WakepointSpacing.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm),
             ) {
-                Text("전달되지 않는 것", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+                Text("전달되지 않는 것", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
                 NotSentRow("집 주소")
                 NotSentRow("현재 위치")
                 NotSentRow("막차 시각")
@@ -117,8 +112,8 @@ private fun NotSentRow(text: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap),
     ) {
-        Icon(Icons.Rounded.Block, contentDescription = null, tint = WakepointIconMuted, modifier = Modifier.size(16.dp))
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = WakepointTextSecondary)
+        Icon(Icons.Rounded.Block, contentDescription = null, tint = LocalWakepointColors.current.textSecondary, modifier = Modifier.size(16.dp))
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = LocalWakepointColors.current.textSecondary)
     }
 }
 
@@ -127,19 +122,19 @@ private fun FunToneBox(fare: String, comparison: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(WakepointShape.control)
-            .background(WakepointPrimaryLight)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.brandSubtle)
             .padding(WakepointSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap),
     ) {
-        Icon(Icons.Rounded.EmojiFoodBeverage, contentDescription = null, tint = WakepointPrimary, modifier = Modifier.size(20.dp))
+        Icon(Icons.Rounded.EmojiFoodBeverage, contentDescription = null, tint = LocalWakepointColors.current.brand, modifier = Modifier.size(20.dp))
         Column(Modifier.weight(1f)) {
-            Text("$fare ≈ $comparison", style = MaterialTheme.typography.titleSmall, color = WakepointPrimary)
+            Text("$fare ≈ $comparison", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.brand)
             Text(
                 "재미 모드예요. 마이 › 알림 설정에서 끌 수 있어요.",
                 style = MaterialTheme.typography.bodySmall,
-                color = WakepointTextSecondary,
+                color = LocalWakepointColors.current.textSecondary,
             )
         }
     }

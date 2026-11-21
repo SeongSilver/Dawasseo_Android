@@ -37,25 +37,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.MapMarkerPreview
-import com.wakepoint.app.core.design.WakepointBackground
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointDangerButton
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
-import com.wakepoint.app.core.design.WakepointMapBase
 import com.wakepoint.app.core.design.WakepointMessageDialog
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSizeV2
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.place.PlaceRules
 import com.wakepoint.app.data.location.PlaceSearchResult
 
@@ -96,13 +89,13 @@ fun PlaceEditScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground),
+            .background(LocalWakepointColors.current.background),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .padding(horizontal = WakepointSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -110,7 +103,7 @@ fun PlaceEditScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "뒤로",
-                    tint = WakepointInk,
+                    tint = LocalWakepointColors.current.text,
                 )
             }
             Text(
@@ -120,7 +113,7 @@ fun PlaceEditScreen(
                     else -> "장소 편집"
                 },
                 style = MaterialTheme.typography.titleSmall,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
             )
         }
 
@@ -143,7 +136,7 @@ fun PlaceEditScreen(
                     .fillMaxWidth()
                     .height(WakepointSizeV2.mapPreviewHeight)
                     .clip(WakepointShape.card)
-                    .background(WakepointMapBase),
+                    .background(LocalWakepointColors.current.backgroundSecondary),
                 contentAlignment = Alignment.Center,
             ) {
                 if (selectedAddress.isNotBlank()) {
@@ -152,7 +145,7 @@ fun PlaceEditScreen(
                     Text(
                         "아래에서 주소를 검색해 위치를 정해주세요",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = WakepointTextSecondary,
+                        color = LocalWakepointColors.current.textSecondary,
                     )
                 }
             }
@@ -185,7 +178,7 @@ fun PlaceEditScreen(
                         )
                     }
                     uiState.searchMessage?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium, color = WakepointMuted)
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = LocalWakepointColors.current.textSecondary)
                     }
                     uiState.searchResults.forEach { result ->
                         SearchResultRow(result = result, onClick = {
@@ -210,7 +203,7 @@ fun PlaceEditScreen(
                 Text(
                     "주소는 나만 볼 수 있어요",
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextSecondary,
+                    color = LocalWakepointColors.current.textSecondary,
                 )
             }
 
@@ -222,8 +215,8 @@ fun PlaceEditScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("친구에게 공개", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
-                    Text("주소는 공개되지 않아요", style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+                    Text("친구에게 공개", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
+                    Text("주소는 공개되지 않아요", style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
                 }
                 WakepointSwitch(checked = isPublic, onCheckedChange = {
                     isPublic = it
@@ -236,7 +229,7 @@ fun PlaceEditScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(WakepointShape.card)
-                        .background(WakepointPrimaryLight)
+                        .background(LocalWakepointColors.current.brandSubtle)
                         .padding(WakepointSpacing.cardPadding),
                     verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md),
                 ) {
@@ -251,11 +244,11 @@ fun PlaceEditScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap),
                     ) {
-                        Icon(Icons.Rounded.Shield, contentDescription = null, tint = WakepointPrimary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Rounded.Shield, contentDescription = null, tint = LocalWakepointColors.current.brand, modifier = Modifier.size(20.dp))
                         Text(
                             "친구는 이 이름만 볼 수 있고, 실제 주소와 위치는 알 수 없어요.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = WakepointTextSecondary,
+                            color = LocalWakepointColors.current.textSecondary,
                         )
                     }
                     FriendPreviewCard(sharedName = sharedName.ifBlank { uiState.suggestedSharedName })
@@ -309,7 +302,7 @@ fun PlaceEditScreen(
 @Composable
 private fun Field(label: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-        Text(label, style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+        Text(label, style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
         content()
     }
 }
@@ -319,14 +312,14 @@ private fun SearchResultRow(result: PlaceSearchResult, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(WakepointShape.control)
-            .background(WakepointCanvas)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.surfaceElevated)
             .clickable(onClick = onClick)
             .padding(WakepointSpacing.md),
         verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs),
     ) {
-        Text(result.name, style = MaterialTheme.typography.titleMedium, color = WakepointInk)
-        Text(result.address, style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+        Text(result.name, style = MaterialTheme.typography.titleMedium, color = LocalWakepointColors.current.text)
+        Text(result.address, style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
     }
 }
 
@@ -336,15 +329,15 @@ private fun FriendPreviewCard(sharedName: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(WakepointShape.control)
-            .background(WakepointCanvas)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.surfaceElevated)
             .padding(WakepointSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(sharedName, style = MaterialTheme.typography.titleMedium, color = WakepointInk)
-            Text("내 장소 (친구 화면 미리보기)", style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+            Text(sharedName, style = MaterialTheme.typography.titleMedium, color = LocalWakepointColors.current.text)
+            Text("내 장소 (친구 화면 미리보기)", style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
         }
-        Text("알람 보내기", style = MaterialTheme.typography.labelLarge, color = WakepointPrimary)
+        Text("알람 보내기", style = MaterialTheme.typography.labelLarge, color = LocalWakepointColors.current.brand)
     }
 }

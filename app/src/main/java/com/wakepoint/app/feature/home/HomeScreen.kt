@@ -82,21 +82,12 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointBorder
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointIconInactive
-import com.wakepoint.app.core.design.WakepointIconMuted
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
@@ -207,7 +198,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointParchment)
+            .background(LocalWakepointColors.current.fill)
     ) {
         WakepointGoogleMap(
             cameraPositionState = cameraPositionState,
@@ -259,8 +250,8 @@ fun HomeScreen(
                 }
             },
             shape = CircleShape,
-            containerColor = WakepointCanvas,
-            contentColor = WakepointPrimary,
+            containerColor = LocalWakepointColors.current.surfaceElevated,
+            contentColor = LocalWakepointColors.current.brand,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
@@ -300,7 +291,7 @@ fun HomeScreen(
             onDismissRequest = { showAlarmSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             AlarmSetupSheet(
                 title = stringResource(R.string.alarm_setup_title),
@@ -340,7 +331,7 @@ fun HomeScreen(
             onDismissRequest = { showSearchSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            containerColor = LocalWakepointColors.current.surfaceElevated
         ) {
             PlaceSearchSheet(
                 query = uiState.searchQuery,
@@ -500,7 +491,7 @@ fun AlarmSetupSheet(
                 if (addressMessage != null) {
                     Text(
                         text = addressMessage,
-                        color = WakepointMuted,
+                        color = LocalWakepointColors.current.textSecondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -575,7 +566,7 @@ fun AlarmSetupSheet(
         if (noticeMessage != null) {
             Text(
                 text = noticeMessage,
-                color = WakepointMuted,
+                color = LocalWakepointColors.current.textSecondary,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -601,7 +592,7 @@ fun AlarmSetupSheet(
         if (errorMessage != null) {
             Text(
                 text = errorMessage,
-                color = WakepointMuted,
+                color = LocalWakepointColors.current.textSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -638,12 +629,12 @@ private fun SheetToggleRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
                 style = MaterialTheme.typography.labelLarge
             )
             Text(
                 text = hint,
-                color = WakepointTextTertiary,
+                color = LocalWakepointColors.current.textTertiary,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -694,7 +685,7 @@ private fun PlaceSearchSheet(
             Text(
                 text = errorMessage,
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted
+                color = LocalWakepointColors.current.textSecondary
             )
         }
 
@@ -720,18 +711,18 @@ private fun PlaceResultRow(
         Icon(
             imageVector = Icons.Rounded.LocationOn,
             contentDescription = null,
-            tint = WakepointPrimary
+            tint = LocalWakepointColors.current.brand
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = place.name,
                 style = MaterialTheme.typography.bodyLarge,
-                color = WakepointInk
+                color = LocalWakepointColors.current.text
             )
             Text(
                 text = place.address,
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted
+                color = LocalWakepointColors.current.textSecondary
             )
         }
     }
@@ -752,7 +743,7 @@ private fun HomeSearchBar(
         color = Color.White,
         tonalElevation = 0.dp,
         shadowElevation = 8.dp,
-        border = BorderStroke(1.dp, WakepointBorder)
+        border = BorderStroke(1.dp, LocalWakepointColors.current.line)
     ) {
         Row(
             modifier = Modifier
@@ -765,11 +756,11 @@ private fun HomeSearchBar(
             Icon(
                 imageVector = Icons.Rounded.Search,
                 contentDescription = null,
-                tint = WakepointIconInactive
+                tint = LocalWakepointColors.current.inactive
             )
             Text(
                 text = placeholder,
-                color = WakepointTextSecondary,
+                color = LocalWakepointColors.current.textSecondary,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
@@ -777,7 +768,7 @@ private fun HomeSearchBar(
                 Icon(
                     imageVector = Icons.Rounded.Mic,
                     contentDescription = micContentDescription,
-                    tint = WakepointIconMuted
+                    tint = LocalWakepointColors.current.textSecondary
                 )
             }
         }
@@ -788,7 +779,7 @@ private fun HomeSearchBar(
 private fun SheetSectionLabel(text: String) {
     Text(
         text = text,
-        color = WakepointInk,
+        color = LocalWakepointColors.current.text,
         style = MaterialTheme.typography.titleSmall
     )
 }

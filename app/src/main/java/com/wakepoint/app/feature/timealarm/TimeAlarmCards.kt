@@ -26,20 +26,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.core.alarm.RepeatMode
 import com.wakepoint.app.core.alarm.TimeAlarmSchedule
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.StatusPill
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointDangerButton
-import com.wakepoint.app.core.design.WakepointDisabledText
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
-import com.wakepoint.app.core.design.WakepointWarning
-import com.wakepoint.app.core.design.WakepointWarningLight
 import com.wakepoint.app.domain.model.TimeAlarm
 import java.time.ZonedDateTime
 
@@ -49,7 +43,7 @@ import java.time.ZonedDateTime
  */
 @Composable
 fun AlarmTypeLabel(isTimeAlarm: Boolean, active: Boolean) {
-    val color = if (active) WakepointPrimary else WakepointDisabledText
+    val color = if (active) LocalWakepointColors.current.brand else LocalWakepointColors.current.disabledContent
     val icon = if (isTimeAlarm) Icons.Rounded.Schedule else Icons.Rounded.LocationOn
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -69,8 +63,8 @@ fun AlarmTypeLabel(isTimeAlarm: Boolean, active: Boolean) {
 fun AccuracyLimitedBadge(modifier: Modifier = Modifier) {
     StatusPill(
         text = "정확도 제한",
-        color = WakepointWarning,
-        background = WakepointWarningLight,
+        color = LocalWakepointColors.current.cautionary,
+        background = LocalWakepointColors.current.cautionarySurface,
         modifier = modifier,
     )
 }
@@ -130,7 +124,7 @@ private fun CompactTimeAlarmCard(
                 Text(
                     text = alarm.label,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (alarm.enabled) WakepointInk else WakepointTextTertiary,
+                    color = if (alarm.enabled) LocalWakepointColors.current.text else LocalWakepointColors.current.textTertiary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -139,11 +133,11 @@ private fun CompactTimeAlarmCard(
                     horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs),
                 ) {
                     AlarmTypeLabel(isTimeAlarm = true, active = alarm.enabled)
-                    Text("·", style = MaterialTheme.typography.bodySmall, color = WakepointTextTertiary)
+                    Text("·", style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textTertiary)
                     Text(
                         text = TimeAlarmFormat.metaText(alarm, ZonedDateTime.now()),
                         style = MaterialTheme.typography.bodySmall,
-                        color = WakepointTextSecondary,
+                        color = LocalWakepointColors.current.textSecondary,
                     )
                 }
                 if (alarm.enabled && !exactAlarmAllowed) {
@@ -193,7 +187,7 @@ private fun TimeAlarmEditCard(
             ) {
                 Text(
                     text = alarm.label,
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

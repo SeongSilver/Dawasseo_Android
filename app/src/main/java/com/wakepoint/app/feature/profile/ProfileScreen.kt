@@ -50,24 +50,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.SettingsRow
 import com.wakepoint.app.core.design.WakepointAvatar
-import com.wakepoint.app.core.design.WakepointBackground
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointDivider
-import com.wakepoint.app.core.design.WakepointIconLight
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointMuted
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextDisabled
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
 
 /** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 구조적 스크롤 여백. */
 private val BOTTOM_LIST_CLEARANCE = 120.dp
@@ -92,7 +84,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground)
+            .background(LocalWakepointColors.current.background)
     ) {
         WakepointPageHeader(title = stringResource(R.string.profile_title))
         Column(
@@ -133,7 +125,7 @@ fun ProfileScreen(
             Text(
                 text = stringResource(R.string.profile_version),
                 style = MaterialTheme.typography.bodySmall,
-                color = WakepointTextDisabled,
+                color = LocalWakepointColors.current.disabledContent,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -181,7 +173,7 @@ private fun EditNicknameDialog(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = WakepointShape.card,
-            color = WakepointCanvas
+            color = LocalWakepointColors.current.surfaceElevated
         ) {
             Column(
                 modifier = Modifier.padding(WakepointSpacing.xl),
@@ -189,7 +181,7 @@ private fun EditNicknameDialog(
             ) {
                 Text(
                     text = stringResource(R.string.profile_edit_nickname_title),
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     style = MaterialTheme.typography.titleLarge
                 )
                 WakepointTextField(
@@ -201,7 +193,7 @@ private fun EditNicknameDialog(
                 if (errorMessage != null) {
                     Text(
                         text = errorMessage,
-                        color = WakepointMuted,
+                        color = LocalWakepointColors.current.textSecondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -240,18 +232,18 @@ private fun ProfileCard(name: String, email: String, onClick: () -> Unit) {
                 Text(
                     text = name,
                     style = MaterialTheme.typography.titleMedium,
-                    color = WakepointInk
+                    color = LocalWakepointColors.current.text
                 )
                 Text(
                     text = email,
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextTertiary
+                    color = LocalWakepointColors.current.textTertiary
                 )
             }
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
                 contentDescription = null,
-                tint = WakepointIconLight
+                tint = LocalWakepointColors.current.textTertiary
             )
         }
     }
@@ -300,12 +292,12 @@ private fun StatColumn(value: String, label: String, modifier: Modifier = Modifi
             // 통계 숫자는 22(titleLarge) — 화면 타이틀 28과 충돌 방지
             text = value,
             style = MaterialTheme.typography.titleLarge,
-            color = WakepointInk
+            color = LocalWakepointColors.current.text
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = WakepointTextTertiary,
+            color = LocalWakepointColors.current.textTertiary,
             textAlign = TextAlign.Center
         )
     }
@@ -317,7 +309,7 @@ private fun StatDivider() {
         modifier = Modifier
             .width(1.dp)
             .height(36.dp)
-            .background(WakepointDivider)
+            .background(LocalWakepointColors.current.line)
     )
 }
 
@@ -337,32 +329,32 @@ private fun SettingsGroupCard(
             title = "내 장소",
             onClick = onOpenMyPlaces
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         // v2 STEP4 마이 진입점: 막차 알람(모의 데이터 미리보기)
         SettingsRow(
             icon = Icons.Rounded.Train,
             title = "막차 알람",
             onClick = onOpenLastTrain
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.Rounded.Notifications,
             title = stringResource(R.string.profile_notification),
             onClick = onOpenNotificationSettings
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.Rounded.LocationOn,
             title = stringResource(R.string.profile_location),
             onClick = onOpenLocationSettings
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.AutoMirrored.Rounded.VolumeUp,
             title = stringResource(R.string.profile_sound),
             onClick = onOpenSoundList
         )
-        HorizontalDivider(color = WakepointDivider, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
         SettingsRow(
             icon = Icons.AutoMirrored.Rounded.HelpOutline,
             title = stringResource(R.string.profile_support),

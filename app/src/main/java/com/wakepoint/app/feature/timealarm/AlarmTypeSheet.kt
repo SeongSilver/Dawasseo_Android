@@ -25,18 +25,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetTitle
-import com.wakepoint.app.core.design.WakepointBackground
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointIconLight
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointTheme
 
 /**
@@ -94,7 +88,7 @@ private fun AlarmTypeOption(
         modifier = Modifier
             .fillMaxWidth()
             .clip(WakepointShape.card)
-            .background(WakepointBackground)
+            .background(LocalWakepointColors.current.background)
             .clickable(onClick = onClick)
             .padding(WakepointSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
@@ -103,21 +97,21 @@ private fun AlarmTypeOption(
         Box(
             modifier = Modifier
                 .size(WakepointSize.circleButton)
-                .clip(WakepointShape.control)
-                .background(WakepointPrimaryLight),
+                .clip(WakepointShape.message)
+                .background(LocalWakepointColors.current.brandSubtle),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = null, tint = WakepointPrimary, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = LocalWakepointColors.current.brand, modifier = Modifier.size(24.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = WakepointInk)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = LocalWakepointColors.current.text)
             Spacer(Modifier.height(WakepointSpacing.xs))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
         }
         Icon(
             Icons.Rounded.ChevronRight,
             contentDescription = null,
-            tint = WakepointIconLight,
+            tint = LocalWakepointColors.current.textTertiary,
             modifier = Modifier.size(20.dp),
         )
     }
@@ -127,7 +121,7 @@ private fun AlarmTypeOption(
 @Composable
 private fun AlarmTypeSheetPreview() {
     WakepointTheme {
-        Box(Modifier.background(WakepointCanvas)) {
+        Box(Modifier.background(LocalWakepointColors.current.surfaceElevated)) {
             AlarmTypeSheetContent(onSelectLocation = {}, onSelectTime = {}, onCancel = {})
         }
     }
