@@ -21,15 +21,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Map
-import androidx.compose.material.icons.rounded.Train
 import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.rounded.Train
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,9 +43,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wakepoint.app.R
@@ -55,14 +54,22 @@ import com.wakepoint.app.core.design.SettingsRow
 import com.wakepoint.app.core.design.WakepointAvatar
 import com.wakepoint.app.core.design.WakepointButton
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointPageHeader
+import com.wakepoint.app.core.design.WakepointDivider
+import com.wakepoint.app.core.design.WakepointHeader
+import com.wakepoint.app.core.design.WakepointMessage
+import com.wakepoint.app.core.design.WakepointMessageKind
+import com.wakepoint.app.core.design.WakepointScreenPreviews
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointTextField
+import com.wakepoint.app.core.design.WakepointTheme
 
-/** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 구조적 스크롤 여백. */
-private val BOTTOM_LIST_CLEARANCE = 120.dp
+/** 리스트 하단이 떠 있는 탭 바(80dp)에 가리지 않도록 확보하는 구조적 스크롤 여백. */
+private val BOTTOM_LIST_CLEARANCE = 80.dp
+
+/** 프로필 영역 아바타 한 변 (design-handoff `Profile` · 64dp 정사각 · corner-large). */
+private const val PROFILE_AVATAR_SIZE = 64
 
 @Composable
 fun ProfileScreen(
@@ -74,65 +81,26 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val profileName = uiState.nickname.ifBlank { stringResource(R.string.profile_name) }
-    val profileEmail = uiState.email.ifBlank { stringResource(R.string.profile_email) }
     val supportEmail = stringResource(R.string.profile_support_email)
     val supportSubject = stringResource(R.string.profile_support_subject)
     val supportUnavailable = stringResource(R.string.profile_support_unavailable)
     var showEditNickname by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LocalWakepointColors.current.background)
-    ) {
-        WakepointPageHeader(title = stringResource(R.string.profile_title))
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .padding(horizontal = WakepointSpacing.screenHorizontal)
-                .padding(top = WakepointSpacing.sectionTitleGap, bottom = BOTTOM_LIST_CLEARANCE),
-            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
-        ) {
-            ProfileCard(
-                name = profileName,
-                email = profileEmail,
-                onClick = { showEditNickname = true }
-            )
-            StatsCard(
-                wakeupCount = uiState.wakeupCount,
-                activeAlarmCount = uiState.activeAlarmCount,
-                friendCount = uiState.friendCount
-            )
-            SettingsGroupCard(
-                onOpenSoundList = onOpenSoundList,
-                onOpenMyPlaces = onOpenMyPlaces,
-                onOpenLastTrain = onOpenLastTrain,
-                onOpenNotificationSettings = { context.openAppNotificationSettings() },
-                onOpenLocationSettings = { context.openAppDetailsSettings() },
-                onOpenSupport = { context.openSupportEmail(supportEmail, supportSubject, supportUnavailable) }
-            )
-            WakepointCard(contentPadding = 0) {
-                SettingsRow(
-                    icon = Icons.AutoMirrored.Rounded.Logout,
-                    title = stringResource(R.string.profile_logout),
-                    danger = true,
-                    showChevron = false,
-                    onClick = onLogout
-                )
-            }
-            Text(
-                text = stringResource(R.string.profile_version),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalWakepointColors.current.disabledContent,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = WakepointSpacing.sm)
-            )
-        }
-    }
+    ProfileContent(
+        name = uiState.nickname.ifBlank { stringResource(R.string.profile_name) },
+        email = uiState.email.ifBlank { stringResource(R.string.profile_email) },
+        wakeupCount = uiState.wakeupCount,
+        activeAlarmCount = uiState.activeAlarmCount,
+        friendCount = uiState.friendCount,
+        onEditNickname = { showEditNickname = true },
+        onOpenMyPlaces = onOpenMyPlaces,
+        onOpenLastTrain = onOpenLastTrain,
+        onOpenNotificationSettings = { context.openAppNotificationSettings() },
+        onOpenLocationSettings = { context.openAppDetailsSettings() },
+        onOpenSoundList = onOpenSoundList,
+        onOpenSupport = { context.openSupportEmail(supportEmail, supportSubject, supportUnavailable) },
+        onLogout = onLogout
+    )
 
     if (showEditNickname) {
         EditNicknameDialog(
@@ -145,6 +113,76 @@ fun ProfileScreen(
             },
             onConfirm = { newName -> viewModel.updateNickname(newName) }
         )
+    }
+}
+
+/** 상태 없는 본문 — 프리뷰용. */
+@Composable
+private fun ProfileContent(
+    name: String,
+    email: String,
+    wakeupCount: Int,
+    activeAlarmCount: Int,
+    friendCount: Int,
+    onEditNickname: () -> Unit,
+    onOpenMyPlaces: () -> Unit,
+    onOpenLastTrain: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
+    onOpenLocationSettings: () -> Unit,
+    onOpenSoundList: () -> Unit,
+    onOpenSupport: () -> Unit,
+    onLogout: () -> Unit
+) {
+    val colors = LocalWakepointColors.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        WakepointHeader()
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = WakepointSpacing.screenHorizontal)
+                .padding(top = WakepointSpacing.sm, bottom = BOTTOM_LIST_CLEARANCE),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+        ) {
+            ProfileIdentity(
+                name = name,
+                email = email,
+                onClick = onEditNickname
+            )
+            WakepointDivider()
+            StatsRow(
+                wakeupCount = wakeupCount,
+                activeAlarmCount = activeAlarmCount,
+                friendCount = friendCount
+            )
+            SettingsGroupCard(
+                onOpenSoundList = onOpenSoundList,
+                onOpenMyPlaces = onOpenMyPlaces,
+                onOpenLastTrain = onOpenLastTrain,
+                onOpenNotificationSettings = onOpenNotificationSettings,
+                onOpenLocationSettings = onOpenLocationSettings,
+                onOpenSupport = onOpenSupport
+            )
+            WakepointCard(contentPadding = 0, filled = false) {
+                SettingsRow(
+                    icon = Icons.AutoMirrored.Rounded.Logout,
+                    title = stringResource(R.string.profile_logout),
+                    showChevron = false,
+                    onClick = onLogout
+                )
+            }
+            Text(
+                text = stringResource(R.string.profile_version),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textTertiary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -172,17 +210,17 @@ private fun EditNicknameDialog(
     Dialog(onDismissRequest = { if (!isSaving) onDismiss() }) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = WakepointShape.card,
+            shape = WakepointShape.dialog,
             color = LocalWakepointColors.current.surfaceElevated
         ) {
             Column(
-                modifier = Modifier.padding(WakepointSpacing.xl),
+                modifier = Modifier.padding(WakepointSpacing.formHorizontal),
                 verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
             ) {
                 Text(
                     text = stringResource(R.string.profile_edit_nickname_title),
                     color = LocalWakepointColors.current.text,
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.headlineSmall
                 )
                 WakepointTextField(
                     value = nickname,
@@ -191,15 +229,14 @@ private fun EditNicknameDialog(
                     readOnly = isSaving
                 )
                 if (errorMessage != null) {
-                    Text(
+                    WakepointMessage(
                         text = errorMessage,
-                        color = LocalWakepointColors.current.textSecondary,
-                        style = MaterialTheme.typography.bodyMedium
+                        kind = WakepointMessageKind.Error
                     )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
+                    horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
                 ) {
                     WakepointSecondaryButton(
                         text = stringResource(R.string.alarm_cancel),
@@ -219,65 +256,70 @@ private fun EditNicknameDialog(
     }
 }
 
+/** 프로필 영역 — 아바타 64(모서리 16) + 이름 titleLarge + 메일 bodyMedium. */
 @Composable
-private fun ProfileCard(name: String, email: String, onClick: () -> Unit) {
-    WakepointCard(modifier = Modifier.clickable(onClick = onClick)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
-        ) {
-            WakepointAvatar(name = name, size = 48)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = LocalWakepointColors.current.text
-                )
-                Text(
-                    text = email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalWakepointColors.current.textTertiary
-                )
-            }
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = LocalWakepointColors.current.textTertiary
+private fun ProfileIdentity(name: String, email: String, onClick: () -> Unit) {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(WakepointSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+    ) {
+        WakepointAvatar(
+            name = name,
+            size = PROFILE_AVATAR_SIZE,
+            shape = WakepointShape.card
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.text
+            )
+            Text(
+                text = email,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.textSecondary
             )
         }
+        Icon(
+            imageVector = Icons.Rounded.ChevronRight,
+            contentDescription = null,
+            tint = colors.textSecondary
+        )
     }
 }
 
 @Composable
-private fun StatsCard(
+private fun StatsRow(
     wakeupCount: Int,
     activeAlarmCount: Int,
     friendCount: Int
 ) {
-    WakepointCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            StatColumn(
-                value = wakeupCount.toString(),
-                label = stringResource(R.string.profile_stat_wakeups),
-                modifier = Modifier.weight(1f)
-            )
-            StatDivider()
-            StatColumn(
-                value = activeAlarmCount.toString(),
-                label = stringResource(R.string.profile_stat_active),
-                modifier = Modifier.weight(1f)
-            )
-            StatDivider()
-            StatColumn(
-                value = friendCount.toString(),
-                label = stringResource(R.string.profile_stat_friends),
-                modifier = Modifier.weight(1f)
-            )
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        StatColumn(
+            value = wakeupCount.toString(),
+            label = stringResource(R.string.profile_stat_wakeups),
+            modifier = Modifier.weight(1f)
+        )
+        StatDivider()
+        StatColumn(
+            value = activeAlarmCount.toString(),
+            label = stringResource(R.string.profile_stat_active),
+            modifier = Modifier.weight(1f)
+        )
+        StatDivider()
+        StatColumn(
+            value = friendCount.toString(),
+            label = stringResource(R.string.profile_stat_friends),
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -289,7 +331,6 @@ private fun StatColumn(value: String, label: String, modifier: Modifier = Modifi
         verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
         Text(
-            // 통계 숫자는 22(titleLarge) — 화면 타이틀 28과 충돌 방지
             text = value,
             style = MaterialTheme.typography.titleLarge,
             color = LocalWakepointColors.current.text
@@ -297,7 +338,7 @@ private fun StatColumn(value: String, label: String, modifier: Modifier = Modifi
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = LocalWakepointColors.current.textTertiary,
+            color = LocalWakepointColors.current.textSecondary,
             textAlign = TextAlign.Center
         )
     }
@@ -326,37 +367,37 @@ private fun SettingsGroupCard(
         // v2 STEP2 (2-1) 마이 진입점: 내 장소 관리
         SettingsRow(
             icon = Icons.Rounded.Map,
-            title = "내 장소",
+            title = stringResource(R.string.profile_my_places),
             onClick = onOpenMyPlaces
         )
-        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        WakepointDivider(inset = true)
         // v2 STEP4 마이 진입점: 막차 알람(모의 데이터 미리보기)
         SettingsRow(
             icon = Icons.Rounded.Train,
-            title = "막차 알람",
+            title = stringResource(R.string.profile_last_train),
             onClick = onOpenLastTrain
         )
-        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        WakepointDivider(inset = true)
         SettingsRow(
             icon = Icons.Rounded.Notifications,
             title = stringResource(R.string.profile_notification),
             onClick = onOpenNotificationSettings
         )
-        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        WakepointDivider(inset = true)
         SettingsRow(
             icon = Icons.Rounded.LocationOn,
             title = stringResource(R.string.profile_location),
             onClick = onOpenLocationSettings
         )
-        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        WakepointDivider(inset = true)
         SettingsRow(
             icon = Icons.AutoMirrored.Rounded.VolumeUp,
             title = stringResource(R.string.profile_sound),
             onClick = onOpenSoundList
         )
-        HorizontalDivider(color = LocalWakepointColors.current.line, modifier = Modifier.padding(start = WakepointSpacing.cardPadding))
+        WakepointDivider(inset = true)
         SettingsRow(
-            icon = Icons.AutoMirrored.Rounded.HelpOutline,
+            icon = Icons.Rounded.ChatBubbleOutline,
             title = stringResource(R.string.profile_support),
             onClick = onOpenSupport
         )
@@ -390,5 +431,27 @@ private fun Context.openSupportEmail(email: String, subject: String, unavailable
         startActivity(intent)
     } catch (e: ActivityNotFoundException) {
         Toast.makeText(this, unavailableMessage, Toast.LENGTH_SHORT).show()
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun ProfileScreenPreview() {
+    WakepointTheme {
+        ProfileContent(
+            name = "김민지",
+            email = "minji@example.com",
+            wakeupCount = 12,
+            activeAlarmCount = 2,
+            friendCount = 5,
+            onEditNickname = {},
+            onOpenMyPlaces = {},
+            onOpenLastTrain = {},
+            onOpenNotificationSettings = {},
+            onOpenLocationSettings = {},
+            onOpenSoundList = {},
+            onOpenSupport = {},
+            onLogout = {}
+        )
     }
 }

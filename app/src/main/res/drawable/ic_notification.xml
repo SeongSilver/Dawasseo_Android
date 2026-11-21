@@ -1,0 +1,5 @@
+<!-- 알림 small icon. 시스템이 알파만 사용하므로 흰색 단색 실루엣(핀 + 종 음각)으로 둔다. ic_brand_mark 와 같은 패스. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M12,22.6c-0.4,0 -0.8,-0.2 -1.1,-0.5C8.5,19.7 3.5,14.6 3.5,10a8.5,8.5 0,0 1,17 0c0,4.6 -5,9.7 -7.4,12.1 -0.3,0.3 -0.7,0.5 -1.1,0.5zM12,5.2a1,1 0,0 1,1 0.9,3.7 3.7,0 0,1 2.7,3.6v2.4l1,1.3v0.6H7.3v-0.6l1,-1.3V9.7A3.7,3.7 0,0 1,11 6.1a1,1 0,0 1,1 -0.9zM10.5,15h3a1.5,1.5 0,0 1,-3 0z" />
+</vector>

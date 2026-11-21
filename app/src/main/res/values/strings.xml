@@ -188,4 +188,10 @@
     <string name="alarm_location_alias_hint">예: 회사, 집 앞 정류장</string>
     <string name="place_search_field_label">장소 또는 주소</string>
     <string name="place_no_result">검색 결과가 없습니다. 다른 이름이나 주소로 찾아보세요.</string>
+    <string name="profile_my_places">내 장소</string>
+    <string name="profile_last_train">막차 알람</string>
+    <!-- 회원가입 필드 보조 문구 (design-handoff Signup-default / Signup-error) -->
+    <string name="signup_email_support">로그인에 쓸 주소</string>
+    <string name="signup_password_support">6자 이상 입력하세요</string>
+    <string name="signup_password_confirm_error">비밀번호와 똑같이 입력해 주세요</string>
 </resources>
