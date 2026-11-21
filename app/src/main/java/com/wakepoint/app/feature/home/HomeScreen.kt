@@ -371,7 +371,8 @@ fun HomeScreen(
                 onSelectPlace = { place ->
                     val target = LatLng(place.lat, place.lng)
                     selectedTarget = target
-                    selectedTargetAddress = place.displayName()
+                    selectedTargetAddress =
+                        place.displayName(context.getString(R.string.place_search_result_fallback))
                     cameraPositionState.centerOn(target)
                     showSearchSheet = false
                     viewModel.clearSearch()
@@ -462,7 +463,7 @@ fun AlarmSetupSheet(
     isSaving: Boolean = false,
     errorMessage: String? = null,
     noticeMessage: String? = null,
-    soundTitle: String = "기본 벨소리",
+    soundTitle: String = stringResource(R.string.alarm_default_sound),
     soundEnabled: Boolean? = null,
     vibrate: Boolean? = null,
     showAddressSearch: Boolean = false,
@@ -979,8 +980,8 @@ private fun FusedLocationProviderClient.fetchCurrentLocation(
     }
 }
 
-private fun PlaceSearchResult.displayName(): String {
-    return name.ifBlank { address.ifBlank { "검색 결과" } }
+private fun PlaceSearchResult.displayName(fallback: String): String {
+    return name.ifBlank { address.ifBlank { fallback } }
 }
 
 private fun Context.createSpeechSearchIntent(): Intent {

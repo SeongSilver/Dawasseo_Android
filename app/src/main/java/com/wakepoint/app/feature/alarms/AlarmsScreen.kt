@@ -326,7 +326,8 @@ fun AlarmsScreen(
     receivedAlarm?.let { alarm ->
         ReceiveAlarmDialog(
             alarm = alarm,
-            senderName = uiState.friendNames[alarm.createdBy] ?: "친구",
+            senderName = uiState.friendNames[alarm.createdBy]
+                ?: stringResource(R.string.friends_title),
             onActivate = {
                 context.acknowledgeReceivedAlarms(setOf(alarm.id))
                 if (!alarm.isActive) viewModel.setAlarmActive(alarm.id, true)
