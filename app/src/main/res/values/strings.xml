@@ -184,4 +184,8 @@
     <string name="profile_support_email">support@wakepoint.app</string>
     <string name="profile_support_subject">[다왔어] 문의하기</string>
     <string name="profile_support_unavailable">메일 앱을 찾을 수 없습니다</string>
+    <!-- 디자인 적용(design-handoff) 시 추가된 문구 -->
+    <string name="alarm_location_alias_hint">예: 회사, 집 앞 정류장</string>
+    <string name="place_search_field_label">장소 또는 주소</string>
+    <string name="place_no_result">검색 결과가 없습니다. 다른 이름이나 주소로 찾아보세요.</string>
 </resources>

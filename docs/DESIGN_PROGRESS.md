@@ -2,13 +2,13 @@
 
 기준: `design-handoff/DESIGN.md`. 화면 하나를 끝내고 `./gradlew assembleDebug` 가 성공하면 해당 칸을 `[x]` 로 바꾼다.
 
-완료: 4 / 88
+완료: 30 / 88
 
 ## 공통
 
 - [x] `core/design/Theme.kt` — 색 역할(라이트 · 다크), 타입, 모양
 - [x] `core/design/Component.kt`, `RadiusSelector.kt` — 공통 컴포넌트 스타일
-- [ ] 하단 탭바, 바텀시트 컨테이너
+- [x] 하단 탭바, 바텀시트 컨테이너
 - [ ] 시스템 알림 small icon, 액센트 색
 - [ ] `docs/DESIGN.md`, `AGENTS.md` 갱신
 
@@ -26,27 +26,27 @@
 | `Alarms-empty` | 알람 목록 · 빈 상태 | 5 | [ ] | [ ] |
 | `Alarms-updating` | 알람 목록 · 갱신 중 + 오류 | 5 | [ ] | [ ] |
 | `Alarms-delete` | 알람 목록 · 삭제 확인 | 5 | [ ] | [ ] |
-| `Sheet-default` | 알람 설정 시트 · 기본 | 4.3 | [ ] | [ ] |
-| `Sheet-noperm` | 알람 설정 시트 · 알림 권한 없음 | 4.3 | [ ] | [ ] |
-| `Sheet-saving` | 알람 설정 시트 · 저장 중 | 4.3 | [ ] | [ ] |
-| `Sheet-error` | 알람 설정 시트 · 오류 | 4.3 | [ ] | [ ] |
-| `Sheet-friend` | 알람 보내기 시트 · 친구 화면 | 4.3 | [ ] | [ ] |
+| `Sheet-default` | 알람 설정 시트 · 기본 | 4.3 | [x] | [x] |
+| `Sheet-noperm` | 알람 설정 시트 · 알림 권한 없음 | 4.3 | [x] | [x] |
+| `Sheet-saving` | 알람 설정 시트 · 저장 중 | 4.3 | [x] | [x] |
+| `Sheet-error` | 알람 설정 시트 · 오류 | 4.3 | [x] | [x] |
+| `Sheet-friend` | 알람 보내기 시트 · 친구 화면 | 4.3 | [x] | [x] |
 | `Friends-requests` | 친구 · 요청 탭 | 7 | [ ] | [ ] |
 | `Friends-list` | 친구 · 친구 탭 (카드 펼침) | 7 | [ ] | [ ] |
 | `Friends-empty` | 친구 · 빈 상태 | 7 | [ ] | [ ] |
 | `Friends-error` | 친구 · 오류 | 7 | [ ] | [ ] |
 | `Friends-block` | 친구 · 차단 확인 | 7 | [ ] | [ ] |
-| `TabBar` | 하단 탭바 · 선택 상태 4종 | 11 | [ ] | [ ] |
+| `TabBar` | 하단 탭바 · 선택 상태 4종 | 11 | [x] | [x] |
 | `Ringing` | 알람 울림 · 별칭 + 주소 | 9 | [x] | [x] |
 | `Ringing-alias` | 알람 울림 · 별칭만 | 9 | [x] | [x] |
 | `Splash` | 스플래시 | 1 | [ ] | [ ] |
-| `Home` | 홈 · 위치 권한 있음 | 4.1 | [ ] | [ ] |
-| `Home-noperm` | 홈 · 위치 권한 없음 (기본 위치) | 4.1 | [ ] | [ ] |
-| `Place-idle` | 장소 검색 시트 · 입력 전 | 4.2 | [ ] | [ ] |
-| `Place-searching` | 장소 검색 시트 · 검색 중 | 4.2 | [ ] | [ ] |
-| `Place-results` | 장소 검색 시트 · 결과 있음 | 4.2 | [ ] | [ ] |
-| `Place-none` | 장소 검색 시트 · 결과 없음 | 4.2 | [ ] | [ ] |
-| `Place-error` | 장소 검색 시트 · 오류 | 4.2 | [ ] | [ ] |
+| `Home` | 홈 · 위치 권한 있음 | 4.1 | [x] | [x] |
+| `Home-noperm` | 홈 · 위치 권한 없음 (기본 위치) | 4.1 | [x] | [x] |
+| `Place-idle` | 장소 검색 시트 · 입력 전 | 4.2 | [x] | [x] |
+| `Place-searching` | 장소 검색 시트 · 검색 중 | 4.2 | [x] | [x] |
+| `Place-results` | 장소 검색 시트 · 결과 있음 | 4.2 | [x] | [x] |
+| `Place-none` | 장소 검색 시트 · 결과 없음 | 4.2 | [x] | [x] |
+| `Place-error` | 장소 검색 시트 · 오류 | 4.2 | [x] | [x] |
 | `Signup-default` | 회원가입 · 기본 | 3 | [ ] | [ ] |
 | `Signup-submitting` | 회원가입 · 제출 중 | 3 | [ ] | [ ] |
 | `Signup-error` | 회원가입 · 오류 (인라인) | 3 | [ ] | [ ] |

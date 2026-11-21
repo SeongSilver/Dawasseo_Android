@@ -19,7 +19,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,14 +36,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.GpsFixed
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,7 +63,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -88,18 +94,25 @@ import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
 import com.wakepoint.app.core.design.WakepointButton
+import com.wakepoint.app.core.design.WakepointDivider
+import com.wakepoint.app.core.design.WakepointMessage
+import com.wakepoint.app.core.design.WakepointMessageKind
 import com.wakepoint.app.core.design.WakepointSecondaryButton
+import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
+import com.wakepoint.app.core.design.WakepointComponentPreviews
+import com.wakepoint.app.core.design.WakepointScreenPreviews
 import com.wakepoint.app.core.design.WakepointSwitch
+import com.wakepoint.app.core.design.WakepointTheme
 import com.wakepoint.app.core.design.WakepointTextField
 import com.wakepoint.app.data.location.PlaceSearchResult
 import java.util.Locale
 
 private val DefaultMapTarget = LatLng(37.5665, 126.9780)
 
-/** 떠 있는 하단 탭 바가 차지하는 높이(시스템 내비게이션 바 제외). 하단 컨트롤을 탭 바 위로 올리는 데 사용. */
-private val BOTTOM_TAB_CLEARANCE = 92.dp
+/** 하단 탭 바가 차지하는 높이(시스템 내비게이션 바 제외). 하단 컨트롤을 탭 바 위로 올리는 데 사용. */
+private val BOTTOM_TAB_CLEARANCE = 80.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -198,7 +211,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(LocalWakepointColors.current.fill)
+            .background(LocalWakepointColors.current.backgroundSecondary)
     ) {
         WakepointGoogleMap(
             cameraPositionState = cameraPositionState,
@@ -222,7 +235,11 @@ fun HomeScreen(
         )
         Box(
             modifier = Modifier
-                .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.lg)
+                .statusBarsPadding()
+                .padding(
+                    horizontal = WakepointSpacing.screenHorizontal,
+                    vertical = WakepointSpacing.sm
+                )
                 .fillMaxWidth()
         ) {
             HomeSearchBar(
@@ -249,9 +266,15 @@ fun HomeScreen(
                     permissionLauncher.launch(FOREGROUND_LOCATION_PERMISSIONS)
                 }
             },
-            shape = CircleShape,
+            shape = WakepointShape.card,
             containerColor = LocalWakepointColors.current.surfaceElevated,
-            contentColor = LocalWakepointColors.current.brand,
+            contentColor = LocalWakepointColors.current.text,
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp
+            ),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
@@ -262,7 +285,11 @@ fun HomeScreen(
                 )
                 .size(WakepointSize.fab)
         ) {
-            Icon(imageVector = Icons.Rounded.GpsFixed, contentDescription = null)
+            Icon(
+                imageVector = Icons.Outlined.LocationOn,
+                contentDescription = null,
+                modifier = Modifier.size(WakepointSize.icon)
+            )
         }
         WakepointButton(
             text = stringResource(R.string.home_create_alarm),
@@ -453,148 +480,225 @@ fun AlarmSetupSheet(
     onPrimaryClick: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
+    val colors = LocalWakepointColors.current
     Column(
         modifier = modifier
             .fillMaxWidth()
-            // 시트 콘텐츠가 화면보다 길거나(주소검색 결과 등) 키보드가 올라오면
-            // 하단 [취소/보내기] 버튼이 잘려 도달 못 하던 문제 수정: 스크롤 + IME/내비바 인셋.
             .imePadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = WakepointSpacing.screenHorizontal)
-            .padding(bottom = WakepointSpacing.xl),
-        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
     ) {
-        BottomSheetTitle(title = title)
+        // 본문만 스크롤한다. 하단 버튼 줄은 스크롤 밖 고정 (DESIGN.md 7절).
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = WakepointSpacing.formHorizontal,
+                    end = WakepointSpacing.formHorizontal,
+                    bottom = WakepointSpacing.xl
+                ),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+        ) {
+            BottomSheetTitle(title = title)
 
-        if (showAddressSearch) {
-            SheetSection(label = stringResource(R.string.alarm_address_search)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
-                    WakepointTextField(
-                        value = addressQuery,
-                        onValueChange = onAddressQueryChange,
-                        placeholder = stringResource(R.string.alarm_address_hint),
-                        leadingIcon = Icons.Rounded.Search,
-                        modifier = Modifier.weight(1f)
-                    )
-                    WakepointButton(
-                        text = if (isSearchingAddress) {
-                            stringResource(R.string.place_searching)
-                        } else {
-                            stringResource(R.string.place_search)
-                        },
-                        enabled = !isSearchingAddress && addressQuery.isNotBlank(),
-                        onClick = onAddressSearch,
-                        modifier = Modifier.width(86.dp).height(WakepointSize.fieldHeight)
-                    )
-                }
+            if (showAddressSearch) {
+                WakepointTextField(
+                    value = addressQuery,
+                    onValueChange = onAddressQueryChange,
+                    placeholder = stringResource(R.string.alarm_address_search),
+                    leadingIcon = Icons.Rounded.Search,
+                    filled = true
+                )
+                WakepointButton(
+                    text = if (isSearchingAddress) {
+                        stringResource(R.string.place_searching)
+                    } else {
+                        stringResource(R.string.place_search)
+                    },
+                    enabled = !isSearchingAddress && addressQuery.isNotBlank(),
+                    onClick = onAddressSearch,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 if (addressMessage != null) {
-                    Text(
+                    WakepointMessage(
                         text = addressMessage,
-                        color = LocalWakepointColors.current.textSecondary,
-                        style = MaterialTheme.typography.bodyMedium
+                        kind = WakepointMessageKind.InfoOnSheet
                     )
                 }
-                addressResults.forEach { place ->
-                    PlaceResultRow(place = place, onClick = { onSelectAddress(place) })
+                if (addressResults.isNotEmpty()) {
+                    SheetRowGroup {
+                        addressResults.forEachIndexed { index, place ->
+                            if (index > 0) WakepointDivider()
+                            PlaceResultRow(place = place, onClick = { onSelectAddress(place) })
+                        }
+                    }
                 }
             }
-        }
 
-        SheetSection(label = stringResource(R.string.alarm_location_alias)) {
             WakepointTextField(
                 value = label,
                 onValueChange = onLabelChange,
-                placeholder = stringResource(R.string.alarm_default_label)
+                placeholder = stringResource(R.string.alarm_location_alias),
+                supportingText = stringResource(R.string.alarm_location_alias_hint),
+                filled = true
             )
-        }
 
-        SheetSection(label = stringResource(R.string.alarm_selected_target)) {
-            WakepointTextField(
-                value = targetAddress.ifBlank {
-                    stringResource(R.string.alarm_selected_target_unknown)
-                },
-                onValueChange = {},
-                placeholder = stringResource(R.string.alarm_selected_target),
-                readOnly = true
-            )
-        }
+            SheetSection(label = stringResource(R.string.alarm_selected_target)) {
+                SheetRowGroup {
+                    SheetReadOnlyRow(
+                        icon = Icons.Rounded.LocationOn,
+                        title = targetAddress.ifBlank {
+                            stringResource(R.string.alarm_selected_target_unknown)
+                        },
+                        subtitle = stringResource(R.string.home_map_selected_location)
+                    )
+                }
+            }
 
-        SheetSection(label = stringResource(R.string.alarm_radius_setting)) {
             RadiusSelector(
                 options = ALARM_RADIUS_OPTIONS,
                 selectedOption = radius,
-                onSelected = onRadiusChange
+                onSelected = onRadiusChange,
+                label = stringResource(R.string.alarm_radius_setting),
+                filled = true
             )
-        }
 
-        if (soundEnabled != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+            if (soundEnabled != null) {
                 SheetToggleRow(
                     title = stringResource(R.string.alarm_sound_toggle),
                     hint = stringResource(R.string.alarm_sound_toggle_hint),
                     checked = soundEnabled,
                     onCheckedChange = onSoundEnabledChange
                 )
-                if (soundEnabled) {
-                    SoundOptionRow(
-                        title = soundTitle,
-                        subtitle = stringResource(R.string.alarm_sound_hint),
-                        icon = Icons.Rounded.Notifications
-                    )
+            }
+
+            if (soundEnabled != false) {
+                SheetSection(label = stringResource(R.string.alarm_sound_setting)) {
+                    SheetRowGroup {
+                        SheetReadOnlyRow(
+                            icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                            title = soundTitle,
+                            subtitle = stringResource(R.string.alarm_sound_hint),
+                            trailingIcon = Icons.Rounded.ChevronRight
+                        )
+                    }
                 }
             }
-        } else {
-            SheetSection(label = stringResource(R.string.alarm_sound_setting)) {
-                SoundOptionRow(
-                    title = soundTitle,
-                    subtitle = stringResource(R.string.alarm_sound_hint),
-                    icon = Icons.Rounded.Notifications
+
+            if (vibrate != null) {
+                SheetToggleRow(
+                    title = stringResource(R.string.alarm_vibrate_setting),
+                    hint = stringResource(R.string.alarm_vibrate_hint),
+                    checked = vibrate,
+                    onCheckedChange = onVibrateChange
+                )
+            }
+
+            // 알림 권한 안내만 cautionary 를 쓴다 (DESIGN.md 5절).
+            if (noticeMessage != null) {
+                WakepointMessage(
+                    text = noticeMessage,
+                    kind = WakepointMessageKind.Caution
+                )
+            }
+
+            if (errorMessage != null) {
+                WakepointMessage(
+                    text = errorMessage,
+                    kind = WakepointMessageKind.Error
                 )
             }
         }
 
-        if (vibrate != null) {
-            SheetToggleRow(
-                title = stringResource(R.string.alarm_vibrate_setting),
-                hint = stringResource(R.string.alarm_vibrate_hint),
-                checked = vibrate,
-                onCheckedChange = onVibrateChange
-            )
-        }
-
-        if (noticeMessage != null) {
-            Text(
-                text = noticeMessage,
-                color = LocalWakepointColors.current.textSecondary,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-
+        WakepointDivider()
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(
+                    start = WakepointSpacing.formHorizontal,
+                    end = WakepointSpacing.formHorizontal,
+                    top = WakepointSpacing.md,
+                    bottom = WakepointSpacing.md
+                ),
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
         ) {
             WakepointSecondaryButton(
                 text = stringResource(R.string.alarm_cancel),
                 onClick = onDismiss,
                 enabled = !isSaving,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(SHEET_CANCEL_WEIGHT)
             )
             WakepointButton(
                 text = if (isSaving) stringResource(R.string.alarm_saving) else primaryButton,
                 onClick = onPrimaryClick,
                 enabled = !isSaving,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(SHEET_CONFIRM_WEIGHT)
             )
         }
+    }
+}
 
-        if (errorMessage != null) {
+/** 시트 하단 버튼 비율 — 취소 1 : 실행 1.4 (design-handoff `Sheet-default`). */
+private const val SHEET_CANCEL_WEIGHT = 1f
+private const val SHEET_CONFIRM_WEIGHT = 1.4f
+
+/** 시트 안 묶음 행 컨테이너 — 모서리 16, 배경 `surfaceElevatedSecondary`. */
+@Composable
+private fun SheetRowGroup(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(WakepointShape.card)
+            .background(LocalWakepointColors.current.surfaceElevatedSecondary),
+        content = content
+    )
+}
+
+/** 시트 안 읽기 전용 행 — 최소 높이 64, 좌우 16, 아이콘 24 + 제목/부제. */
+@Composable
+private fun SheetReadOnlyRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    trailingIcon: ImageVector? = null,
+    onClick: (() -> Unit)? = null
+) {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = WakepointSize.soundRowHeight)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = WakepointSpacing.lg, vertical = WakepointSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.textSecondary,
+            modifier = Modifier.size(WakepointSize.icon)
+        )
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = errorMessage,
-                color = LocalWakepointColors.current.textSecondary,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.text
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary
+                )
+            }
+        }
+        if (trailingIcon != null) {
+            Icon(
+                imageVector = trailingIcon,
+                contentDescription = null,
+                tint = colors.textSecondary,
+                modifier = Modifier.size(WakepointSize.icon)
             )
         }
     }
@@ -630,11 +734,11 @@ private fun SheetToggleRow(
             Text(
                 text = title,
                 color = LocalWakepointColors.current.text,
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.titleMedium
             )
             Text(
                 text = hint,
-                color = LocalWakepointColors.current.textTertiary,
+                color = LocalWakepointColors.current.textSecondary,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -642,6 +746,10 @@ private fun SheetToggleRow(
     }
 }
 
+/**
+ * 장소 검색 시트 (design-handoff `Place-idle` · `-searching` · `-results` · `-none` · `-error`, 명세 4.2).
+ * 시트 안이므로 채움 필드와 `surfaceElevatedSecondary` 안내를 쓴다.
+ */
 @Composable
 private fun PlaceSearchSheet(
     query: String,
@@ -656,19 +764,26 @@ private fun PlaceSearchSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = WakepointSpacing.screenHorizontal)
-            .padding(bottom = WakepointSpacing.xl),
-        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
+            .imePadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(
+                start = WakepointSpacing.formHorizontal,
+                end = WakepointSpacing.formHorizontal,
+                bottom = WakepointSpacing.xxxl
+            ),
+        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
     ) {
         BottomSheetTitle(title = stringResource(R.string.place_search_title))
         WakepointTextField(
             value = query,
             onValueChange = onQueryChange,
-            placeholder = stringResource(R.string.home_search_placeholder),
+            placeholder = stringResource(R.string.place_search_field_label),
             leadingIcon = Icons.Rounded.Search,
             trailingIcon = Icons.Rounded.Mic,
             trailingIconContentDescription = stringResource(R.string.place_voice_search),
-            onTrailingIconClick = onVoiceSearch
+            onTrailingIconClick = onVoiceSearch,
+            filled = true
         )
         WakepointButton(
             text = if (isSearching) {
@@ -681,53 +796,43 @@ private fun PlaceSearchSheet(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (errorMessage != null) {
-            Text(
+        when {
+            errorMessage != null -> WakepointMessage(
                 text = errorMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalWakepointColors.current.textSecondary
+                kind = WakepointMessageKind.Error
+            )
+            !isSearching && query.isNotBlank() && results.isEmpty() -> WakepointMessage(
+                text = stringResource(R.string.place_no_result),
+                kind = WakepointMessageKind.InfoOnSheet
             )
         }
 
-        results.forEach { place ->
-            PlaceResultRow(place = place, onClick = { onSelectPlace(place) })
+        if (results.isNotEmpty()) {
+            SheetRowGroup {
+                results.forEachIndexed { index, place ->
+                    if (index > 0) WakepointDivider()
+                    PlaceResultRow(place = place, onClick = { onSelectPlace(place) })
+                }
+            }
         }
     }
 }
 
+/** 장소 검색 결과 행 — 아이콘 location_on `textSecondary`, 제목 bodyLarge, 주소 bodySmall. */
 @Composable
 private fun PlaceResultRow(
     place: PlaceSearchResult,
     onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = WakepointSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.LocationOn,
-            contentDescription = null,
-            tint = LocalWakepointColors.current.brand
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = place.name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = LocalWakepointColors.current.text
-            )
-            Text(
-                text = place.address,
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalWakepointColors.current.textSecondary
-            )
-        }
-    }
+    SheetReadOnlyRow(
+        icon = Icons.Rounded.LocationOn,
+        title = place.name,
+        subtitle = place.address,
+        onClick = onClick
+    )
 }
 
+/** 지도 위 검색바 (design-handoff `Home`) — 높이 56, 완전 원형, `surfaceElevated`. 그림자 없음. */
 @Composable
 private fun HomeSearchBar(
     placeholder: String,
@@ -735,52 +840,54 @@ private fun HomeSearchBar(
     onClick: () -> Unit,
     onMicClick: () -> Unit
 ) {
+    val colors = LocalWakepointColors.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(WakepointSize.fieldHeight),
-        shape = CircleShape,
-        color = Color.White,
-        tonalElevation = 0.dp,
-        shadowElevation = 8.dp,
-        border = BorderStroke(1.dp, LocalWakepointColors.current.line)
+            .height(WakepointSize.searchBarHeight),
+        shape = WakepointShape.full,
+        color = colors.surfaceElevated
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .clickable(onClick = onClick)
-                .padding(start = WakepointSpacing.screenHorizontal, end = WakepointSpacing.xs),
+                .padding(horizontal = WakepointSpacing.lg),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap)
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
         ) {
             Icon(
                 imageVector = Icons.Rounded.Search,
                 contentDescription = null,
-                tint = LocalWakepointColors.current.inactive
+                tint = colors.textSecondary,
+                modifier = Modifier.size(WakepointSize.icon)
             )
             Text(
                 text = placeholder,
-                color = LocalWakepointColors.current.textSecondary,
+                color = colors.textSecondary,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                maxLines = 1
             )
-            IconButton(onClick = onMicClick) {
-                Icon(
-                    imageVector = Icons.Rounded.Mic,
-                    contentDescription = micContentDescription,
-                    tint = LocalWakepointColors.current.textSecondary
-                )
-            }
+            Icon(
+                imageVector = Icons.Rounded.Mic,
+                contentDescription = micContentDescription,
+                tint = colors.textSecondary,
+                modifier = Modifier
+                    .size(WakepointSize.icon)
+                    .clickable(onClick = onMicClick)
+            )
         }
     }
 }
 
+/** 시트 섹션 라벨 — labelLarge(14/20 · 500), `textSecondary`. */
 @Composable
 private fun SheetSectionLabel(text: String) {
     Text(
         text = text,
-        color = LocalWakepointColors.current.text,
-        style = MaterialTheme.typography.titleSmall
+        color = LocalWakepointColors.current.textSecondary,
+        style = MaterialTheme.typography.labelLarge
     )
 }
 
@@ -884,4 +991,208 @@ private fun Context.createSpeechSearchIntent(): Intent {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// @Preview — design-handoff 의 상태별 화면
+// ─────────────────────────────────────────────────────────────────────
 
+@WakepointComponentPreviews
+@Composable
+private fun SheetDefaultPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            AlarmSetupSheet(
+                title = stringResource(R.string.alarm_setup_title),
+                primaryButton = stringResource(R.string.alarm_add),
+                targetAddress = "서울 강남구 테헤란로 152"
+            )
+        }
+    }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun SheetNoPermPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            AlarmSetupSheet(
+                title = stringResource(R.string.alarm_setup_title),
+                primaryButton = stringResource(R.string.alarm_add),
+                targetAddress = "서울 강남구 테헤란로 152",
+                noticeMessage = stringResource(R.string.alarm_notification_permission_hint)
+            )
+        }
+    }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun SheetSavingPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            AlarmSetupSheet(
+                title = stringResource(R.string.alarm_setup_title),
+                primaryButton = stringResource(R.string.alarm_add),
+                targetAddress = "서울 강남구 테헤란로 152",
+                label = "회사",
+                isSaving = true
+            )
+        }
+    }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun SheetErrorPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            AlarmSetupSheet(
+                title = stringResource(R.string.alarm_setup_title),
+                primaryButton = stringResource(R.string.alarm_add),
+                targetAddress = "서울 강남구 테헤란로 152",
+                label = "회사",
+                errorMessage = "알람을 저장하지 못했습니다. 잠시 뒤 다시 눌러 주세요."
+            )
+        }
+    }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun SheetFriendPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            AlarmSetupSheet(
+                title = stringResource(R.string.alarm_send_title),
+                primaryButton = stringResource(R.string.alarm_send),
+                targetAddress = "서울 강남구 테헤란로 152",
+                showAddressSearch = true,
+                addressQuery = "테헤란로"
+            )
+        }
+    }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun PlaceIdlePreview() {
+    WakepointTheme { PreviewSheetSurface { PreviewPlaceSheet() } }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun PlaceSearchingPreview() {
+    WakepointTheme { PreviewSheetSurface { PreviewPlaceSheet(query = "서울역", isSearching = true) } }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun PlaceResultsPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            PreviewPlaceSheet(query = "서울역", results = PREVIEW_PLACES)
+        }
+    }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun PlaceNonePreview() {
+    WakepointTheme { PreviewSheetSurface { PreviewPlaceSheet(query = "서울역") } }
+}
+
+@WakepointComponentPreviews
+@Composable
+private fun PlaceErrorPreview() {
+    WakepointTheme {
+        PreviewSheetSurface {
+            PreviewPlaceSheet(
+                query = "서울역",
+                errorMessage = "장소를 찾지 못했습니다. 네트워크를 확인하고 다시 검색해 주세요."
+            )
+        }
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun HomeChromePreview() {
+    WakepointTheme { PreviewHomeChrome() }
+}
+
+/** 시트 컨테이너(모서리 28 · `surfaceElevated` · 드래그 핸들)를 미리보기에서 재현한다. */
+@Composable
+private fun PreviewSheetSurface(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(WakepointShape.sheet)
+            .background(LocalWakepointColors.current.surfaceElevated)
+    ) {
+        BottomSheetHandle()
+        content()
+    }
+}
+
+@Composable
+private fun PreviewPlaceSheet(
+    query: String = "",
+    results: List<PlaceSearchResult> = emptyList(),
+    isSearching: Boolean = false,
+    errorMessage: String? = null
+) {
+    PlaceSearchSheet(
+        query = query,
+        results = results,
+        isSearching = isSearching,
+        errorMessage = errorMessage,
+        onQueryChange = {},
+        onSearch = {},
+        onVoiceSearch = {},
+        onSelectPlace = {}
+    )
+}
+
+/** 홈 · 홈(권한 없음) 의 지도 위 UI. 지도 자체는 미리보기에서 그려지지 않아 바탕색으로 둔다. */
+@Composable
+private fun PreviewHomeChrome() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LocalWakepointColors.current.backgroundSecondary)
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(
+                    horizontal = WakepointSpacing.screenHorizontal,
+                    vertical = WakepointSpacing.sm
+                )
+                .fillMaxWidth()
+        ) {
+            HomeSearchBar(
+                placeholder = stringResource(R.string.home_search_placeholder),
+                micContentDescription = stringResource(R.string.place_voice_search),
+                onClick = {},
+                onMicClick = {}
+            )
+        }
+        WakepointButton(
+            text = stringResource(R.string.home_create_alarm),
+            icon = Icons.Rounded.Add,
+            onClick = {},
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(
+                    start = WakepointSpacing.screenHorizontal,
+                    end = WakepointSpacing.screenHorizontal,
+                    bottom = WakepointSpacing.lg + BOTTOM_TAB_CLEARANCE
+                )
+                .fillMaxWidth()
+        )
+    }
+}
+
+private val PREVIEW_PLACES = listOf(
+    PlaceSearchResult("1", "서울역", "서울 용산구 한강대로 405", 37.5547, 126.9707),
+    PlaceSearchResult("2", "서울역 버스환승센터", "서울 중구 봉래동2가 122", 37.5553, 126.9723),
+    PlaceSearchResult("3", "서울로7017", "서울 중구 청파로 432", 37.5560, 126.9713)
+)

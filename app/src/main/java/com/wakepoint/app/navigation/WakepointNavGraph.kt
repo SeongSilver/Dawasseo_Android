@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Map
-import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
@@ -53,6 +56,7 @@ import androidx.navigation.navArgument
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointShape
+import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.feature.alarms.AlarmsScreen
 import com.wakepoint.app.feature.alarms.SoundListScreen
@@ -107,13 +111,15 @@ private fun NavHostController.navigateToTab(route: String) {
     }
 }
 
+/** 하단 탭. 선택된 홈·알람은 채움형 아이콘을 쓴다 (DESIGN.md 5절). */
 private enum class MainRoute(
     val route: String,
     @StringRes val labelResId: Int,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val selectedIcon: ImageVector = icon
 ) {
-    Home("home", R.string.tab_home, Icons.Rounded.Map),
-    Alarms("alarms", R.string.tab_alarms, Icons.Rounded.Notifications),
+    Home("home", R.string.tab_home, Icons.Outlined.LocationOn, Icons.Filled.LocationOn),
+    Alarms("alarms", R.string.tab_alarms, Icons.Outlined.Alarm, Icons.Filled.Alarm),
     Friends("friends", R.string.tab_friends, Icons.Rounded.Groups),
     Profile("profile", R.string.tab_profile, Icons.Rounded.Person)
 }
@@ -319,6 +325,11 @@ fun WakepointApp() {
     }
 }
 
+/**
+ * 하단 탭바 (design-handoff `TabBar`, 명세 11절).
+ * 배경 `backgroundSecondary`, 높이 80 + 내비게이션바 인셋. 그림자·테두리 없음.
+ * 항목: 인디케이터 64×32 `brandSubtle`, 선택 `brand`, 비선택 `inactive`.
+ */
 @Composable
 private fun WakepointTabBar(
     items: List<MainRoute>,
@@ -326,38 +337,21 @@ private fun WakepointTabBar(
     onSelect: (MainRoute) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(LocalWakepointColors.current.backgroundSecondary)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.md),
-        contentAlignment = Alignment.Center
+            .height(TAB_BAR_HEIGHT),
+        verticalAlignment = Alignment.Top
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(68.dp),
-            shape = WakepointShape.full,
-            color = LocalWakepointColors.current.surfaceElevated,
-            shadowElevation = 12.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, LocalWakepointColors.current.line)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = WakepointSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                items.forEach { item ->
-                    WakepointTabItem(
-                        item = item,
-                        selected = currentRoute == item.route,
-                        onClick = { onSelect(item) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+        items.forEach { item ->
+            WakepointTabItem(
+                item = item,
+                selected = currentRoute == item.route,
+                onClick = { onSelect(item) },
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -369,38 +363,40 @@ private fun WakepointTabItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalWakepointColors.current
     val label = stringResource(item.labelResId)
-    val tint = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.inactive
+    val tint = if (selected) colors.brand else colors.inactive
     Column(
         modifier = modifier
-            .clip(WakepointShape.full)
             .clickable(onClick = onClick)
-            .padding(vertical = WakepointSpacing.sm),
+            .padding(top = WakepointSpacing.md),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
     ) {
         Box(
             modifier = Modifier
-                .width(56.dp)
-                .height(30.dp)
+                .width(TAB_INDICATOR_WIDTH)
+                .height(TAB_INDICATOR_HEIGHT)
                 .clip(WakepointShape.full)
-                .background(if (selected) LocalWakepointColors.current.brandSubtle else androidx.compose.ui.graphics.Color.Transparent),
+                .background(if (selected) colors.brandSubtle else Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = item.icon,
+                imageVector = if (selected) item.selectedIcon else item.icon,
                 contentDescription = label,
                 tint = tint,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(WakepointSize.icon)
             )
         }
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold
-                else androidx.compose.ui.text.font.FontWeight.Medium
-            ),
+            style = MaterialTheme.typography.labelMedium,
             color = tint
         )
     }
 }
+
+// 탭바의 구조적 치수 (디자인 토큰 대상이 아닌 구조 상수).
+private val TAB_BAR_HEIGHT = 80.dp
+private val TAB_INDICATOR_WIDTH = 64.dp
+private val TAB_INDICATOR_HEIGHT = 32.dp
