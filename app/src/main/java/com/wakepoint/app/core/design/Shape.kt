@@ -6,32 +6,48 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 /**
- * v1.5 통일 리디자인 — 코너 라운드 4단계 단일 소스(SSOT).
+ * 다왔어 모서리 토큰 — 단일 소스(SSOT). 출처: `design-handoff/DESIGN.md` 4절.
  *
- * 8 배지·작은 요소 / 12 입력·칩·버튼 / 20 카드·시트 / full 검색·탭바·FAB.
- * (디자인: "라운드 — 4단계")
+ * 텍스트 필드 4 · 상태 pill 8 · 메시지 영역 12 · 카드와 묶음 행 16 ·
+ * 시트(위쪽)·다이얼로그·빈 상태 카드 28 · 버튼·검색바·스위치·아바타는 완전 원형.
  */
 object WakepointRadius {
-    /** 8 — 배지·작은 요소 */
-    val badge = 8.dp
-    /** 12 — 입력·칩·버튼 */
-    val control = 12.dp
-    /** 20 — 카드·시트 */
-    val card = 20.dp
+    /** 4 — 텍스트 필드 */
+    val field = 4.dp
+    /** 8 — 상태 pill */
+    val pill = 8.dp
+    /** 12 — 메시지 영역, 버튼 pressed */
+    val message = 12.dp
+    /** 16 — 카드, 묶음 행 */
+    val card = 16.dp
+    /** 28 — 시트, 다이얼로그, 빈 상태 카드 */
+    val sheet = 28.dp
 }
 
-/** 라운드 단계에 대응하는 Shape 상수. */
 object WakepointShape {
-    val badge = RoundedCornerShape(WakepointRadius.badge)
-    val control = RoundedCornerShape(WakepointRadius.control)
+    val field = RoundedCornerShape(WakepointRadius.field)
+    val pill = RoundedCornerShape(WakepointRadius.pill)
+    val message = RoundedCornerShape(WakepointRadius.message)
     val card = RoundedCornerShape(WakepointRadius.card)
-    /** full — 검색·탭바·FAB */
+    val dialog = RoundedCornerShape(WakepointRadius.sheet)
+    /** 시트는 위쪽 모서리만 28 */
+    val sheet = RoundedCornerShape(
+        topStart = WakepointRadius.sheet,
+        topEnd = WakepointRadius.sheet,
+        bottomStart = 0.dp,
+        bottomEnd = 0.dp
+    )
+    /** 버튼·검색바·스위치·아바타 */
     val full = CircleShape
+    /** 버튼을 누르는 동안 한 단계 작아진 모서리 (m: 원형 → 12) */
+    val buttonPressed = RoundedCornerShape(WakepointRadius.message)
 }
 
-/** MaterialTheme.shapes 로 노출되는 매핑(small=배지, medium=컨트롤, large=카드). */
+/** MaterialTheme.shapes 매핑. */
 val WakepointShapes = Shapes(
-    small = WakepointShape.badge,
-    medium = WakepointShape.control,
-    large = WakepointShape.card
+    extraSmall = WakepointShape.field,
+    small = WakepointShape.pill,
+    medium = WakepointShape.message,
+    large = WakepointShape.card,
+    extraLarge = WakepointShape.dialog
 )

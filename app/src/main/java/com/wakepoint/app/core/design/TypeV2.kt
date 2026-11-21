@@ -2,7 +2,6 @@ package com.wakepoint.app.core.design
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 /**
@@ -12,19 +11,19 @@ import androidx.compose.ui.unit.sp
  * (근거: docs/v2-design-guide.md §3, docs/v2-decisions.md)
  */
 object WakepointTypeV2 {
-    /** 막차 남은 시간 카운트다운(hero, 52/Bold). 명세 STEP4 최상위 위계. */
+    /** 막차 남은 시간 카운트다운(hero, 52/Medium). 명세 STEP4 최상위 위계. */
     val lastTrainCountdown = TextStyle(
-        fontFamily = SpoqaFontFamily,
+        fontFamily = WakepointFontFamily,
         fontSize = 52.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.03).em,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = (-0.25).sp,
     )
 
-    /** 막차 택시비 등 금액 강조(34/Bold). 화면 2번째로 큰 요소. */
+    /** 막차 택시비 등 금액 강조(34/Medium). 화면 2번째로 큰 요소. */
     val amountEmphasis = TextStyle(
-        fontFamily = SpoqaFontFamily,
+        fontFamily = WakepointFontFamily,
         fontSize = 34.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.02).em,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 0.sp,
     )
 }

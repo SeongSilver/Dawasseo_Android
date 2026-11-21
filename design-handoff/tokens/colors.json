@@ -1,0 +1,230 @@
+{
+ "source": "Montage semantic palette (user-supplied) applied to Dawasseo",
+ "format": "#RRGGBB or #RRGGBBAA (last two digits = alpha)",
+ "roles": [
+  {
+   "name": "background",
+   "token": "Background Neutral/Primary",
+   "dark": "#1B1C1E",
+   "light": "#FFFFFF",
+   "usage": "화면 배경, 테두리 카드 배경, 테두리 필드의 라벨 배경"
+  },
+  {
+   "name": "backgroundSecondary",
+   "token": "Background Neutral/Secondary",
+   "dark": "#0F0F10",
+   "light": "#F7F7F8",
+   "usage": "하단 탭바"
+  },
+  {
+   "name": "surfaceElevated",
+   "token": "Surface Elevated/Primary",
+   "dark": "#212225",
+   "light": "#FFFFFF",
+   "usage": "바텀시트, 다이얼로그, 지도 위 검색바와 현재 위치 버튼, 알림 카드"
+  },
+  {
+   "name": "surfaceElevatedSecondary",
+   "token": "Surface Elevated/Secondary",
+   "dark": "#141415",
+   "light": "#F7F7F8",
+   "usage": "시트 안 읽기 전용 행, 장소 검색 결과 목록, 시트 안 안내 메시지"
+  },
+  {
+   "name": "fill",
+   "token": "Surface Neutral/Secondary",
+   "dark": "#70737C38",
+   "light": "#70737C14",
+   "usage": "채움 필드, 화면 위 읽기 전용 행, 보조(tonal) 버튼, 친구 검색바, 진행 pill, 안내 메시지, 꺼진 스위치 트랙, 빈 상태 아이콘 원"
+  },
+  {
+   "name": "fillWeak",
+   "token": "Surface Neutral/Tertiary",
+   "dark": "#70737C1F",
+   "light": "#70737C0D",
+   "usage": "중립 pill, 알람 울림 바깥 원"
+  },
+  {
+   "name": "fillStrong",
+   "token": "Surface Neutral/Strong",
+   "dark": "#70737C47",
+   "light": "#70737C29",
+   "usage": "아바타 배경, 알람 울림 중앙 원"
+  },
+  {
+   "name": "card",
+   "token": "Dark: Surface Neutral/Tertiary · Light: Background Neutral/Secondary",
+   "dark": "#70737C1F",
+   "light": "#F7F7F8",
+   "usage": "활성 알람 카드, 프로필 메뉴 카드, 사운드 목록 카드, 빈 상태 카드"
+  },
+  {
+   "name": "disabledContainer",
+   "token": "Surface Disable/Primary",
+   "dark": "#2E2F33",
+   "light": "#F4F4F5",
+   "usage": "비활성 버튼 · 스위치 배경"
+  },
+  {
+   "name": "disabledContent",
+   "token": "Foreground Disable/Primary",
+   "dark": "#989BA229",
+   "light": "#37383C29",
+   "usage": "비활성 버튼 글자, 비활성 스위치 핸들"
+  },
+  {
+   "name": "text",
+   "token": "Foreground Neutral/Primary",
+   "dark": "#F7F7F8",
+   "light": "#171719",
+   "usage": "본문 · 제목, 보조 버튼 글자"
+  },
+  {
+   "name": "textStrong",
+   "token": "Foreground Neutral/Strong",
+   "dark": "#FFFFFF",
+   "light": "#000000",
+   "usage": "로고 심볼"
+  },
+  {
+   "name": "textSecondary",
+   "token": "Foreground Neutral/Secondary",
+   "dark": "#C2C4C8E0",
+   "light": "#2E2F33E0",
+   "usage": "보조 텍스트, 일반 아이콘"
+  },
+  {
+   "name": "textTertiary",
+   "token": "Foreground Neutral/Tertiary",
+   "dark": "#AEB0B69C",
+   "light": "#37383C9C",
+   "usage": "필드 라벨, 필드 보조 문구"
+  },
+  {
+   "name": "inactive",
+   "token": "Foreground Inactive/Primary",
+   "dark": "#5A5C63",
+   "light": "#989BA2",
+   "usage": "비선택 탭(하단 탭바, 요청/친구 탭), 꺼진 스위치 핸들 · 테두리, 시트 핸들"
+  },
+  {
+   "name": "line",
+   "token": "Line Neutral/Primary Opaque",
+   "dark": "#37383C",
+   "light": "#E1E2E4",
+   "usage": "필드 · 테두리 버튼 · 카드 테두리, 구분선"
+  },
+  {
+   "name": "dim",
+   "token": "Effect Dimmer/Primary",
+   "dark": "#171719BD",
+   "light": "#17171985",
+   "usage": "시트 · 다이얼로그 뒤 scrim (이 값 그대로, 추가 알파 금지)"
+  },
+  {
+   "name": "brand",
+   "token": "Surface Brand/Primary · Foreground Brand/Primary",
+   "dark": "#3385FF",
+   "light": "#0066FF",
+   "usage": "채움 버튼, 켜진 스위치, 탭 인디케이터 · 배지, 선택 체크, 글자 버튼, 선택 탭, 목적지 마커"
+  },
+  {
+   "name": "brandPressed",
+   "token": "Surface Brand/Heavy",
+   "dark": "#0066FF",
+   "light": "#0054D1",
+   "usage": "채움 버튼 pressed"
+  },
+  {
+   "name": "onBrand",
+   "token": "Static/White",
+   "dark": "#FFFFFF",
+   "light": "#FFFFFF",
+   "usage": "brand 채움 위 글자 · 아이콘, 스위치 핸들"
+  },
+  {
+   "name": "brandSubtle",
+   "token": "Surface Brand/Subtle",
+   "dark": "#3385FF0D",
+   "light": "#0066FF0D",
+   "usage": "선택된 행(친구 검색, 알람음), 하단 탭 선택 인디케이터"
+  },
+  {
+   "name": "brandLineStrong",
+   "token": "Line Brand/Strong",
+   "dark": "#3385FF6E",
+   "light": "#0066FF6E",
+   "usage": "필드 포커스 테두리"
+  },
+  {
+   "name": "brandFocus",
+   "token": "Line Brand/Focus",
+   "dark": "#3385FF1F",
+   "light": "#0066FF1F",
+   "usage": "포커스 링"
+  },
+  {
+   "name": "negative",
+   "token": "Foreground Negative/Primary",
+   "dark": "#FF6363",
+   "light": "#FF4242",
+   "usage": "오류 아이콘"
+  },
+  {
+   "name": "negativeText",
+   "token": "Dark: Foreground Negative/Primary · Light: Foreground Negative/Strong",
+   "dark": "#FF6363",
+   "light": "#E52222",
+   "usage": "오류 메시지 글자, 필드 오류 라벨 · 보조 문구"
+  },
+  {
+   "name": "negativeSurface",
+   "token": "Surface Negative/Primary",
+   "dark": "#FF636314",
+   "light": "#FF424214",
+   "usage": "오류 메시지 배경"
+  },
+  {
+   "name": "negativeLine",
+   "token": "Line Negative/Primary",
+   "dark": "#FF63636E",
+   "light": "#FF42426E",
+   "usage": "오류 메시지 테두리"
+  },
+  {
+   "name": "negativeLineStrong",
+   "token": "Line Negative/Strong",
+   "dark": "#FF636385",
+   "light": "#FF424285",
+   "usage": "필드 오류 테두리"
+  },
+  {
+   "name": "positive",
+   "token": "Foreground Positive/Primary",
+   "dark": "#1ED45A",
+   "light": "#00BF40",
+   "usage": "완료 pill(친구 · 승인) 글자와 체크"
+  },
+  {
+   "name": "positiveSurface",
+   "token": "Surface Positive/Primary",
+   "dark": "#1ED45A14",
+   "light": "#00BF4014",
+   "usage": "완료 pill 배경"
+  },
+  {
+   "name": "cautionary",
+   "token": "Foreground Cautionary/Primary",
+   "dark": "#FFA938",
+   "light": "#FF9200",
+   "usage": "알림 권한 안내 글자"
+  },
+  {
+   "name": "cautionarySurface",
+   "token": "Surface Cautionary/Primary",
+   "dark": "#FFA93814",
+   "light": "#FF920014",
+   "usage": "알림 권한 안내 배경"
+  }
+ ]
+}

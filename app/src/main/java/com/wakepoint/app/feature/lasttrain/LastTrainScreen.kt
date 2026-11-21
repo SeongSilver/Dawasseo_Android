@@ -38,20 +38,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetHandle
 import com.wakepoint.app.core.design.StatusPill
-import com.wakepoint.app.core.design.WakepointBackground
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
 import com.wakepoint.app.core.design.WakepointMessageDialog
 import com.wakepoint.app.core.design.WakepointPageHeader
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointWarning
-import com.wakepoint.app.core.design.WakepointWarningLight
 
 /**
  * v2 STEP4 — 막차 알람 메인(마이 탭 진입 서브 화면).
@@ -92,13 +87,13 @@ fun LastTrainScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground),
+            .background(LocalWakepointColors.current.background),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .padding(horizontal = WakepointSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -106,10 +101,10 @@ fun LastTrainScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "뒤로",
-                    tint = WakepointInk,
+                    tint = LocalWakepointColors.current.text,
                 )
             }
-            Text("막차 알람", style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+            Text("막차 알람", style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
         }
         Column(
             modifier = Modifier
@@ -124,7 +119,7 @@ fun LastTrainScreen(
                 modifier = Modifier.padding(horizontal = 0.dp),
                 action = {
                     // 경로 API(Kakao Mobility) 미확보 — 모의 계산임을 화면에 정직하게 표시.
-                    StatusPill("모의 데이터", color = WakepointWarning, background = WakepointWarningLight)
+                    StatusPill("모의 데이터", color = LocalWakepointColors.current.cautionary, background = LocalWakepointColors.current.cautionarySurface)
                 },
             )
             Spacer(Modifier.height(WakepointSpacing.sectionTitleGap))
@@ -164,7 +159,7 @@ fun LastTrainScreen(
             onDismissRequest = { showConsentSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas,
+            containerColor = LocalWakepointColors.current.surfaceElevated,
         ) {
             LocationConsentSheetContent(
                 onAgree = {
@@ -186,12 +181,12 @@ private fun LastTrainLookupCard(homeName: String, onLookup: () -> Unit) {
             Text(
                 "지금 일어나야 하나?",
                 style = MaterialTheme.typography.titleLarge,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
             )
             Text(
                 "'$homeName'까지 가는 막차 시각과 택시비를 3초 안에 알려드려요.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = WakepointTextSecondary,
+                color = LocalWakepointColors.current.textSecondary,
             )
             WakepointButton(
                 text = "막차 조회",

@@ -21,13 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
 
 /**
  * v2 STEP4 (4-5) — 위치 전송 동의(최초 1회) 시트 콘텐츠.
@@ -73,10 +71,10 @@ fun LocationConsentSheetContent(
 @Composable
 private fun ConsentRow(icon: ImageVector, title: String, body: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)) {
-        Icon(icon, contentDescription = null, tint = WakepointPrimary, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = null, tint = LocalWakepointColors.current.brand, modifier = Modifier.size(24.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = WakepointInk)
-            Text(body, style = MaterialTheme.typography.bodySmall, color = WakepointTextSecondary)
+            Text(title, style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = LocalWakepointColors.current.textSecondary)
         }
     }
 }

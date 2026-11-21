@@ -21,15 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointDanger
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointDangerButton
-import com.wakepoint.app.core.design.WakepointDangerLight
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
 
 /**
  * v2 STEP2 (2-4) — 장소 삭제 확인 다이얼로그.
@@ -43,7 +39,7 @@ fun PlaceDeleteDialog(
     onDelete: () -> Unit,
 ) {
     Dialog(onDismissRequest = onCancel) {
-        Surface(shape = WakepointShape.card, color = WakepointCanvas, modifier = Modifier.fillMaxWidth()) {
+        Surface(shape = WakepointShape.card, color = LocalWakepointColors.current.surfaceElevated, modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(WakepointSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,20 +48,20 @@ fun PlaceDeleteDialog(
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .background(WakepointDangerLight, CircleShape),
+                        .background(LocalWakepointColors.current.negativeSurface, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Rounded.DeleteOutline,
                         contentDescription = null,
-                        tint = WakepointDanger,
+                        tint = LocalWakepointColors.current.negative,
                         modifier = Modifier.size(28.dp),
                     )
                 }
                 Text(
                     "'$placeName'을(를) 삭제할까요?",
                     style = MaterialTheme.typography.titleLarge,
-                    color = WakepointInk,
+                    color = LocalWakepointColors.current.text,
                     textAlign = TextAlign.Center,
                 )
                 Text(
@@ -74,7 +70,7 @@ fun PlaceDeleteDialog(
                         if (sharedName != null) append("\n친구 목록의 '$sharedName'도 사라져요.")
                     },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = WakepointTextSecondary,
+                    color = LocalWakepointColors.current.textSecondary,
                     textAlign = TextAlign.Center,
                 )
                 Row(

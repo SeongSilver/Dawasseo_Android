@@ -42,24 +42,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.wakepoint.app.core.alarm.RepeatMode
 import com.wakepoint.app.core.alarm.TimeAlarmSchedule
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.BottomSheetTitle
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointChipActiveBorder
-import com.wakepoint.app.core.design.WakepointChipBorder
-import com.wakepoint.app.core.design.WakepointField
-import com.wakepoint.app.core.design.WakepointIconMuted
-import com.wakepoint.app.core.design.WakepointInk
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
 import com.wakepoint.app.core.design.WakepointSwitch
-import com.wakepoint.app.core.design.WakepointTextDisabled
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextSecondary
 import com.wakepoint.app.core.design.WakepointTheme
 import com.wakepoint.app.domain.model.TimeAlarm
 import java.time.DayOfWeek
@@ -252,7 +243,7 @@ fun WakepointTimePickerDialog(
         Column(
             modifier = Modifier
                 .clip(WakepointShape.card)
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .padding(WakepointSpacing.cardPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg),
@@ -260,7 +251,7 @@ fun WakepointTimePickerDialog(
             Text(
                 text = "시각 선택",
                 style = MaterialTheme.typography.titleSmall,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
                 modifier = Modifier.fillMaxWidth(),
             )
             TimePicker(state = state)
@@ -278,7 +269,7 @@ fun WakepointTimePickerDialog(
 @Composable
 internal fun SheetSection(label: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-        Text(label, style = MaterialTheme.typography.titleSmall, color = WakepointInk)
+        Text(label, style = MaterialTheme.typography.titleSmall, color = LocalWakepointColors.current.text)
         content()
     }
 }
@@ -294,8 +285,8 @@ internal fun SelectBox(
     Row(
         modifier = modifier
             .height(WakepointSize.fieldHeight)
-            .clip(WakepointShape.control)
-            .background(WakepointField)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.fill)
             .then(
                 if (onClick != null && enabled) Modifier.clickable(onClick = onClick) else Modifier
             )
@@ -305,13 +296,13 @@ internal fun SelectBox(
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled) WakepointInk else WakepointTextDisabled,
+            color = if (enabled) LocalWakepointColors.current.text else LocalWakepointColors.current.disabledContent,
             modifier = Modifier.weight(1f),
         )
         Icon(
             Icons.Rounded.ExpandMore,
             contentDescription = null,
-            tint = if (enabled) WakepointIconMuted else WakepointTextDisabled,
+            tint = if (enabled) LocalWakepointColors.current.textSecondary else LocalWakepointColors.current.disabledContent,
             modifier = Modifier.size(20.dp),
         )
     }
@@ -322,12 +313,12 @@ internal fun RepeatChip(label: String, selected: Boolean, modifier: Modifier = M
     Box(
         modifier = modifier
             .height(WakepointSize.chipHeight)
-            .clip(WakepointShape.control)
-            .background(if (selected) WakepointPrimaryLight else Color.Transparent)
+            .clip(WakepointShape.message)
+            .background(if (selected) LocalWakepointColors.current.brandSubtle else Color.Transparent)
             .border(
                 width = if (selected) 2.dp else 1.5.dp,
-                color = if (selected) WakepointChipActiveBorder else WakepointChipBorder,
-                shape = WakepointShape.control,
+                color = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.line,
+                shape = WakepointShape.message,
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -335,7 +326,7 @@ internal fun RepeatChip(label: String, selected: Boolean, modifier: Modifier = M
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (selected) WakepointPrimary else WakepointTextSecondary,
+            color = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.textSecondary,
         )
     }
 }
@@ -346,10 +337,10 @@ private fun DayCircle(label: String, selected: Boolean, modifier: Modifier = Mod
         modifier = modifier
             .height(WakepointSize.chipHeight)
             .clip(CircleShape)
-            .background(if (selected) WakepointPrimaryLight else Color.Transparent)
+            .background(if (selected) LocalWakepointColors.current.brandSubtle else Color.Transparent)
             .border(
                 width = if (selected) 2.dp else 1.5.dp,
-                color = if (selected) WakepointChipActiveBorder else WakepointChipBorder,
+                color = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.line,
                 shape = CircleShape,
             )
             .clickable(onClick = onClick),
@@ -358,7 +349,7 @@ private fun DayCircle(label: String, selected: Boolean, modifier: Modifier = Mod
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (selected) WakepointPrimary else WakepointTextSecondary,
+            color = if (selected) LocalWakepointColors.current.brand else LocalWakepointColors.current.textSecondary,
             textAlign = TextAlign.Center,
         )
     }
@@ -375,7 +366,7 @@ internal fun SheetToggleRow(title: String, checked: Boolean, onCheckedChange: (B
         Text(
             title,
             style = MaterialTheme.typography.bodyLarge,
-            color = WakepointInk,
+            color = LocalWakepointColors.current.text,
             modifier = Modifier.weight(1f),
         )
         WakepointSwitch(checked = checked, onCheckedChange = onCheckedChange)
@@ -389,8 +380,8 @@ internal fun RingtoneRow(value: String) {
         modifier = Modifier
             .fillMaxWidth()
             .height(WakepointSize.rowHeight)
-            .clip(WakepointShape.control)
-            .background(WakepointField)
+            .clip(WakepointShape.message)
+            .background(LocalWakepointColors.current.fill)
             .padding(horizontal = WakepointSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap),
@@ -398,16 +389,16 @@ internal fun RingtoneRow(value: String) {
         Icon(
             Icons.Rounded.Notifications,
             contentDescription = null,
-            tint = WakepointIconMuted,
+            tint = LocalWakepointColors.current.textSecondary,
             modifier = Modifier.size(20.dp),
         )
         Text(
             "벨소리",
             style = MaterialTheme.typography.bodyLarge,
-            color = WakepointInk,
+            color = LocalWakepointColors.current.text,
             modifier = Modifier.weight(1f),
         )
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = WakepointTextSecondary)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = LocalWakepointColors.current.textSecondary)
     }
 }
 
@@ -415,7 +406,7 @@ internal fun RingtoneRow(value: String) {
 @Composable
 private fun TimeAlarmCreateSheetPreview() {
     WakepointTheme {
-        Box(Modifier.background(WakepointCanvas)) {
+        Box(Modifier.background(LocalWakepointColors.current.surfaceElevated)) {
             TimeAlarmCreateSheetContent(onCancel = {}, onAdd = {})
         }
     }

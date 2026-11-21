@@ -2,9 +2,9 @@ package com.wakepoint.app.feature.auth
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -33,53 +35,74 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wakepoint.app.R
-import com.wakepoint.app.core.design.WakepointBorder
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLogo
-import com.wakepoint.app.core.design.WakepointMessageDialog
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointParchment
+import com.wakepoint.app.core.design.WakepointMessage
+import com.wakepoint.app.core.design.WakepointMessageKind
+import com.wakepoint.app.core.design.WakepointPageHeader
+import com.wakepoint.app.core.design.WakepointScreenPreviews
+import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
+import com.wakepoint.app.core.design.WakepointTextButton
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextSecondary
+import com.wakepoint.app.core.design.WakepointTheme
 
+// 브랜드 에셋 치수 — 디자인 토큰 대상이 아니다 (DESIGN.md 7절 / CLAUDE.md 6절).
+/** 스플래시 로고 심볼 96dp (로그인은 WakepointLogo 기본값 72dp). */
+private const val SPLASH_SYMBOL_SIZE = 96
+
+/** 카카오 로그인 공식 이미지 에셋의 고유 치수. 변형 없이 그대로 쓴다. */
+private val KAKAO_BUTTON_WIDTH = 183.dp
+private val KAKAO_BUTTON_HEIGHT = 45.dp
+
+/** 비활성 상태의 카카오 버튼 불투명도 (design-handoff `Login-submitting`). */
+private const val KAKAO_DISABLED_ALPHA = 0.38f
+
+/** 스플래시 — design-handoff `Splash`. */
 @Composable
 fun SplashScreen() {
+    val colors = LocalWakepointColors.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
-            .padding(horizontal = 28.dp, vertical = 72.dp),
+            .background(colors.background)
+            .navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(1f))
-        Image(
-            painter = painterResource(R.drawable.logo_square),
-            contentDescription = stringResource(R.string.app_name),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.size(112.dp)
-        )
-        Spacer(modifier = Modifier.height(32.dp))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            WakepointLogo(horizontal = false, symbolSize = SPLASH_SYMBOL_SIZE)
+        }
         Text(
             text = stringResource(R.string.splash_tagline),
-            style = MaterialTheme.typography.titleMedium,
-            color = WakepointInk,
-            textAlign = TextAlign.Center
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.textSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = WakepointSpacing.formHorizontal)
+                .padding(bottom = WakepointSpacing.xxl)
         )
-        Spacer(modifier = Modifier.weight(1.5f))
     }
 }
 
+/**
+ * 로그인 — design-handoff `Login-default` · `Login-submitting` · `Login-error` · `Login-info`.
+ *
+ * 오류·안내는 팝업이 아니라 비밀번호 필드 아래의 메시지 영역으로 보여 준다.
+ * `onDismissMessage` 는 내비게이션 호출부 시그니처 유지를 위해 남겨 둔다(인라인 메시지는 닫기 버튼이 없다).
+ */
 @Composable
 fun AuthScreen(
     uiState: AuthUiState,
@@ -89,48 +112,53 @@ fun AuthScreen(
     onKakaoLogin: () -> String?,
     onSignUp: () -> Unit,
     onForgotPassword: () -> Unit = {},
-    onDismissMessage: () -> Unit = {}
+    @Suppress("UNUSED_PARAMETER") onDismissMessage: () -> Unit = {}
 ) {
     val context = LocalContext.current
-
-    AuthMessageDialog(uiState = uiState, onDismiss = onDismissMessage)
+    val colors = LocalWakepointColors.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
+            .background(colors.background)
+            .imePadding()
+            .navigationBarsPadding()
     ) {
-        AuthTopBar()
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = WakepointSpacing.screenHorizontal)
-                .padding(top = WakepointSpacing.xxl, bottom = WakepointSpacing.xl),
+                .padding(horizontal = WakepointSpacing.formHorizontal)
+                .padding(top = WakepointSpacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             WakepointLogo(horizontal = false)
+            Spacer(modifier = Modifier.height(WakepointSpacing.md))
             Text(
                 text = stringResource(R.string.auth_intro),
-                style = MaterialTheme.typography.headlineLarge,
-                color = WakepointInk,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = WakepointSpacing.xl, bottom = WakepointSpacing.xl)
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(WakepointSpacing.xxl))
             WakepointTextField(
                 value = uiState.loginEmail,
                 onValueChange = onLoginEmailChange,
                 placeholder = stringResource(R.string.field_email),
+                enabled = !uiState.isSubmitting,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
-            Spacer(modifier = Modifier.height(WakepointSpacing.sm))
+            Spacer(modifier = Modifier.height(WakepointSpacing.fieldGap))
             WakepointTextField(
                 value = uiState.loginPassword,
                 onValueChange = onLoginPasswordChange,
                 placeholder = stringResource(R.string.auth_password),
+                enabled = !uiState.isSubmitting,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
+            AuthInlineMessage(uiState = uiState, topGap = WakepointSpacing.fieldGap)
             Spacer(modifier = Modifier.height(WakepointSpacing.xl))
             WakepointButton(
                 text = if (uiState.isSubmitting) {
@@ -142,9 +170,30 @@ fun AuthScreen(
                 enabled = !uiState.isSubmitting,
                 onClick = onSignIn
             )
-            Spacer(modifier = Modifier.height(WakepointSpacing.xl))
+            Spacer(modifier = Modifier.height(WakepointSpacing.sm))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
+            ) {
+                WakepointTextButton(
+                    text = stringResource(R.string.auth_forgot_password),
+                    enabled = !uiState.isSubmitting,
+                    onClick = onForgotPassword
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = WakepointSize.border, height = WakepointSpacing.md)
+                        .background(colors.line)
+                )
+                WakepointTextButton(
+                    text = stringResource(R.string.auth_signup),
+                    enabled = !uiState.isSubmitting,
+                    onClick = onSignUp
+                )
+            }
+            Spacer(modifier = Modifier.height(WakepointSpacing.lg))
             OrDivider()
-            Spacer(modifier = Modifier.height(WakepointSpacing.xl))
+            Spacer(modifier = Modifier.height(WakepointSpacing.lg))
             KakaoLoginButton(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isSubmitting,
@@ -154,78 +203,37 @@ fun AuthScreen(
                 }
             )
             Spacer(modifier = Modifier.height(WakepointSpacing.xl))
-            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)) {
-                Text(
-                    text = stringResource(R.string.auth_forgot_password),
-                    color = WakepointInk,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable(enabled = !uiState.isSubmitting, onClick = onForgotPassword)
-                )
-                Text(text = "|", color = WakepointMuted)
-                Text(
-                    text = stringResource(R.string.auth_signup),
-                    color = WakepointInk,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable(onClick = onSignUp)
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = WakepointSpacing.formHorizontal)
+                .padding(bottom = WakepointSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
                 text = stringResource(R.string.auth_terms),
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(WakepointSpacing.xxl))
+            Spacer(modifier = Modifier.height(WakepointSpacing.sm))
             Text(
                 text = stringResource(R.string.auth_copyright),
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointMuted,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center
             )
         }
     }
 }
 
-@Composable
-private fun OrDivider() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
-    ) {
-        HorizontalDivider(modifier = Modifier.weight(1f), color = WakepointBorder)
-        Text(
-            text = stringResource(R.string.auth_or),
-            style = MaterialTheme.typography.bodySmall,
-            color = WakepointTextSecondary
-        )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = WakepointBorder)
-    }
-}
-
-@Composable
-private fun KakaoLoginButton(
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .height(45.dp)
-            .alpha(if (enabled) 1f else 0.5f)
-            .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(R.drawable.kakao_login_medium_narrow),
-            contentDescription = stringResource(R.string.auth_kakao_login),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.size(width = 183.dp, height = 45.dp)
-        )
-    }
-}
-
+/**
+ * 회원가입 — design-handoff `Signup-default` · `Signup-submitting` · `Signup-error` · `Signup-info`.
+ *
+ * 비밀번호 확인 불일치는 필드 자체의 오류(3dp `negativeLineStrong` + 오류 아이콘 + 보조 문구)로,
+ * 그 밖의 실패·안내는 가입 버튼 위 메시지 영역으로 보여 준다.
+ */
 @Composable
 fun SignUpScreen(
     uiState: AuthUiState,
@@ -235,52 +243,79 @@ fun SignUpScreen(
     onNameChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onBack: () -> Unit,
-    onDismissMessage: () -> Unit = {}
+    @Suppress("UNUSED_PARAMETER") onDismissMessage: () -> Unit = {}
 ) {
-    AuthMessageDialog(uiState = uiState, onDismiss = onDismissMessage)
+    val colors = LocalWakepointColors.current
+    val passwordMismatch = uiState.signUpPasswordConfirm.isNotEmpty() &&
+        uiState.signUpPassword != uiState.signUpPasswordConfirm
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointCanvas)
+            .background(colors.background)
+            .imePadding()
+            .navigationBarsPadding()
     ) {
-        AuthTopBar(title = stringResource(R.string.signup_title), onBack = onBack)
+        WakepointPageHeader(
+            title = stringResource(R.string.signup_title),
+            navigation = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.common_back),
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(WakepointSize.icon)
+                    )
+                }
+            }
+        )
         Column(
             modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(WakepointSpacing.screenHorizontal),
-            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
+                .padding(horizontal = WakepointSpacing.formHorizontal)
+                .padding(vertical = WakepointSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
         ) {
-            SignUpField(
+            WakepointTextField(
                 value = uiState.signUpName,
                 onValueChange = onNameChange,
-                label = stringResource(R.string.field_name),
-                hint = stringResource(R.string.signup_name_hint)
+                placeholder = stringResource(R.string.field_name),
+                enabled = !uiState.isSubmitting
             )
-            SignUpField(
+            WakepointTextField(
                 value = uiState.signUpEmail,
                 onValueChange = onEmailChange,
-                label = stringResource(R.string.field_email),
-                hint = stringResource(R.string.signup_email_hint),
+                placeholder = stringResource(R.string.field_email),
+                enabled = !uiState.isSubmitting,
+                supportingText = stringResource(R.string.signup_email_support),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
-            SignUpField(
+            WakepointTextField(
                 value = uiState.signUpPassword,
                 onValueChange = onPasswordChange,
-                label = stringResource(R.string.field_password),
-                hint = stringResource(R.string.signup_password_hint),
+                placeholder = stringResource(R.string.field_password),
+                enabled = !uiState.isSubmitting,
+                supportingText = stringResource(R.string.signup_password_support),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-            SignUpField(
+            WakepointTextField(
                 value = uiState.signUpPasswordConfirm,
                 onValueChange = onPasswordConfirmChange,
-                label = stringResource(R.string.field_password_confirm),
-                hint = stringResource(R.string.signup_password_confirm_hint),
+                placeholder = stringResource(R.string.field_password_confirm),
+                enabled = !uiState.isSubmitting,
+                isError = passwordMismatch,
+                supportingText = if (passwordMismatch) {
+                    stringResource(R.string.signup_password_confirm_error)
+                } else {
+                    null
+                },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-            Spacer(modifier = Modifier.height(WakepointSpacing.md))
+            AuthInlineMessage(uiState = uiState)
             WakepointButton(
                 text = if (uiState.isSubmitting) {
                     stringResource(R.string.auth_processing)
@@ -295,61 +330,224 @@ fun SignUpScreen(
     }
 }
 
+/** 오류 / 안내 메시지 영역 — 오류가 있으면 오류를, 없으면 안내를 보여 준다. */
 @Composable
-private fun AuthTopBar(
-    title: String? = null,
-    onBack: () -> Unit = {}
+private fun AuthInlineMessage(
+    uiState: AuthUiState,
+    topGap: Dp? = null
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(WakepointCanvas),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.common_back))
-        }
-        if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = WakepointInk
-            )
-        }
+    val message = uiState.errorMessage ?: uiState.infoMessage ?: return
+    if (topGap != null) {
+        Spacer(modifier = Modifier.height(topGap))
     }
+    WakepointMessage(
+        text = message,
+        kind = if (uiState.errorMessage != null) {
+            WakepointMessageKind.Error
+        } else {
+            WakepointMessageKind.Info
+        }
+    )
 }
 
+/** "또는" 구분선 — 1dp `line` + 12/16 · 500 라벨. */
 @Composable
-private fun AuthMessageDialog(uiState: AuthUiState, onDismiss: () -> Unit) {
-    val isError = uiState.errorMessage != null
-    val message = uiState.errorMessage ?: uiState.infoMessage
-    if (message != null) {
-        WakepointMessageDialog(
-            message = message,
-            onDismiss = onDismiss,
-            isError = isError
+private fun OrDivider() {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+    ) {
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = WakepointSize.border,
+            color = colors.line
+        )
+        Text(
+            text = stringResource(R.string.auth_or),
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.textSecondary
+        )
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = WakepointSize.border,
+            color = colors.line
         )
     }
 }
 
+/** 카카오 로그인 — 공식 이미지 에셋을 그대로 쓴다 (DESIGN.md 7절). */
 @Composable
-private fun SignUpField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    hint: String,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+private fun KakaoLoginButton(
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, color = WakepointInk)
-        WakepointTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = hint,
-            visualTransformation = visualTransformation,
-            keyboardOptions = keyboardOptions
+    Box(
+        modifier = modifier
+            .height(KAKAO_BUTTON_HEIGHT)
+            .alpha(if (enabled) 1f else KAKAO_DISABLED_ALPHA)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(R.drawable.kakao_login_medium_narrow),
+            contentDescription = stringResource(R.string.auth_kakao_login),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(width = KAKAO_BUTTON_WIDTH, height = KAKAO_BUTTON_HEIGHT)
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// @Preview — design-handoff 의 상태별 화면
+// ─────────────────────────────────────────────────────────────────────
+
+private const val PREVIEW_EMAIL = "minji@example.com"
+private const val PREVIEW_PASSWORD = "password12"
+private const val PREVIEW_NAME = "김민지"
+
+@Composable
+private fun PreviewAuthScreen(uiState: AuthUiState) {
+    AuthScreen(
+        uiState = uiState,
+        onLoginEmailChange = {},
+        onLoginPasswordChange = {},
+        onSignIn = {},
+        onKakaoLogin = { null },
+        onSignUp = {}
+    )
+}
+
+@Composable
+private fun PreviewSignUpScreen(uiState: AuthUiState) {
+    SignUpScreen(
+        uiState = uiState,
+        onEmailChange = {},
+        onPasswordChange = {},
+        onPasswordConfirmChange = {},
+        onNameChange = {},
+        onSubmit = {},
+        onBack = {}
+    )
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SplashPreview() {
+    WakepointTheme {
+        SplashScreen()
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun LoginDefaultPreview() {
+    WakepointTheme {
+        PreviewAuthScreen(AuthUiState(isCheckingSession = false))
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun LoginSubmittingPreview() {
+    WakepointTheme {
+        PreviewAuthScreen(
+            AuthUiState(
+                isCheckingSession = false,
+                loginEmail = PREVIEW_EMAIL,
+                loginPassword = PREVIEW_PASSWORD,
+                isSubmitting = true
+            )
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun LoginErrorPreview() {
+    WakepointTheme {
+        PreviewAuthScreen(
+            AuthUiState(
+                isCheckingSession = false,
+                loginEmail = PREVIEW_EMAIL,
+                loginPassword = PREVIEW_PASSWORD,
+                errorMessage = "이메일과 비밀번호를 다시 확인해 주세요."
+            )
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun LoginInfoPreview() {
+    WakepointTheme {
+        PreviewAuthScreen(
+            AuthUiState(
+                isCheckingSession = false,
+                loginEmail = PREVIEW_EMAIL,
+                loginPassword = PREVIEW_PASSWORD,
+                infoMessage = "확인 메일을 보냈습니다. 메일함에서 인증을 마친 뒤 로그인해 주세요."
+            )
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SignupDefaultPreview() {
+    WakepointTheme {
+        PreviewSignUpScreen(AuthUiState(isCheckingSession = false))
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SignupSubmittingPreview() {
+    WakepointTheme {
+        PreviewSignUpScreen(
+            AuthUiState(
+                isCheckingSession = false,
+                signUpName = PREVIEW_NAME,
+                signUpEmail = PREVIEW_EMAIL,
+                signUpPassword = PREVIEW_PASSWORD,
+                signUpPasswordConfirm = PREVIEW_PASSWORD,
+                isSubmitting = true
+            )
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SignupErrorPreview() {
+    WakepointTheme {
+        PreviewSignUpScreen(
+            AuthUiState(
+                isCheckingSession = false,
+                signUpName = PREVIEW_NAME,
+                signUpEmail = PREVIEW_EMAIL,
+                signUpPassword = PREVIEW_PASSWORD,
+                signUpPasswordConfirm = "password"
+            )
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SignupInfoPreview() {
+    WakepointTheme {
+        PreviewSignUpScreen(
+            AuthUiState(
+                isCheckingSession = false,
+                signUpName = PREVIEW_NAME,
+                signUpEmail = PREVIEW_EMAIL,
+                signUpPassword = PREVIEW_PASSWORD,
+                signUpPasswordConfirm = PREVIEW_PASSWORD,
+                infoMessage = "확인 메일을 보냈습니다. 메일함에서 인증을 마치면 가입이 끝납니다."
+            )
         )
     }
 }

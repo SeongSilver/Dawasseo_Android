@@ -10,15 +10,17 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,30 +29,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Alarm
-import androidx.compose.material.icons.rounded.AudioFile
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
-import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,55 +68,50 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.wakepoint.app.R
 import com.wakepoint.app.core.design.BottomSheetHandle
+import com.wakepoint.app.core.design.BottomSheetTitle
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.RadiusSelector
 import com.wakepoint.app.core.design.SoundOptionRow
-import com.wakepoint.app.core.design.StatusDot
-import com.wakepoint.app.core.design.WakepointBackground
-import com.wakepoint.app.core.design.WakepointBorder
 import com.wakepoint.app.core.design.WakepointButton
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
 import com.wakepoint.app.core.design.WakepointCircleIconButton
 import com.wakepoint.app.core.design.WakepointConfirmDialog
-import com.wakepoint.app.core.design.WakepointDanger
-import com.wakepoint.app.core.design.WakepointDangerButton
-import com.wakepoint.app.core.design.WakepointMessageDialog
-import com.wakepoint.app.core.design.WakepointInk
+import com.wakepoint.app.core.design.WakepointDivider
+import com.wakepoint.app.core.design.WakepointEmptyState
+import com.wakepoint.app.core.design.WakepointHeader
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
-import com.wakepoint.app.core.design.WakepointMuted
-import com.wakepoint.app.core.design.WakepointPrimaryLight
+import com.wakepoint.app.core.design.WakepointMessage
+import com.wakepoint.app.core.design.WakepointMessageKind
 import com.wakepoint.app.core.design.WakepointPageHeader
-import com.wakepoint.app.core.design.WakepointParchment
-import com.wakepoint.app.core.design.WakepointPrimary
+import com.wakepoint.app.core.design.WakepointScreenPreviews
 import com.wakepoint.app.core.design.WakepointSecondaryButton
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointStar
 import com.wakepoint.app.core.design.WakepointSwitch
 import com.wakepoint.app.core.design.WakepointTextField
-import com.wakepoint.app.core.design.WakepointTextDisabled
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
+import com.wakepoint.app.core.design.WakepointTheme
+import com.wakepoint.app.core.design.WakepointTintButton
 import com.wakepoint.app.domain.model.Alarm
 import com.wakepoint.app.domain.model.AlarmSound
 import com.wakepoint.app.domain.model.SoundKind
+import com.wakepoint.app.domain.model.SoundType
+import com.wakepoint.app.domain.model.TimeAlarm
 import com.wakepoint.app.feature.friends.ReceiveAlarmDialog
 import com.wakepoint.app.feature.friends.ReceivedAlarmLogic
 import com.wakepoint.app.feature.friends.acknowledgeReceivedAlarms
@@ -125,8 +119,6 @@ import com.wakepoint.app.feature.friends.acknowledgedReceivedAlarmIds
 import com.wakepoint.app.feature.friends.isReceivedAlarmSeeded
 import com.wakepoint.app.feature.friends.markReceivedAlarmSeeded
 import com.wakepoint.app.feature.home.ALARM_RADIUS_OPTIONS
-import com.wakepoint.app.domain.model.TimeAlarm
-import com.wakepoint.app.feature.timealarm.AlarmTypeLabel
 import com.wakepoint.app.feature.timealarm.AlarmTypeSheetContent
 import com.wakepoint.app.feature.timealarm.ExactAlarmPermissionDialog
 import com.wakepoint.app.feature.timealarm.TimeAlarmCard
@@ -136,8 +128,19 @@ import com.wakepoint.app.feature.timealarm.markExactAlarmPrompted
 import com.wakepoint.app.feature.timealarm.openExactAlarmSettings
 import com.wakepoint.app.feature.timealarm.shouldPromptExactAlarm
 
-/** 리스트 하단이 떠 있는 탭 바에 가리지 않도록 확보하는 스크롤 여백(구조적 오프셋). */
-private val BOTTOM_LIST_CLEARANCE = 120.dp
+/** 하단 탭바(80dp + 내비게이션바 인셋) 위로 목록이 가리지 않도록 확보하는 구조 상수. */
+private val BOTTOM_TAB_CLEARANCE = 80.dp
+
+/** 시트·화면 하단 버튼 줄 비율 — 보조 1 : 실행 1.4 (design-handoff `Alarms-edit`·`Sounds-recording`). */
+private const val BOTTOM_SECONDARY_WEIGHT = 1f
+private const val BOTTOM_PRIMARY_WEIGHT = 1.4f
+
+/** 녹음 시트 가운데 정지/시작 버튼 폭 (design-handoff `Sounds-recording`, 구조 상수). */
+private val RECORD_BUTTON_WIDTH = 160.dp
+
+// ─────────────────────────────────────────────────────────────────────
+// 알람 목록 (design-handoff `Alarms-list` · `-open` · `-edit` · `-empty` · `-updating` · `-delete`)
+// ─────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,6 +151,8 @@ fun AlarmsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var expandedAlarmId by remember { mutableStateOf<String?>(null) }
+    // DESIGN.md 8절 기본값 = B안(별도 수정 화면). 카드를 누르면 `Alarms-edit` 화면이 열린다.
+    var editingAlarmId by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<Alarm?>(null) }
     var deleteTimeTarget by remember { mutableStateOf<TimeAlarm?>(null) }
     var selectionMode by remember { mutableStateOf(false) }
@@ -186,177 +191,106 @@ fun AlarmsScreen(
 
     BackHandler(enabled = selectionMode) { exitSelection() }
 
-    val activeCount = uiState.activeAlarms.size + uiState.activeTimeAlarms.size
-    val summary = when {
-        uiState.isEmpty -> null
-        activeCount > 0 -> stringResource(R.string.alarms_summary_active, activeCount)
-        else -> stringResource(R.string.alarms_summary_none)
-    }
+    val editingAlarm = uiState.alarms.firstOrNull { it.id == editingAlarmId }
+    BackHandler(enabled = editingAlarm != null) { editingAlarmId = null }
 
-    uiState.errorMessage?.let { message ->
-        WakepointMessageDialog(message = message, onDismiss = viewModel::clearError)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WakepointBackground)
-    ) {
-        if (selectionMode) {
-            AlarmSelectionHeader(
-                count = selectedIds.size,
-                allSelected = uiState.alarms.isNotEmpty() && selectedIds.size == uiState.alarms.size,
-                onClose = { exitSelection() },
-                onToggleSelectAll = {
-                    selectedIds = if (selectedIds.size == uiState.alarms.size) {
-                        emptySet()
-                    } else {
-                        uiState.alarms.mapTo(mutableSetOf()) { it.id }
-                    }
-                },
-                onDelete = { showBatchDelete = true }
-            )
-        } else {
-            WakepointPageHeader(
-                title = stringResource(R.string.alarms_title),
-                subtitle = summary,
-                action = {
-                    WakepointCircleIconButton(
-                        icon = Icons.Rounded.Add,
-                        contentDescription = stringResource(R.string.alarm_add),
-                        onClick = { showTypeSheet = true }
-                    )
-                }
-            )
-        }
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .padding(horizontal = WakepointSpacing.screenHorizontal)
-                .padding(top = WakepointSpacing.sectionTitleGap, bottom = BOTTOM_LIST_CLEARANCE),
-            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
-        ) {
-            if (uiState.isLoading) {
-                WakepointLoadingPlaceholder()
-            } else if (uiState.isEmpty) {
-                EmptyAlarmMessage(onCreateAlarm = { showTypeSheet = true })
-            } else {
-                val renderAlarm: @Composable (com.wakepoint.app.domain.model.Alarm) -> Unit = { alarm ->
-                    key(alarm.id) {
-                        AlarmListCard(
-                            alarm = alarm,
-                            soundTitle = alarm.resolveSoundTitle(uiState.soundTitles),
-                            selectionMode = selectionMode,
-                            selected = alarm.id in selectedIds,
-                            expanded = !selectionMode && expandedAlarmId == alarm.id,
-                            isUpdating = alarm.id in uiState.updatingAlarmIds,
-                            onToggleSelect = {
-                                selectedIds = if (alarm.id in selectedIds) {
-                                    selectedIds - alarm.id
-                                } else {
-                                    selectedIds + alarm.id
-                                }
-                            },
-                            onEnterSelection = {
-                                expandedAlarmId = null
-                                selectionMode = true
-                                selectedIds = setOf(alarm.id)
-                            },
-                            onToggleExpanded = {
-                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
-                            },
-                            onOpenSoundList = { onOpenSoundList(alarm.id) },
-                            onActiveChange = { isActive -> viewModel.setAlarmActive(alarm.id, isActive) },
-                            onToggleFavorite = { viewModel.setFavorite(alarm.id, !alarm.isFavorite) },
-                            onSave = { updatedAlarm, label, radius, vibrate, repeating ->
-                                viewModel.updateAlarmSettings(updatedAlarm, label, radius, vibrate, repeating)
-                            },
-                            onDeleteRequest = { deleteTarget = alarm }
-                        )
-                    }
-                }
-
-                val renderTimeAlarm: @Composable (TimeAlarm) -> Unit = { alarm ->
-                    key(alarm.id) {
-                        TimeAlarmCard(
-                            alarm = alarm,
-                            expanded = !selectionMode && expandedAlarmId == alarm.id,
-                            isUpdating = alarm.id in uiState.updatingAlarmIds,
-                            exactAlarmAllowed = uiState.exactAlarmAllowed,
-                            onToggleExpanded = {
-                                expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
-                            },
-                            onEnabledChange = { enabled ->
-                                viewModel.setTimeAlarmEnabled(alarm.id, enabled)
-                            },
-                            onSave = { viewModel.saveTimeAlarm(it) },
-                            onDeleteRequest = { deleteTimeTarget = alarm },
-                            onAccuracyBadgeClick = { context.openExactAlarmSettings() }
-                        )
-                    }
-                }
-
-                if (uiState.favoriteAlarms.isNotEmpty()) {
-                    SectionTitle(text = stringResource(R.string.alarm_favorite))
-                    uiState.favoriteAlarms.forEach { renderAlarm(it) }
-                }
-
-                if (uiState.activeAlarms.isNotEmpty() || uiState.activeTimeAlarms.isNotEmpty()) {
-                    SectionTitle(text = stringResource(R.string.alarm_active))
-                    uiState.activeAlarms.forEach { renderAlarm(it) }
-                    uiState.activeTimeAlarms.forEach { renderTimeAlarm(it) }
-                }
-
-                if (uiState.inactiveAlarms.isNotEmpty() || uiState.inactiveTimeAlarms.isNotEmpty()) {
-                    SectionTitle(text = stringResource(R.string.alarm_inactive))
-                    uiState.inactiveAlarms.forEach { renderAlarm(it) }
-                    uiState.inactiveTimeAlarms.forEach { renderTimeAlarm(it) }
-                }
+    if (editingAlarm != null) {
+        AlarmEditContent(
+            alarm = editingAlarm,
+            soundTitle = editingAlarm.resolveSoundTitle(uiState.soundTitles),
+            isUpdating = editingAlarm.id in uiState.updatingAlarmIds,
+            errorMessage = uiState.errorMessage,
+            onBack = { editingAlarmId = null },
+            onOpenSoundList = { onOpenSoundList(editingAlarm.id) },
+            onActiveChange = { viewModel.setAlarmActive(editingAlarm.id, it) },
+            onVibrateChange = { viewModel.updateAlarmSettings(editingAlarm, editingAlarm.label, editingAlarm.radiusKm.toRadiusOption(), it, editingAlarm.repeating) },
+            onRepeatingChange = { viewModel.updateAlarmSettings(editingAlarm, editingAlarm.label, editingAlarm.radiusKm.toRadiusOption(), editingAlarm.vibrate, it) },
+            onDelete = { deleteTarget = editingAlarm },
+            onSave = { label, radius ->
+                viewModel.updateAlarmSettings(editingAlarm, label, radius, editingAlarm.vibrate, editingAlarm.repeating)
+                editingAlarmId = null
             }
-        }
+        )
+    } else {
+        AlarmsListContent(
+            uiState = uiState,
+            selectionMode = selectionMode,
+            selectedIds = selectedIds,
+            expandedAlarmId = expandedAlarmId,
+            onAdd = { showTypeSheet = true },
+            onExitSelection = { exitSelection() },
+            onToggleSelectAll = {
+                selectedIds = if (selectedIds.size == uiState.alarms.size) {
+                    emptySet()
+                } else {
+                    uiState.alarms.mapTo(mutableSetOf()) { it.id }
+                }
+            },
+            onDeleteSelected = { showBatchDelete = true },
+            onToggleSelect = { alarm ->
+                selectedIds = if (alarm.id in selectedIds) selectedIds - alarm.id else selectedIds + alarm.id
+            },
+            onEnterSelection = { alarm ->
+                expandedAlarmId = null
+                selectionMode = true
+                selectedIds = setOf(alarm.id)
+            },
+            onOpenAlarm = { alarm -> editingAlarmId = alarm.id },
+            onCollapse = { expandedAlarmId = null },
+            onOpenSoundList = { alarm -> onOpenSoundList(alarm.id) },
+            onActiveChange = { alarm, active -> viewModel.setAlarmActive(alarm.id, active) },
+            onToggleFavorite = { alarm -> viewModel.setFavorite(alarm.id, !alarm.isFavorite) },
+            onSaveExpanded = { alarm, label, radius ->
+                viewModel.updateAlarmSettings(alarm, label, radius, alarm.vibrate, alarm.repeating)
+                expandedAlarmId = null
+            },
+            onDeleteRequest = { alarm -> deleteTarget = alarm },
+            timeAlarmSlot = { alarm ->
+                TimeAlarmCard(
+                    alarm = alarm,
+                    expanded = !selectionMode && expandedAlarmId == alarm.id,
+                    isUpdating = alarm.id in uiState.updatingAlarmIds,
+                    exactAlarmAllowed = uiState.exactAlarmAllowed,
+                    onToggleExpanded = {
+                        expandedAlarmId = if (expandedAlarmId == alarm.id) null else alarm.id
+                    },
+                    onEnabledChange = { enabled -> viewModel.setTimeAlarmEnabled(alarm.id, enabled) },
+                    onSave = { viewModel.saveTimeAlarm(it) },
+                    onDeleteRequest = { deleteTimeTarget = alarm },
+                    onAccuracyBadgeClick = { context.openExactAlarmSettings() }
+                )
+            }
+        )
     }
 
     deleteTarget?.let { alarm ->
-        WakepointConfirmDialog(
-            title = stringResource(R.string.alarm_delete_confirm_title),
+        AlarmDeleteDialog(
             message = stringResource(R.string.alarm_delete_confirm_message),
-            cancelText = stringResource(R.string.alarm_cancel),
-            confirmText = stringResource(R.string.alarm_delete),
             onDismiss = { deleteTarget = null },
             onConfirm = {
                 viewModel.deleteAlarm(alarm.id)
-                if (expandedAlarmId == alarm.id) {
-                    expandedAlarmId = null
-                }
+                if (expandedAlarmId == alarm.id) expandedAlarmId = null
+                if (editingAlarmId == alarm.id) editingAlarmId = null
                 deleteTarget = null
             }
         )
     }
 
     deleteTimeTarget?.let { alarm ->
-        WakepointConfirmDialog(
-            title = stringResource(R.string.alarm_delete_confirm_title),
+        AlarmDeleteDialog(
             message = stringResource(R.string.alarm_delete_confirm_message),
-            cancelText = stringResource(R.string.alarm_cancel),
-            confirmText = stringResource(R.string.alarm_delete),
             onDismiss = { deleteTimeTarget = null },
             onConfirm = {
                 viewModel.deleteTimeAlarm(alarm.id)
-                if (expandedAlarmId == alarm.id) {
-                    expandedAlarmId = null
-                }
+                if (expandedAlarmId == alarm.id) expandedAlarmId = null
                 deleteTimeTarget = null
             }
         )
     }
 
     if (showBatchDelete) {
-        WakepointConfirmDialog(
-            title = stringResource(R.string.alarm_delete_confirm_title),
+        AlarmDeleteDialog(
             message = stringResource(R.string.alarm_delete_confirm_message_multi, selectedIds.size),
-            cancelText = stringResource(R.string.alarm_cancel),
-            confirmText = stringResource(R.string.alarm_delete),
             onDismiss = { showBatchDelete = false },
             onConfirm = {
                 viewModel.deleteAlarms(selectedIds)
@@ -392,7 +326,8 @@ fun AlarmsScreen(
     receivedAlarm?.let { alarm ->
         ReceiveAlarmDialog(
             alarm = alarm,
-            senderName = uiState.friendNames[alarm.createdBy] ?: "친구",
+            senderName = uiState.friendNames[alarm.createdBy]
+                ?: stringResource(R.string.friends_title),
             onActivate = {
                 context.acknowledgeReceivedAlarms(setOf(alarm.id))
                 if (!alarm.isActive) viewModel.setAlarmActive(alarm.id, true)
@@ -424,8 +359,10 @@ fun AlarmsScreen(
         ModalBottomSheet(
             onDismissRequest = { showTypeSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() },
+            containerColor = LocalWakepointColors.current.surfaceElevated,
+            scrimColor = LocalWakepointColors.current.dim,
+            shape = WakepointShape.sheet
         ) {
             AlarmTypeSheetContent(
                 onSelectLocation = {
@@ -445,8 +382,10 @@ fun AlarmsScreen(
         ModalBottomSheet(
             onDismissRequest = { showTimeCreateSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() },
+            containerColor = LocalWakepointColors.current.surfaceElevated,
+            scrimColor = LocalWakepointColors.current.dim,
+            shape = WakepointShape.sheet
         ) {
             TimeAlarmCreateSheetContent(
                 onCancel = { showTimeCreateSheet = false },
@@ -467,378 +406,187 @@ fun AlarmsScreen(
     }
 }
 
+/**
+ * 알람 목록 본문 (design-handoff `Alarms-list` · `-empty` · `-updating`).
+ * 상단 바는 고정, 목록만 스크롤한다 (DESIGN.md 7절).
+ */
 @Composable
-private fun AlarmSelectionHeader(
-    count: Int,
-    allSelected: Boolean,
-    onClose: () -> Unit,
-    onToggleSelectAll: () -> Unit,
-    onDelete: () -> Unit
+private fun AlarmsListContent(
+    uiState: AlarmsUiState,
+    selectionMode: Boolean = false,
+    selectedIds: Set<String> = emptySet(),
+    expandedAlarmId: String? = null,
+    onAdd: () -> Unit = {},
+    onExitSelection: () -> Unit = {},
+    onToggleSelectAll: () -> Unit = {},
+    onDeleteSelected: () -> Unit = {},
+    onToggleSelect: (Alarm) -> Unit = {},
+    onEnterSelection: (Alarm) -> Unit = {},
+    onOpenAlarm: (Alarm) -> Unit = {},
+    onCollapse: () -> Unit = {},
+    onOpenSoundList: (Alarm) -> Unit = {},
+    onActiveChange: (Alarm, Boolean) -> Unit = { _, _ -> },
+    onToggleFavorite: (Alarm) -> Unit = {},
+    onSaveExpanded: (Alarm, String, String) -> Unit = { _, _, _ -> },
+    onDeleteRequest: (Alarm) -> Unit = {},
+    timeAlarmSlot: @Composable (TimeAlarm) -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = WakepointSpacing.md)
-            .padding(top = WakepointSpacing.md, bottom = WakepointSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onClose) {
-            Icon(
-                imageVector = Icons.Rounded.Close,
-                contentDescription = stringResource(R.string.alarm_selection_close),
-                tint = WakepointInk
-            )
-        }
-        Text(
-            text = stringResource(R.string.alarm_selection_count, count),
-            style = MaterialTheme.typography.titleMedium,
-            color = WakepointInk,
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = WakepointSpacing.xs)
-        )
-        IconButton(onClick = onToggleSelectAll) {
-            Icon(
-                imageVector = Icons.Rounded.SelectAll,
-                contentDescription = stringResource(R.string.alarm_select_all),
-                tint = if (allSelected) WakepointPrimary else WakepointInk
-            )
-        }
-        IconButton(onClick = onDelete, enabled = count > 0) {
-            Icon(
-                imageVector = Icons.Rounded.DeleteOutline,
-                contentDescription = stringResource(R.string.alarm_delete_selected),
-                tint = if (count > 0) WakepointDanger else WakepointMuted
-            )
-        }
-    }
-}
-
-@Composable
-private fun AlarmListCard(
-    alarm: Alarm,
-    soundTitle: String,
-    selectionMode: Boolean,
-    selected: Boolean,
-    expanded: Boolean,
-    isUpdating: Boolean,
-    onToggleSelect: () -> Unit,
-    onEnterSelection: () -> Unit,
-    onToggleExpanded: () -> Unit,
-    onOpenSoundList: () -> Unit,
-    onActiveChange: (Boolean) -> Unit,
-    onToggleFavorite: () -> Unit,
-    onSave: (Alarm, String, String, Boolean, Boolean) -> Unit,
-    onDeleteRequest: () -> Unit
-) {
-    when {
-        selectionMode -> SelectableAlarmCard(
-            alarm = alarm,
-            soundTitle = soundTitle,
-            selected = selected,
-            onToggleSelect = onToggleSelect
-        )
-        expanded -> EditableAlarmCard(
-            alarm = alarm,
-            soundTitle = soundTitle,
-            isUpdating = isUpdating,
-            onToggleExpanded = onToggleExpanded,
-            onOpenSoundList = onOpenSoundList,
-            onActiveChange = onActiveChange,
-            onToggleFavorite = onToggleFavorite,
-            onSave = onSave,
-            onDelete = onDeleteRequest
-        )
-        else -> CompactAlarmCard(
-            alarm = alarm,
-            soundTitle = soundTitle,
-            isUpdating = isUpdating,
-            onToggleExpanded = onToggleExpanded,
-            onLongClick = onEnterSelection,
-            onActiveChange = onActiveChange,
-            onToggleFavorite = onToggleFavorite
-        )
-    }
-}
-
-/** 선택 모드에서 표시되는 카드. 카드 전체를 탭하면 선택이 토글되고, 왼쪽 체크로 상태를 표시한다. */
-@Composable
-private fun SelectableAlarmCard(
-    alarm: Alarm,
-    soundTitle: String,
-    selected: Boolean,
-    onToggleSelect: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(WakepointShape.card)
-            .clickable(onClick = onToggleSelect),
-        shape = WakepointShape.card,
-        color = if (selected) WakepointPrimaryLight else WakepointCanvas,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) WakepointPrimary else WakepointBorder
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(WakepointSpacing.cardPadding),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                contentDescription = stringResource(R.string.alarm_select_item),
-                tint = if (selected) WakepointPrimary else WakepointMuted,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(WakepointSpacing.md))
-            AlarmCardInfo(
-                alarm = alarm,
-                soundTitle = soundTitle,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-/** 컴팩트/선택 카드가 공유하는 알람 요약 정보(상태 점·별칭·주소·메타). */
-@Composable
-private fun AlarmCardInfo(
-    alarm: Alarm,
-    soundTitle: String,
-    modifier: Modifier = Modifier
-) {
-    val radiusLabel = if (alarm.radiusKm < 1.0) {
-        "${(alarm.radiusKm * 1000).toInt()}m"
-    } else {
-        "${alarm.radiusKm.toInt()}km"
-    }
+    val colors = LocalWakepointColors.current
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
-        ) {
-            StatusDot(active = alarm.isActive, size = 7)
-            Text(
-                text = alarm.label,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (alarm.isActive) WakepointPrimary else WakepointTextDisabled
-            )
-        }
-        Text(
-            text = alarm.targetAddress,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (alarm.isActive) WakepointInk else WakepointTextTertiary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
-        ) {
-            AlarmTypeLabel(isTimeAlarm = false, active = alarm.isActive)
-            Text(
-                text = "·",
-                style = MaterialTheme.typography.bodySmall,
-                color = WakepointTextTertiary
-            )
-            Text(
-                text = stringResource(R.string.alarm_meta_line, radiusLabel, soundTitle),
-                color = WakepointTextSecondary,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
-}
-
-@Composable
-private fun FavoriteStarButton(isFavorite: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick, modifier = Modifier.size(32.dp)) {
-        Icon(
-            imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-            contentDescription = stringResource(
-                if (isFavorite) R.string.alarm_favorite_remove else R.string.alarm_favorite_add
-            ),
-            tint = if (isFavorite) WakepointStar else WakepointMuted,
-            modifier = Modifier.size(22.dp)
-        )
-    }
-}
-
-@Composable
-private fun EditableAlarmCard(
-    alarm: Alarm,
-    soundTitle: String,
-    isUpdating: Boolean,
-    onToggleExpanded: () -> Unit,
-    onOpenSoundList: () -> Unit,
-    onActiveChange: (Boolean) -> Unit,
-    onToggleFavorite: () -> Unit,
-    onSave: (Alarm, String, String, Boolean, Boolean) -> Unit,
-    onDelete: () -> Unit
-) {
-    var radius by remember(alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
-    var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
-    var vibrate by remember(alarm.id, alarm.vibrate) { mutableStateOf(alarm.vibrate) }
-    var repeating by remember(alarm.id, alarm.repeating) { mutableStateOf(alarm.repeating) }
-    WakepointCard {
-        Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)) {
-            // 헤더: "위치 별칭 :" 라벨 노출 제거 — 값만 T3(카드 제목)로 표기
-            Row(
-                modifier = Modifier.clickable(onClick = onToggleExpanded),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = alarm.label,
-                    color = WakepointInk,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                FavoriteStarButton(isFavorite = alarm.isFavorite, onClick = onToggleFavorite)
-                WakepointSwitch(
-                    checked = alarm.isActive,
-                    onCheckedChange = onActiveChange,
-                    enabled = !isUpdating
-                )
-            }
-            EditSection(label = stringResource(R.string.alarm_location_alias)) {
-                WakepointTextField(
-                    value = label,
-                    onValueChange = { label = it },
-                    placeholder = stringResource(R.string.alarm_location_alias),
-                    readOnly = isUpdating
-                )
-            }
-            EditSection(label = stringResource(R.string.alarm_radius_setting)) {
-                RadiusSelector(
-                    options = ALARM_RADIUS_OPTIONS,
-                    selectedOption = radius,
-                    onSelected = { radius = it }
-                )
-            }
-            EditSection(label = stringResource(R.string.alarm_sound_setting)) {
-                SoundOptionRow(
-                    title = soundTitle,
-                    icon = Icons.Rounded.Notifications,
-                    trailing = {
-                        Icon(
-                            imageVector = Icons.Rounded.ChevronRight,
-                            contentDescription = null,
-                            tint = WakepointMuted
-                        )
-                    },
-                    onClick = onOpenSoundList
-                )
-            }
-            EditToggleRow(
-                title = stringResource(R.string.alarm_vibrate_setting),
-                hint = stringResource(R.string.alarm_vibrate_hint),
-                checked = vibrate,
-                onCheckedChange = { vibrate = it },
-                enabled = !isUpdating
-            )
-            EditToggleRow(
-                title = stringResource(R.string.alarm_repeating_setting),
-                hint = stringResource(R.string.alarm_repeating_hint),
-                checked = repeating,
-                onCheckedChange = { repeating = it },
-                enabled = !isUpdating
-            )
-            // 2분할 1:1 · 삭제(Danger Tonal) 왼쪽 · 긍정 액션(저장) 오른쪽
-            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
-                WakepointDangerButton(
-                    text = stringResource(R.string.alarm_delete),
-                    enabled = !isUpdating,
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f)
-                )
-                WakepointButton(
-                    text = stringResource(R.string.alarm_save),
-                    enabled = !isUpdating,
-                    onClick = { onSave(alarm, label, radius, vibrate, repeating) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-/** 편집 카드 섹션: 섹션 타이틀(T2) + 콘텐츠, 라벨↔콘텐츠 8. */
-@Composable
-private fun EditSection(
-    label: String,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
-        SectionLabel(text = label)
-        content()
-    }
-}
-
-/** 편집 카드 토글 행: 제목(15/SemiBold) + 보조설명(T5) + 스위치, 높이 56. */
-@Composable
-private fun EditToggleRow(
-    title: String,
-    hint: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean
-) {
-    Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(WakepointSize.rowHeight),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxSize()
+            .background(colors.background)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = WakepointInk,
-                style = MaterialTheme.typography.labelLarge
+        if (selectionMode) {
+            AlarmSelectionHeader(
+                count = selectedIds.size,
+                allSelected = uiState.alarms.isNotEmpty() && selectedIds.size == uiState.alarms.size,
+                onClose = onExitSelection,
+                onToggleSelectAll = onToggleSelectAll,
+                onDelete = onDeleteSelected
             )
-            Text(
-                text = hint,
-                color = WakepointTextTertiary,
-                style = MaterialTheme.typography.bodySmall
+        } else {
+            WakepointHeader(
+                action = {
+                    WakepointCircleIconButton(
+                        icon = Icons.Rounded.Add,
+                        contentDescription = stringResource(R.string.alarm_add),
+                        filled = true,
+                        tint = colors.text,
+                        onClick = onAdd
+                    )
+                }
             )
         }
-        WakepointSwitch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = WakepointSpacing.screenHorizontal)
+                .padding(
+                    top = WakepointSpacing.sectionTitleGap,
+                    bottom = BOTTOM_TAB_CLEARANCE + WakepointSpacing.lg
+                ),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
+        ) {
+            // 갱신 실패는 다이얼로그 대신 목록 맨 위 오류 메시지로 알린다 (`Alarms-updating`).
+            uiState.errorMessage?.let { message ->
+                WakepointMessage(text = message, kind = WakepointMessageKind.Error)
+            }
+
+            if (uiState.isLoading) {
+                WakepointLoadingPlaceholder()
+            } else if (uiState.isEmpty) {
+                WakepointEmptyState(
+                    icon = Icons.Rounded.Alarm,
+                    title = stringResource(R.string.alarm_empty_title),
+                    description = stringResource(R.string.alarm_empty_hint),
+                    modifier = Modifier.padding(top = WakepointSpacing.sm)
+                )
+            } else {
+                val renderAlarm: @Composable (Alarm) -> Unit = { alarm ->
+                    key(alarm.id) {
+                        when {
+                            selectionMode -> SelectableAlarmCard(
+                                alarm = alarm,
+                                selected = alarm.id in selectedIds,
+                                onToggleSelect = { onToggleSelect(alarm) }
+                            )
+                            expandedAlarmId == alarm.id -> ExpandedAlarmCard(
+                                alarm = alarm,
+                                soundTitle = alarm.resolveSoundTitle(uiState.soundTitles),
+                                isUpdating = alarm.id in uiState.updatingAlarmIds,
+                                onCollapse = onCollapse,
+                                onOpenSoundList = { onOpenSoundList(alarm) },
+                                onActiveChange = { onActiveChange(alarm, it) },
+                                onSave = { label, radius -> onSaveExpanded(alarm, label, radius) },
+                                onDelete = { onDeleteRequest(alarm) }
+                            )
+                            else -> AlarmSummaryCard(
+                                alarm = alarm,
+                                isUpdating = alarm.id in uiState.updatingAlarmIds,
+                                onClick = { onOpenAlarm(alarm) },
+                                onLongClick = { onEnterSelection(alarm) },
+                                onActiveChange = { onActiveChange(alarm, it) },
+                                onToggleFavorite = { onToggleFavorite(alarm) }
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.favoriteAlarms.isNotEmpty()) {
+                    AlarmSectionHeader(
+                        title = stringResource(R.string.alarm_favorite),
+                        count = uiState.favoriteAlarms.size
+                    )
+                    uiState.favoriteAlarms.forEach { renderAlarm(it) }
+                }
+
+                if (uiState.activeAlarms.isNotEmpty() || uiState.activeTimeAlarms.isNotEmpty()) {
+                    AlarmSectionHeader(
+                        title = stringResource(R.string.alarm_active),
+                        count = uiState.activeAlarms.size + uiState.activeTimeAlarms.size
+                    )
+                    uiState.activeAlarms.forEach { renderAlarm(it) }
+                    uiState.activeTimeAlarms.forEach { key(it.id) { timeAlarmSlot(it) } }
+                }
+
+                if (uiState.inactiveAlarms.isNotEmpty() || uiState.inactiveTimeAlarms.isNotEmpty()) {
+                    AlarmSectionHeader(
+                        title = stringResource(R.string.alarm_inactive),
+                        count = uiState.inactiveAlarms.size + uiState.inactiveTimeAlarms.size
+                    )
+                    uiState.inactiveAlarms.forEach { renderAlarm(it) }
+                    uiState.inactiveTimeAlarms.forEach { key(it.id) { timeAlarmSlot(it) } }
+                }
+            }
+        }
+    }
+}
+
+/** 섹션 제목 — titleMedium + 개수 labelLarge, 좌 인셋 4 (design-handoff `Alarms-list`). */
+@Composable
+private fun AlarmSectionHeader(title: String, count: Int) {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier.padding(start = WakepointSpacing.xs, top = WakepointSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
+    ) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium, color = colors.text)
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.textSecondary
         )
     }
 }
 
+/**
+ * 알람 요약 카드 — 활성은 채움(`card`), 비활성은 테두리(`background` + 1dp `line`).
+ * "위치: 별칭" labelLarge · 주소 titleMedium · "반경 N" bodyMedium.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CompactAlarmCard(
+private fun AlarmSummaryCard(
     alarm: Alarm,
-    soundTitle: String,
     isUpdating: Boolean,
-    onToggleExpanded: () -> Unit,
+    onClick: () -> Unit,
     onLongClick: () -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onToggleFavorite: () -> Unit
 ) {
     WakepointCard(
-        modifier = Modifier.combinedClickable(
-            onClick = onToggleExpanded,
-            onLongClick = onLongClick
-        )
+        filled = alarm.isActive,
+        modifier = Modifier
+            .clip(WakepointShape.card)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AlarmCardInfo(
-                alarm = alarm,
-                soundTitle = soundTitle,
-                modifier = Modifier.weight(1f)
-            )
+            AlarmCardSummaryText(alarm = alarm, modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.width(WakepointSpacing.lg))
             FavoriteStarButton(isFavorite = alarm.isFavorite, onClick = onToggleFavorite)
+            Spacer(modifier = Modifier.width(WakepointSpacing.sm))
             WakepointSwitch(
                 checked = alarm.isActive,
                 onCheckedChange = onActiveChange,
@@ -848,58 +596,540 @@ private fun CompactAlarmCard(
     }
 }
 
+/** 요약 카드의 글 묶음 — 선택 카드와 공유한다. */
 @Composable
-private fun EmptyAlarmMessage(onCreateAlarm: () -> Unit) {
-    WakepointCard(contentPadding = 24) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
-        ) {
-            Surface(
-                modifier = Modifier.size(72.dp),
-                shape = WakepointShape.card,
-                color = WakepointParchment
+private fun AlarmCardSummaryText(alarm: Alarm, modifier: Modifier = Modifier) {
+    val colors = LocalWakepointColors.current
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.alarm_card_alias, alarm.label),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.textSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = alarm.targetAddress,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (alarm.isActive) colors.text else colors.textSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = stringResource(R.string.alarm_card_radius, alarm.radiusKm.toRadiusOption()),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.textSecondary
+        )
+    }
+}
+
+/** 즐겨찾기 별 — 디자인에는 없지만 기존 기능이라 요약 카드에 남겨 둔다. */
+@Composable
+private fun FavoriteStarButton(isFavorite: Boolean, onClick: () -> Unit) {
+    val colors = LocalWakepointColors.current
+    IconButton(onClick = onClick, modifier = Modifier.size(WakepointSize.minTouchTarget)) {
+        Icon(
+            imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+            contentDescription = stringResource(
+                if (isFavorite) R.string.alarm_favorite_remove else R.string.alarm_favorite_add
+            ),
+            tint = if (isFavorite) colors.brand else colors.textSecondary,
+            modifier = Modifier.size(WakepointSize.icon)
+        )
+    }
+}
+
+/**
+ * A안 카드 펼침 (design-handoff `Alarms-open`).
+ * 기본 경로는 B안(`AlarmEditContent`)이지만, 코드가 이미 펼치는 동작을 갖고 있어 모양만 디자인에 맞춰 둔다.
+ */
+@Composable
+private fun ExpandedAlarmCard(
+    alarm: Alarm,
+    soundTitle: String,
+    isUpdating: Boolean,
+    onCollapse: () -> Unit,
+    onOpenSoundList: () -> Unit,
+    onActiveChange: (Boolean) -> Unit,
+    onSave: (String, String) -> Unit,
+    onDelete: () -> Unit
+) {
+    val colors = LocalWakepointColors.current
+    var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
+    var radius by remember(alarm.id, alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
+
+    WakepointCard {
+        Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onCollapse),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
+                ) {
+                    Text(
+                        text = stringResource(R.string.alarm_card_alias, alarm.label),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     Icon(
-                        imageVector = Icons.Rounded.NotificationsNone,
+                        imageVector = Icons.Rounded.KeyboardArrowUp,
                         contentDescription = null,
-                        tint = WakepointTextTertiary,
-                        modifier = Modifier.size(30.dp)
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(WakepointSize.icon)
+                    )
+                }
+                WakepointSwitch(
+                    checked = alarm.isActive,
+                    onCheckedChange = onActiveChange,
+                    enabled = !isUpdating
+                )
+            }
+            // 카드 안이므로 채움 필드를 쓴다 (DESIGN.md 5절).
+            WakepointTextField(
+                value = label,
+                onValueChange = { label = it },
+                placeholder = stringResource(R.string.alarm_location_alias),
+                filled = true,
+                enabled = !isUpdating
+            )
+            RadiusSelector(
+                options = ALARM_RADIUS_OPTIONS,
+                selectedOption = radius,
+                onSelected = { radius = it },
+                label = stringResource(R.string.alarm_radius_label),
+                filled = true
+            )
+            LabeledSection(label = stringResource(R.string.alarm_sound_label)) {
+                AlarmRowGroup {
+                    AlarmReadOnlyRow(
+                        icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                        title = soundTitle,
+                        subtitle = stringResource(R.string.alarm_sound_hint),
+                        trailingIcon = Icons.Rounded.ChevronRight,
+                        onClick = onOpenSoundList
                     )
                 }
             }
-            Text(
-                text = stringResource(R.string.alarm_empty_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = WakepointInk
+            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
+                WakepointButton(
+                    text = stringResource(R.string.alarm_save),
+                    enabled = !isUpdating,
+                    onClick = { onSave(label, radius) },
+                    modifier = Modifier.weight(1f)
+                )
+                WakepointSecondaryButton(
+                    text = stringResource(R.string.alarm_delete),
+                    icon = Icons.Rounded.DeleteOutline,
+                    enabled = !isUpdating,
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * B안 별도 수정 화면 (design-handoff `Alarms-edit`).
+ * 본문만 스크롤하고 하단 삭제/저장 줄은 고정한다.
+ */
+@Composable
+private fun AlarmEditContent(
+    alarm: Alarm,
+    soundTitle: String,
+    isUpdating: Boolean = false,
+    errorMessage: String? = null,
+    onBack: () -> Unit = {},
+    onOpenSoundList: () -> Unit = {},
+    onActiveChange: (Boolean) -> Unit = {},
+    onVibrateChange: (Boolean) -> Unit = {},
+    onRepeatingChange: (Boolean) -> Unit = {},
+    onDelete: () -> Unit = {},
+    onSave: (String, String) -> Unit = { _, _ -> }
+) {
+    val colors = LocalWakepointColors.current
+    var label by remember(alarm.id, alarm.label) { mutableStateOf(alarm.label) }
+    var radius by remember(alarm.id, alarm.radiusKm) { mutableStateOf(alarm.radiusKm.toRadiusOption()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        WakepointPageHeader(
+            title = stringResource(R.string.alarm_edit_title),
+            navigation = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.action_back),
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(WakepointSize.icon)
+                    )
+                }
+            }
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = WakepointSpacing.formHorizontal)
+                .padding(top = WakepointSpacing.sm, bottom = WakepointSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
+        ) {
+            LabeledSection(label = stringResource(R.string.alarm_destination_label)) {
+                AlarmRowGroup {
+                    AlarmReadOnlyRow(
+                        icon = Icons.Rounded.LocationOn,
+                        title = alarm.targetAddress.ifBlank {
+                            stringResource(R.string.alarm_selected_target_unknown)
+                        },
+                        subtitle = stringResource(R.string.home_map_selected_location)
+                    )
+                }
+            }
+            // 화면 배경 위라 테두리 필드를 쓴다 (DESIGN.md 5절).
+            WakepointTextField(
+                value = label,
+                onValueChange = { label = it },
+                placeholder = stringResource(R.string.alarm_location_alias),
+                enabled = !isUpdating
             )
-            Text(
-                text = stringResource(R.string.alarm_empty_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = WakepointTextSecondary,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            RadiusSelector(
+                options = ALARM_RADIUS_OPTIONS,
+                selectedOption = radius,
+                onSelected = { radius = it },
+                label = stringResource(R.string.alarm_radius_label),
+                filled = false
             )
-            WakepointButton(
-                text = stringResource(R.string.alarm_empty_action),
-                icon = Icons.Rounded.Add,
-                onClick = onCreateAlarm,
-                modifier = Modifier.fillMaxWidth()
+            LabeledSection(label = stringResource(R.string.alarm_sound_label)) {
+                AlarmRowGroup {
+                    AlarmReadOnlyRow(
+                        icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                        title = soundTitle,
+                        subtitle = stringResource(R.string.alarm_sound_hint),
+                        trailingIcon = Icons.Rounded.ChevronRight,
+                        onClick = onOpenSoundList
+                    )
+                }
+            }
+            AlarmRowGroup {
+                AlarmSwitchRow(
+                    icon = Icons.Rounded.Alarm,
+                    title = stringResource(R.string.alarm_enable_row),
+                    checked = alarm.isActive,
+                    enabled = !isUpdating,
+                    onCheckedChange = onActiveChange
+                )
+            }
+            // 디자인에는 없지만 기존 설정이라 같은 묶음 행 모양으로 유지한다.
+            AlarmRowGroup {
+                AlarmSwitchRow(
+                    icon = Icons.Rounded.Alarm,
+                    title = stringResource(R.string.alarm_vibrate_setting),
+                    checked = alarm.vibrate,
+                    enabled = !isUpdating,
+                    onCheckedChange = onVibrateChange
+                )
+                WakepointDivider(inset = true)
+                AlarmSwitchRow(
+                    icon = Icons.Rounded.Alarm,
+                    title = stringResource(R.string.alarm_repeating_setting),
+                    checked = alarm.repeating,
+                    enabled = !isUpdating,
+                    onCheckedChange = onRepeatingChange
+                )
+            }
+            if (errorMessage != null) {
+                WakepointMessage(text = errorMessage, kind = WakepointMessageKind.Error)
+            }
+        }
+        BottomActionBar(
+            secondaryText = stringResource(R.string.alarm_delete),
+            secondaryIcon = Icons.Rounded.DeleteOutline,
+            primaryText = if (isUpdating) {
+                stringResource(R.string.alarm_saving)
+            } else {
+                stringResource(R.string.alarm_save)
+            },
+            primaryEnabled = !isUpdating,
+            secondaryEnabled = !isUpdating,
+            onSecondary = onDelete,
+            onPrimary = { onSave(label, radius) }
+        )
+    }
+}
+
+/** 하단 고정 버튼 줄 — 위 구분선 1dp `line`, 보조 1 : 실행 1.4. */
+@Composable
+private fun BottomActionBar(
+    secondaryText: String,
+    primaryText: String,
+    modifier: Modifier = Modifier,
+    secondaryIcon: ImageVector? = null,
+    primaryIcon: ImageVector? = null,
+    secondaryEnabled: Boolean = true,
+    primaryEnabled: Boolean = true,
+    secondaryWeight: Float = BOTTOM_SECONDARY_WEIGHT,
+    primaryWeight: Float = BOTTOM_PRIMARY_WEIGHT,
+    onSecondary: () -> Unit = {},
+    onPrimary: () -> Unit = {},
+    extraContent: @Composable (ColumnScope.() -> Unit)? = null
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        WakepointDivider()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(
+                    horizontal = WakepointSpacing.formHorizontal,
+                    vertical = WakepointSpacing.md
+                ),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.md)
+        ) {
+            extraContent?.invoke(this)
+            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.md)) {
+                WakepointSecondaryButton(
+                    text = secondaryText,
+                    icon = secondaryIcon,
+                    enabled = secondaryEnabled,
+                    onClick = onSecondary,
+                    modifier = Modifier.weight(secondaryWeight)
+                )
+                WakepointButton(
+                    text = primaryText,
+                    icon = primaryIcon,
+                    enabled = primaryEnabled,
+                    onClick = onPrimary,
+                    modifier = Modifier.weight(primaryWeight)
+                )
+            }
+        }
+    }
+}
+
+/** 화면 위 묶음 행 컨테이너 — 모서리 16, 배경 `fill` (DESIGN.md 2절). */
+@Composable
+private fun AlarmRowGroup(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(WakepointShape.card)
+            .background(LocalWakepointColors.current.fill),
+        content = content
+    )
+}
+
+/** 묶음 행 — 최소 높이 64, 좌우 16, 아이콘 24 + 제목/부제. */
+@Composable
+private fun AlarmReadOnlyRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    trailingIcon: ImageVector? = null,
+    onClick: (() -> Unit)? = null
+) {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = WakepointSize.soundRowHeight)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = WakepointSpacing.lg, vertical = WakepointSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.textSecondary,
+            modifier = Modifier.size(WakepointSize.icon)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = colors.text)
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary
+                )
+            }
+        }
+        if (trailingIcon != null) {
+            Icon(
+                imageVector = trailingIcon,
+                contentDescription = null,
+                tint = colors.textSecondary,
+                modifier = Modifier.size(WakepointSize.icon)
             )
         }
     }
 }
 
+/** 묶음 행 + 스위치 — 최소 높이 64, 아이콘 24 + 제목 + 스위치. */
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = WakepointInk,
-        modifier = Modifier.padding(top = WakepointSpacing.sm)
+private fun AlarmSwitchRow(
+    icon: ImageVector,
+    title: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = WakepointSize.soundRowHeight)
+            .padding(horizontal = WakepointSpacing.lg, vertical = WakepointSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.textSecondary,
+            modifier = Modifier.size(WakepointSize.icon)
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.text,
+            modifier = Modifier.weight(1f)
+        )
+        WakepointSwitch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    }
+}
+
+/** 섹션 라벨(labelLarge `textSecondary`) + 콘텐츠, 라벨↔콘텐츠 8. */
+@Composable
+private fun LabeledSection(
+    label: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(WakepointSpacing.labelFieldGap)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = LocalWakepointColors.current.textSecondary
+        )
+        content()
+    }
+}
+
+/** 삭제 확인 다이얼로그 (design-handoff `Alarms-delete`). 빨강을 쓰지 않고 아이콘으로 구분한다. */
+@Composable
+private fun AlarmDeleteDialog(
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    WakepointConfirmDialog(
+        title = stringResource(R.string.alarm_delete_confirm_title),
+        message = message,
+        cancelText = stringResource(R.string.alarm_cancel),
+        confirmText = stringResource(R.string.alarm_delete),
+        icon = Icons.Rounded.DeleteOutline,
+        onDismiss = onDismiss,
+        onConfirm = onConfirm
     )
 }
+
+/** 선택 모드 상단 바 — 디자인에 없는 기존 기능이라 토큰만 맞춰 유지한다. */
+@Composable
+private fun AlarmSelectionHeader(
+    count: Int,
+    allSelected: Boolean,
+    onClose: () -> Unit,
+    onToggleSelectAll: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val colors = LocalWakepointColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(WakepointSize.headerHeight)
+            .padding(horizontal = WakepointSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onClose) {
+            Icon(
+                imageVector = Icons.Rounded.Close,
+                contentDescription = stringResource(R.string.alarm_selection_close),
+                tint = colors.textSecondary,
+                modifier = Modifier.size(WakepointSize.icon)
+            )
+        }
+        Text(
+            text = stringResource(R.string.alarm_selection_count, count),
+            style = MaterialTheme.typography.titleLarge,
+            color = colors.text,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = WakepointSpacing.sm)
+        )
+        IconButton(onClick = onToggleSelectAll) {
+            Icon(
+                imageVector = Icons.Rounded.SelectAll,
+                contentDescription = stringResource(R.string.alarm_select_all),
+                tint = if (allSelected) colors.brand else colors.textSecondary,
+                modifier = Modifier.size(WakepointSize.icon)
+            )
+        }
+        IconButton(onClick = onDelete, enabled = count > 0) {
+            Icon(
+                imageVector = Icons.Rounded.DeleteOutline,
+                contentDescription = stringResource(R.string.alarm_delete_selected),
+                tint = if (count > 0) colors.textSecondary else colors.disabledContent,
+                modifier = Modifier.size(WakepointSize.icon)
+            )
+        }
+    }
+}
+
+/** 선택 모드 카드 — 선택되면 `brandSubtle` + `brand` 테두리. */
+@Composable
+private fun SelectableAlarmCard(
+    alarm: Alarm,
+    selected: Boolean,
+    onToggleSelect: () -> Unit
+) {
+    val colors = LocalWakepointColors.current
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(WakepointShape.card)
+            .clickable(onClick = onToggleSelect),
+        shape = WakepointShape.card,
+        color = if (selected) colors.brandSubtle else colors.background,
+        border = BorderStroke(WakepointSize.border, if (selected) colors.brand else colors.line)
+    ) {
+        Row(
+            modifier = Modifier.padding(WakepointSpacing.cardPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+        ) {
+            Icon(
+                imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                contentDescription = stringResource(R.string.alarm_select_item),
+                tint = if (selected) colors.brand else colors.textSecondary,
+                modifier = Modifier.size(WakepointSize.icon)
+            )
+            AlarmCardSummaryText(alarm = alarm, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 알람음 (design-handoff `Sounds` · `Sounds-recording`)
+// ─────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -992,128 +1222,29 @@ fun SoundListScreen(
         runCatching { systemSoundLauncher.launch(intent) }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(WakepointParchment)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(WakepointCanvas)
-                .padding(horizontal = WakepointSpacing.md),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = {
-                viewModel.stopPreview()
-                onBack()
-            }) {
-                Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
-            }
-            Text(
-                text = stringResource(R.string.alarm_sound_setting),
-                style = MaterialTheme.typography.titleSmall,
-                color = WakepointInk
-            )
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = WakepointSpacing.screenHorizontal, vertical = WakepointSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
-        ) {
-            uiState.errorMessage?.let { message ->
-                Text(
-                    text = message,
-                    color = WakepointMuted,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            SectionTitle(text = stringResource(R.string.sound_section_bundled))
-            if (uiState.bundledSounds.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.sound_bundled_empty),
-                    color = WakepointTextSecondary,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = WakepointSpacing.xs)
-                )
-            } else {
-                uiState.bundledSounds.forEach { sound ->
-                    key(sound.id) {
-                        SelectableSoundRow(
-                            sound = sound,
-                            selected = sound.uri == uiState.selectedUri,
-                            onSelect = { viewModel.selectSound(sound) },
-                            onDelete = null
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(WakepointSpacing.sm))
-            SectionTitle(text = stringResource(R.string.sound_section_custom))
-            if (uiState.customSounds.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.sound_custom_empty),
-                    color = WakepointTextSecondary,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = WakepointSpacing.xs)
-                )
-            } else {
-                uiState.customSounds.forEach { sound ->
-                    key(sound.id) {
-                        SelectableSoundRow(
-                            sound = sound,
-                            selected = sound.uri == uiState.selectedUri,
-                            onSelect = { viewModel.selectSound(sound) },
-                            onDelete = { deleteTarget = sound }
-                        )
-                    }
-                }
-            }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(WakepointCanvas)
-                .navigationBarsPadding()
-                .padding(WakepointSpacing.cardPadding),
-            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)
-        ) {
-            WakepointSecondaryButton(
-                text = stringResource(R.string.sound_system),
-                icon = Icons.Rounded.Alarm,
-                onClick = { openSystemSoundPicker() },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
-                WakepointSecondaryButton(
-                    text = stringResource(R.string.sound_import),
-                    icon = Icons.Rounded.FileDownload,
-                    onClick = { requestImportSound() },
-                    modifier = Modifier.weight(1f)
-                )
-                WakepointButton(
-                    text = stringResource(R.string.sound_record),
-                    icon = Icons.Rounded.Mic,
-                    onClick = { viewModel.openRecordSheet() },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
+    SoundListContent(
+        uiState = uiState,
+        onBack = {
+            viewModel.stopPreview()
+            onBack()
+        },
+        onSelect = { viewModel.selectSound(it) },
+        onDeleteSound = { deleteTarget = it },
+        onSystemPicker = { openSystemSoundPicker() },
+        onImport = { requestImportSound() },
+        onRecord = { viewModel.openRecordSheet() }
+    )
 
     if (uiState.recordSheetVisible) {
         ModalBottomSheet(
             onDismissRequest = { viewModel.closeRecordSheet() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = { BottomSheetHandle(modifier = Modifier.padding(top = WakepointSpacing.md)) },
-            containerColor = WakepointCanvas
+            dragHandle = { BottomSheetHandle() },
+            containerColor = LocalWakepointColors.current.surfaceElevated,
+            scrimColor = LocalWakepointColors.current.dim,
+            shape = WakepointShape.sheet
         ) {
-            RecordingSheet(
+            RecordingSheetContent(
                 phase = uiState.recordingPhase,
                 elapsedSeconds = uiState.elapsedSeconds,
                 onStart = { requestStartRecording() },
@@ -1131,6 +1262,7 @@ fun SoundListScreen(
             message = stringResource(R.string.sound_delete_confirm_message),
             cancelText = stringResource(R.string.alarm_cancel),
             confirmText = stringResource(R.string.sound_delete),
+            icon = Icons.Rounded.DeleteOutline,
             onDismiss = { deleteTarget = null },
             onConfirm = {
                 viewModel.deleteSound(sound)
@@ -1140,170 +1272,221 @@ fun SoundListScreen(
     }
 }
 
+/** 알람음 목록 본문 (design-handoff `Sounds`) — 한 장의 카드 안에 행 + 구분선. */
 @Composable
-private fun SelectableSoundRow(
-    sound: AlarmSound,
-    selected: Boolean,
-    onSelect: () -> Unit,
-    onDelete: (() -> Unit)?
+private fun SoundListContent(
+    uiState: SoundListUiState,
+    onBack: () -> Unit = {},
+    onSelect: (AlarmSound) -> Unit = {},
+    onDeleteSound: (AlarmSound) -> Unit = {},
+    onSystemPicker: () -> Unit = {},
+    onImport: () -> Unit = {},
+    onRecord: () -> Unit = {}
 ) {
-    SoundOptionRow(
-        title = sound.title,
-        subtitle = sound.subtitle,
-        icon = sound.iconVector(),
-        selected = selected,
-        onClick = onSelect,
-        trailing = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
-            ) {
-                if (selected) {
+    val colors = LocalWakepointColors.current
+    val sounds = uiState.sounds
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        WakepointPageHeader(
+            title = stringResource(R.string.sound_list_title),
+            navigation = {
+                IconButton(onClick = onBack) {
                     Icon(
-                        imageVector = Icons.Rounded.CheckCircle,
-                        contentDescription = null,
-                        tint = WakepointPrimary
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.action_back),
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(WakepointSize.icon)
                     )
                 }
-                if (onDelete != null) {
-                    IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                        Icon(
-                            imageVector = Icons.Rounded.DeleteOutline,
-                            contentDescription = stringResource(R.string.sound_delete),
-                            tint = WakepointMuted,
-                            modifier = Modifier.size(20.dp)
-                        )
+            }
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = WakepointSpacing.screenHorizontal)
+                .padding(top = WakepointSpacing.sm, bottom = WakepointSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.cardGap)
+        ) {
+            uiState.errorMessage?.let { message ->
+                WakepointMessage(text = message, kind = WakepointMessageKind.Error)
+            }
+            if (sounds.isEmpty()) {
+                WakepointEmptyState(
+                    icon = Icons.Rounded.MusicNote,
+                    title = stringResource(R.string.sound_none),
+                    description = stringResource(R.string.sound_custom_empty),
+                    modifier = Modifier.padding(top = WakepointSpacing.sm)
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(WakepointShape.card)
+                        .background(colors.card)
+                ) {
+                    sounds.forEachIndexed { index, sound ->
+                        key(sound.id) {
+                            if (index > 0) WakepointDivider()
+                            SoundOptionRow(
+                                title = sound.title,
+                                subtitle = sound.subtitle,
+                                icon = sound.iconVector(),
+                                selected = sound.uri == uiState.selectedUri,
+                                onClick = { onSelect(sound) },
+                                trailing = {
+                                    SoundRowTrailing(
+                                        selected = sound.uri == uiState.selectedUri,
+                                        onDelete = if (sound.kind == SoundKind.Bundled) {
+                                            null
+                                        } else {
+                                            { onDeleteSound(sound) }
+                                        }
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
-    )
+        BottomActionBar(
+            secondaryText = stringResource(R.string.sound_import),
+            secondaryIcon = Icons.Rounded.FileDownload,
+            primaryText = stringResource(R.string.sound_record),
+            primaryIcon = Icons.Rounded.Mic,
+            // `Sounds` 의 하단 두 버튼은 1:1 이다.
+            secondaryWeight = 1f,
+            primaryWeight = 1f,
+            onSecondary = onImport,
+            onPrimary = onRecord,
+            extraContent = {
+                // 디자인에 없는 기존 기능(기기 알람음 선택)이라 같은 줄 위에 보조 버튼으로 둔다.
+                WakepointSecondaryButton(
+                    text = stringResource(R.string.sound_system),
+                    icon = Icons.Rounded.Alarm,
+                    onClick = onSystemPicker,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        )
+    }
+}
+
+/** 사운드 행 오른쪽 — 선택 체크 `brand`, 사용자 사운드는 삭제 아이콘. */
+@Composable
+private fun SoundRowTrailing(selected: Boolean, onDelete: (() -> Unit)?) {
+    val colors = LocalWakepointColors.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.xs)
+    ) {
+        if (selected) {
+            Icon(
+                imageVector = Icons.Rounded.Check,
+                contentDescription = null,
+                tint = colors.brand,
+                modifier = Modifier.size(WakepointSize.icon)
+            )
+        }
+        if (onDelete != null) {
+            IconButton(onClick = onDelete, modifier = Modifier.size(WakepointSize.minTouchTarget)) {
+                Icon(
+                    imageVector = Icons.Rounded.DeleteOutline,
+                    contentDescription = stringResource(R.string.sound_delete),
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(WakepointSize.iconSmall)
+                )
+            }
+        }
+    }
+}
+
+/** 녹음 시트 (design-handoff `Sounds-recording`) — 본문 스크롤 + 하단 고정 버튼. */
+@Composable
+private fun RecordingSheetContent(
+    phase: RecordingPhase,
+    elapsedSeconds: Int,
+    onStart: () -> Unit = {},
+    onStop: () -> Unit = {},
+    onRetry: () -> Unit = {},
+    onSave: () -> Unit = {},
+    onCancel: () -> Unit = {}
+) {
+    val colors = LocalWakepointColors.current
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = WakepointSpacing.formHorizontal,
+                    end = WakepointSpacing.formHorizontal,
+                    bottom = WakepointSpacing.xl
+                ),
+            verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+        ) {
+            BottomSheetTitle(title = stringResource(R.string.record_title))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = WakepointSpacing.lg, bottom = WakepointSpacing.sm),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(WakepointSpacing.lg)
+            ) {
+                Text(
+                    text = formatElapsed(elapsedSeconds),
+                    style = MaterialTheme.typography.displayLarge,
+                    color = colors.text
+                )
+                Text(
+                    text = when (phase) {
+                        RecordingPhase.Idle -> stringResource(R.string.record_hint)
+                        RecordingPhase.Recording -> stringResource(R.string.record_recording)
+                        RecordingPhase.Recorded -> stringResource(R.string.record_done)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textSecondary
+                )
+                WakepointTintButton(
+                    text = when (phase) {
+                        RecordingPhase.Idle -> stringResource(R.string.record_start)
+                        RecordingPhase.Recording -> stringResource(R.string.record_stop)
+                        RecordingPhase.Recorded -> stringResource(R.string.record_retry)
+                    },
+                    onClick = when (phase) {
+                        RecordingPhase.Idle -> onStart
+                        RecordingPhase.Recording -> onStop
+                        RecordingPhase.Recorded -> onRetry
+                    },
+                    modifier = Modifier.width(RECORD_BUTTON_WIDTH)
+                )
+            }
+        }
+        BottomActionBar(
+            secondaryText = stringResource(R.string.alarm_cancel),
+            primaryText = stringResource(R.string.alarm_save),
+            primaryEnabled = phase == RecordingPhase.Recorded,
+            onSecondary = onCancel,
+            onPrimary = onSave
+        )
+    }
 }
 
 private fun AlarmSound.iconVector(): ImageVector = when (kind) {
-    SoundKind.Bundled -> Icons.Rounded.Notifications
-    SoundKind.Recorded -> Icons.Rounded.GraphicEq
-    SoundKind.Imported -> Icons.Rounded.AudioFile
-    SoundKind.System -> Icons.Rounded.Alarm
-}
-
-@Composable
-private fun RecordingSheet(
-    phase: RecordingPhase,
-    elapsedSeconds: Int,
-    onStart: () -> Unit,
-    onStop: () -> Unit,
-    onRetry: () -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(WakepointSpacing.screenHorizontal),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(WakepointSpacing.sectionGap)
-    ) {
-        Text(
-            text = stringResource(R.string.record_title),
-            color = WakepointPrimary,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            text = formatElapsed(elapsedSeconds),
-            color = WakepointPrimary,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            text = when (phase) {
-                RecordingPhase.Idle -> stringResource(R.string.record_hint)
-                RecordingPhase.Recording -> stringResource(R.string.record_recording)
-                RecordingPhase.Recorded -> stringResource(R.string.record_done)
-            },
-            color = WakepointTextSecondary,
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        when (phase) {
-            RecordingPhase.Idle -> {
-                RecordCircleButton(
-                    icon = Icons.Rounded.Mic,
-                    contentDescription = stringResource(R.string.record_start),
-                    onClick = onStart
-                )
-            }
-            RecordingPhase.Recording -> {
-                RecordCircleButton(
-                    icon = Icons.Rounded.Stop,
-                    contentDescription = stringResource(R.string.record_stop),
-                    onClick = onStop
-                )
-            }
-            RecordingPhase.Recorded -> {
-                Icon(
-                    imageVector = Icons.Rounded.CheckCircle,
-                    contentDescription = null,
-                    tint = WakepointPrimary,
-                    modifier = Modifier.size(56.dp)
-                )
-            }
-        }
-
-        HorizontalDivider(color = WakepointParchment)
-        Row(horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm)) {
-            WakepointSecondaryButton(
-                text = stringResource(
-                    if (phase == RecordingPhase.Recorded) R.string.record_retry else R.string.alarm_cancel
-                ),
-                onClick = if (phase == RecordingPhase.Recorded) onRetry else onCancel,
-                modifier = Modifier.weight(1f)
-            )
-            WakepointButton(
-                text = stringResource(R.string.alarm_save),
-                enabled = phase == RecordingPhase.Recorded,
-                onClick = onSave,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun RecordCircleButton(
-    icon: ImageVector,
-    contentDescription: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .size(72.dp)
-            .clickable(onClick = onClick),
-        shape = CircleShape,
-        border = androidx.compose.foundation.BorderStroke(2.dp, WakepointPrimary),
-        color = WakepointCanvas
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = WakepointPrimary,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-    }
+    SoundKind.Bundled -> Icons.Rounded.MusicNote
+    SoundKind.Recorded -> Icons.Rounded.Mic
+    SoundKind.Imported -> Icons.Rounded.MusicNote
+    SoundKind.System -> Icons.AutoMirrored.Rounded.VolumeUp
 }
 
 private fun formatElapsed(seconds: Int): String {
     val minutes = seconds / 60
     val remaining = seconds % 60
     return "%02d:%02d".format(minutes, remaining)
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleSmall, color = WakepointInk)
 }
 
 private fun Double.toRadiusOption(): String {
@@ -1315,8 +1498,149 @@ private fun Double.toRadiusOption(): String {
 }
 
 /** 알람에 저장된 사운드 URI를 사람이 읽을 수 있는 이름으로 변환. 없으면 기본 벨소리. */
+@Composable
 private fun Alarm.resolveSoundTitle(titles: Map<String, String>): String =
-    soundUri?.let { titles[it] } ?: "기본 벨소리"
+    soundUri?.let { titles[it] } ?: stringResource(R.string.alarm_default_sound)
 
 /** 오디오 파일 선택기에서 허용할 MIME 타입. */
 private val AUDIO_MIME_TYPES = arrayOf("audio/*")
+
+// ─────────────────────────────────────────────────────────────────────
+// @Preview — design-handoff 의 상태별 화면
+// ─────────────────────────────────────────────────────────────────────
+
+@WakepointScreenPreviews
+@Composable
+private fun AlarmsListPreview() {
+    WakepointTheme {
+        AlarmsListContent(uiState = PREVIEW_ALARMS_STATE)
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun AlarmsOpenPreview() {
+    WakepointTheme {
+        AlarmsListContent(
+            uiState = PREVIEW_ALARMS_STATE,
+            expandedAlarmId = PREVIEW_ALARMS[0].id
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun AlarmsEditPreview() {
+    WakepointTheme {
+        AlarmEditContent(
+            alarm = PREVIEW_ALARMS[0],
+            soundTitle = stringResource(R.string.alarm_default_sound)
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun AlarmsEmptyPreview() {
+    WakepointTheme {
+        AlarmsListContent(uiState = AlarmsUiState(isLoading = false))
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun AlarmsUpdatingPreview() {
+    WakepointTheme {
+        AlarmsListContent(
+            uiState = PREVIEW_ALARMS_STATE.copy(
+                updatingAlarmIds = setOf(PREVIEW_ALARMS[0].id),
+                errorMessage = "알람을 변경하지 못했습니다. 네트워크를 확인하고 다시 시도해 주세요."
+            )
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun AlarmsDeletePreview() {
+    WakepointTheme {
+        AlarmsListContent(uiState = PREVIEW_ALARMS_STATE)
+        AlarmDeleteDialog(
+            message = stringResource(R.string.alarm_delete_confirm_message),
+            onDismiss = {},
+            onConfirm = {}
+        )
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SoundsPreview() {
+    WakepointTheme {
+        SoundListContent(uiState = PREVIEW_SOUND_STATE)
+    }
+}
+
+@WakepointScreenPreviews
+@Composable
+private fun SoundsRecordingPreview() {
+    WakepointTheme {
+        val colors = LocalWakepointColors.current
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.weight(1f)) {
+                SoundListContent(uiState = PREVIEW_SOUND_STATE)
+            }
+            // 시트 컨테이너(모서리 28 · `surfaceElevated` · 드래그 핸들)를 미리보기에서 재현한다.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(WakepointShape.sheet)
+                    .background(colors.surfaceElevated)
+            ) {
+                BottomSheetHandle()
+                RecordingSheetContent(phase = RecordingPhase.Recording, elapsedSeconds = 7)
+            }
+        }
+    }
+}
+
+private val PREVIEW_ALARMS = listOf(
+    previewAlarm("1", "회사", "서울 강남구 테헤란로 152", 0.5, true),
+    previewAlarm("2", "집 앞 정류장", "서울 마포구 월드컵북로 396", 2.0, true),
+    previewAlarm("3", "본가", "경기 수원시 팔달구 효원로 241", 1.0, false),
+    previewAlarm("4", "학원", "서울 서초구 강남대로 465", 0.3, false)
+)
+
+private val PREVIEW_ALARMS_STATE = AlarmsUiState(isLoading = false, alarms = PREVIEW_ALARMS)
+
+private val PREVIEW_SOUNDS = listOf(
+    AlarmSound("s0", "기본 알람음", "시스템 기본", "content://system", SoundKind.System),
+    AlarmSound("s1", "부드러운 종", "내장 알람음", "res://bell", SoundKind.Bundled),
+    AlarmSound("s2", "지하철 안내음", "내장 알람음", "res://subway", SoundKind.Bundled),
+    AlarmSound("s3", "내 녹음 1", "녹음 · 0:07", "file://rec1", SoundKind.Recorded)
+)
+
+private val PREVIEW_SOUND_STATE = SoundListUiState(
+    sounds = PREVIEW_SOUNDS,
+    selectedUri = "content://system"
+)
+
+private fun previewAlarm(
+    id: String,
+    label: String,
+    address: String,
+    radiusKm: Double,
+    active: Boolean
+) = Alarm(
+    id = id,
+    ownerId = "me",
+    createdBy = "me",
+    label = label,
+    targetLat = 37.5,
+    targetLng = 127.0,
+    targetAddress = address,
+    radiusKm = radiusKm,
+    isActive = active,
+    soundType = SoundType.Default,
+    soundUri = null
+)

@@ -35,23 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.wakepoint.app.core.design.LocalWakepointColors
 import com.wakepoint.app.core.design.StatusPill
-import com.wakepoint.app.core.design.WakepointBackground
-import com.wakepoint.app.core.design.WakepointCanvas
 import com.wakepoint.app.core.design.WakepointCard
-import com.wakepoint.app.core.design.WakepointChipBorder
-import com.wakepoint.app.core.design.WakepointIconLight
-import com.wakepoint.app.core.design.WakepointIconMuted
-import com.wakepoint.app.core.design.WakepointInk
 import com.wakepoint.app.core.design.WakepointLoadingPlaceholder
 import com.wakepoint.app.core.design.WakepointPageHeader
-import com.wakepoint.app.core.design.WakepointPrimary
-import com.wakepoint.app.core.design.WakepointPrimaryLight
 import com.wakepoint.app.core.design.WakepointShape
 import com.wakepoint.app.core.design.WakepointSize
 import com.wakepoint.app.core.design.WakepointSpacing
-import com.wakepoint.app.core.design.WakepointTextSecondary
-import com.wakepoint.app.core.design.WakepointTextTertiary
 import com.wakepoint.app.domain.model.Place
 
 /**
@@ -86,13 +77,13 @@ fun MyPlacesContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WakepointBackground),
+            .background(LocalWakepointColors.current.background),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(WakepointCanvas)
+                .background(LocalWakepointColors.current.surfaceElevated)
                 .padding(horizontal = WakepointSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -100,13 +91,13 @@ fun MyPlacesContent(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "뒤로",
-                    tint = WakepointInk,
+                    tint = LocalWakepointColors.current.text,
                 )
             }
             Text(
                 text = "내 장소",
                 style = MaterialTheme.typography.titleSmall,
-                color = WakepointInk,
+                color = LocalWakepointColors.current.text,
             )
         }
         Column(
@@ -162,8 +153,8 @@ private fun PlaceRow(place: Place, onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(WakepointSize.chipHeight)
-                    .clip(WakepointShape.control)
-                    .background(WakepointPrimaryLight),
+                    .clip(WakepointShape.message)
+                    .background(LocalWakepointColors.current.brandSubtle),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -173,7 +164,7 @@ private fun PlaceRow(place: Place, onClick: () -> Unit) {
                         else -> Icons.Rounded.Lock
                     },
                     contentDescription = if (place.isPublic) "공개" else "비공개",
-                    tint = WakepointPrimary,
+                    tint = LocalWakepointColors.current.brand,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -182,9 +173,9 @@ private fun PlaceRow(place: Place, onClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.sm),
                 ) {
-                    Text(place.myName, style = MaterialTheme.typography.titleMedium, color = WakepointInk)
+                    Text(place.myName, style = MaterialTheme.typography.titleMedium, color = LocalWakepointColors.current.text)
                     if (place.isHome) {
-                        StatusPill("고정", color = WakepointTextSecondary)
+                        StatusPill("고정", color = LocalWakepointColors.current.textSecondary)
                     }
                 }
                 Spacer(Modifier.height(WakepointSpacing.xs))
@@ -195,13 +186,13 @@ private fun PlaceRow(place: Place, onClick: () -> Unit) {
                         "비공개 · 나만 볼 수 있어요"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = WakepointTextSecondary,
+                    color = LocalWakepointColors.current.textSecondary,
                 )
             }
             Icon(
                 Icons.Rounded.ChevronRight,
                 contentDescription = null,
-                tint = WakepointIconLight,
+                tint = LocalWakepointColors.current.textTertiary,
                 modifier = Modifier.size(20.dp),
             )
         }
@@ -219,13 +210,13 @@ private fun AddSlotRow(
             .fillMaxWidth()
             .height(WakepointSize.rowHeight)
             .clip(WakepointShape.card)
-            .border(1.5.dp, WakepointChipBorder, WakepointShape.card)
+            .border(1.5.dp, LocalWakepointColors.current.line, WakepointShape.card)
             .clickable(onClick = onClick)
             .padding(horizontal = WakepointSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(WakepointSpacing.iconTextGap),
     ) {
-        Icon(icon, contentDescription = null, tint = WakepointIconMuted, modifier = Modifier.size(20.dp))
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = WakepointTextTertiary)
+        Icon(icon, contentDescription = null, tint = LocalWakepointColors.current.textSecondary, modifier = Modifier.size(20.dp))
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = LocalWakepointColors.current.textTertiary)
     }
 }
