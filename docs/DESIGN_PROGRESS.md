@@ -1,8 +1,16 @@
 # 디자인 적용 진행 현황
 
-기준: `design-handoff/DESIGN.md`. 화면 하나를 끝내고 `./gradlew assembleDebug` 가 성공하면 해당 칸을 `[x]` 로 바꾼다.
+기준: `docs/DESIGN.md`(원본 `design-handoff/`). 화면 하나를 끝내고 `./gradlew assembleDebug` 가
+성공하면 해당 칸을 `[x]` 로 바꾼다.
 
 완료: 88 / 88
+
+> 빌드 메모: 이 장비의 기본 JDK(26.0.2.1)는 Kotlin 컴파일러의 버전 파서를 깨뜨린다.
+> `JAVA_HOME=/Users/yoose/Library/Java/JavaVirtualMachines/ms-21.0.11/Contents/Home ./gradlew …`
+> 처럼 JDK 21 로 빌드한다.
+>
+> 핸드오프의 `PROMPT.md` 는 저장소 루트의 `DESIGN_SPEC.md` 를 참조하지만 그 파일은 저장소에
+> 존재하지 않는다. 화면 요구사항은 `docs/DESIGN.md` 와 화면별 HTML/PNG 만 근거로 삼았다.
 
 ## 공통
 
@@ -61,7 +69,18 @@
 | `Profile` | 프로필 | 8 | [x] | [x] |
 | `Notifications` | 시스템 알림 2종 | 10 | [x] | [x] |
 
+## DESIGN.md 8절 "아직 정하지 않은 것" — 구현한 기본값
+
+| 항목 | 구현 | 다른 안 |
+|---|---|---|
+| 알람 수정 | **B안: 별도 수정 화면**(`Alarms-edit`). 카드를 누르면 수정 화면으로 간다 | A안 카드 펼침(`Alarms-open`)은 컴포저블·상태를 남겨 둬 되돌리기 쉽다 |
+| 친구 추가 진입점 | **헤더의 "친구 추가" 버튼만.** FAB 제거 | FAB 복원 |
+| 요청이 0건일 때 친구 화면 기본 탭 | **"친구" 탭**. 요청이 있으면 "요청" 탭, 사용자가 탭을 고른 뒤에는 그 선택을 따른다 | — |
+| 알람 울림 화면 테마 | **시스템 테마를 따름** | 항상 다크 |
+
 ## 막힌 화면 (blocked)
+
+없음 — 44개 화면 전부 라이트 · 다크로 구현했다.
 
 | 화면 | 이유 |
 |---|---|
