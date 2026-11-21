@@ -28,7 +28,7 @@
 - 알람 목록은 실제 Room flow 데이터를 표시한다.
 - 알람 별칭/반경 수정은 Supabase PATCH 후 Room cache에 반영한다.
 - 활성 알람 기반 foreground 위치 추적과 반경 진입 트리거가 1차 구현되어 있다.
-- Pretendard가 앱 기본 폰트로 적용되어 있다.
+- UI 는 2026-11-21 Montage 디자인(라이트 · 다크)으로 재적용 중이다. Pretendard 폰트 파일이 없어 시스템 폰트를 쓴다.
 
 ## 개발 원칙
 
@@ -55,12 +55,25 @@
 
 ## 디자인 규칙
 
-- Pretendard를 기본 폰트로 사용한다.
-- Primary accent는 `#0066cc` 하나만 사용한다.
-- font weight는 300/400/600 중심으로 사용하고 500은 피한다.
-- 그라데이션 배경과 불필요한 장식은 피한다.
-- 카드 안에 카드를 중첩하지 않는다.
-- 하단 탭바는 검정 배경 기준을 유지한다.
+전체 규칙은 `docs/DESIGN.md`(라이트 · 다크 2테마, Montage 역할 토큰)를 따른다. 요약:
+
+- 단일 소스(SSOT)는 `core/design/` 의 `Theme.kt`(색) · `Type.kt`(타입) · `Shape.kt`(모서리) ·
+  `Spacing.kt`(간격 · 치수) · `Component.kt`(공통 컴포넌트) 다.
+- **화면 코드에 hex 를 쓰지 않는다.** `LocalWakepointColors.current.<역할>` 만 참조하고,
+  8자리 색의 알파를 바꾸거나 색을 섞지 않는다. `Color(0x…)` 리터럴은 `Theme.kt` 에만 둔다.
+- 간격 · 폰트 리터럴도 쓰지 않는다. `WakepointSpacing` · `WakepointSize` ·
+  `MaterialTheme.typography.<role>` 만 쓴다 (테두리 두께, 디자인 고유의 구조 치수는 예외).
+- 라이트 · 다크 두 테마. `WakepointTheme()` 이 `isSystemInDarkTheme()` 을 따른다.
+- 빨강(`negative*`)은 **입력 오류와 실패 메시지에만** 쓴다. 삭제 · 차단 · 로그아웃에 쓰지 않는다.
+- 파랑(`brand`)은 핵심 액션과 선택 상태에만 쓴다.
+- 굵기는 Regular 400 과 Medium 500 두 가지. Bold 를 쓰지 않고 인라인 `fontWeight` 도 쓰지 않는다.
+- 그림자(elevation)를 쓰지 않는다. 면은 채움과 테두리로 구분한다.
+- 로딩은 스피너 없이 버튼 문구 변경("처리 중" · "저장 중" · "검색 중") + 비활성으로 표현한다.
+- 모서리: 필드 4 · pill 8 · 메시지 12 · 카드 16 · 시트 · 다이얼로그 28 · 버튼 · 검색바는 원형.
+- Edge-to-edge 인셋을 처리한다. 스크롤은 목록과 시트 본문 안에서만.
+- 폰트는 Pretendard 가 스펙이지만 `res/font` 에 파일이 없어 시스템 폰트로 구현되어 있다.
+- 화면을 손대면 `@WakepointScreenPreviews`(라이트 · 다크)로 상태별 미리보기를 둔다.
+- 구현 현황과 디자인과 다른 점은 `docs/DESIGN_PROGRESS.md` 에 기록한다.
 
 ## 환경 키
 
@@ -96,7 +109,7 @@ Gradle이 sandbox 네트워크 제한으로 실패하면 같은 명령을 escala
 - API 문서: `docs/API.md`
 - DB schema: `docs/SCHEMA.md`
 - 설정: `docs/SETUP.md`
-- 디자인: `docs/DESIGN.md`
+- 디자인: `docs/DESIGN.md` (원본 산출물 `design-handoff/`, 구현 현황 `docs/DESIGN_PROGRESS.md`)
 - 작업 로그: `docs/work-log/`
 
 작업이 끝나면 필요한 경우 작업 로그만 짧게 갱신한다.

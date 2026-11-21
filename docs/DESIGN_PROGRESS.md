@@ -10,7 +10,7 @@
 - [x] `core/design/Component.kt`, `RadiusSelector.kt` — 공통 컴포넌트 스타일
 - [x] 하단 탭바, 바텀시트 컨테이너
 - [ ] 시스템 알림 small icon, 액센트 색
-- [ ] `docs/DESIGN.md`, `AGENTS.md` 갱신
+- [x] `docs/DESIGN.md`, `AGENTS.md` 갱신
 
 ## 화면
 
