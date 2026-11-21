@@ -2,12 +2,12 @@
 
 기준: `design-handoff/DESIGN.md`. 화면 하나를 끝내고 `./gradlew assembleDebug` 가 성공하면 해당 칸을 `[x]` 로 바꾼다.
 
-완료: 0 / 88
+완료: 4 / 88
 
 ## 공통
 
-- [ ] `core/design/Theme.kt` — 색 역할(라이트 · 다크), 타입, 모양
-- [ ] `core/design/Component.kt`, `RadiusSelector.kt` — 공통 컴포넌트 스타일
+- [x] `core/design/Theme.kt` — 색 역할(라이트 · 다크), 타입, 모양
+- [x] `core/design/Component.kt`, `RadiusSelector.kt` — 공통 컴포넌트 스타일
 - [ ] 하단 탭바, 바텀시트 컨테이너
 - [ ] 시스템 알림 small icon, 액센트 색
 - [ ] `docs/DESIGN.md`, `AGENTS.md` 갱신
@@ -37,8 +37,8 @@
 | `Friends-error` | 친구 · 오류 | 7 | [ ] | [ ] |
 | `Friends-block` | 친구 · 차단 확인 | 7 | [ ] | [ ] |
 | `TabBar` | 하단 탭바 · 선택 상태 4종 | 11 | [ ] | [ ] |
-| `Ringing` | 알람 울림 · 별칭 + 주소 | 9 | [ ] | [ ] |
-| `Ringing-alias` | 알람 울림 · 별칭만 | 9 | [ ] | [ ] |
+| `Ringing` | 알람 울림 · 별칭 + 주소 | 9 | [x] | [x] |
+| `Ringing-alias` | 알람 울림 · 별칭만 | 9 | [x] | [x] |
 | `Splash` | 스플래시 | 1 | [ ] | [ ] |
 | `Home` | 홈 · 위치 권한 있음 | 4.1 | [ ] | [ ] |
 | `Home-noperm` | 홈 · 위치 권한 없음 (기본 위치) | 4.1 | [ ] | [ ] |
@@ -70,3 +70,7 @@
 
 | 화면 | 다른 점 | 이유 |
 |---|---|---|
+| 전체 | 글꼴이 Pretendard 가 아니라 시스템 폰트(`FontFamily.Default`) | `res/font` 에 Pretendard 리소스가 없다. 스펙에 없는 에셋을 임의로 추가하지 않았다. 번들된 Spoqa Han Sans Neo 도 쓰지 않는다(디자인에 없는 글꼴). 폰트 파일을 넣으면 `core/design/Type.kt` 의 `WakepointFontFamily` 한 곳만 바꾸면 된다. |
+| 알람 울림 | 문구가 "도착했습니다 / 알람 중지" 가 아니라 "목적지에 도착했어요 / 알람 끄기" | 디자인의 자리 표시 문구로 기존 `strings.xml` 값을 덮어쓰지 않는다. |
+| 알람 울림 | 펄스 원의 모프 애니메이션 없음 | 명세에 없는 동작을 추가하지 않는다. 정지 상태의 3겹 원만 그렸다. |
+| 전체 | 즐겨찾기 별(구 `WakepointStar` 앰버)이 `brand` 로 바뀜 | 새 팔레트에 별 전용 역할이 없고, 즐겨찾기는 디자인 44개 화면에 없다. |
